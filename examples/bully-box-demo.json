@@ -1,0 +1,68 @@
+{
+  "name": "Bully Box (demo)",
+  "version": "demo-v1",
+  "format": "expanded",
+  "notes": "Illustrative control-themed smoke-test deck, not Mike's actual Bully Box and not an optimized or tournament-certified list. Expanded is used because this demo includes older printings.",
+  "cards": [
+    {
+      "card_id": "swsh11-143",
+      "count": 4
+    },
+    {
+      "card_id": "sv02-097",
+      "count": 3
+    },
+    {
+      "card_id": "sv01-096",
+      "count": 2
+    },
+    {
+      "card_id": "swsh11-137",
+      "count": 1
+    },
+    {
+      "card_id": "sv02-185",
+      "count": 4
+    },
+    {
+      "card_id": "sv02-172",
+      "count": 3
+    },
+    {
+      "card_id": "sv04-160",
+      "count": 4
+    },
+    {
+      "card_id": "sv01-181",
+      "count": 4
+    },
+    {
+      "card_id": "sv01-196",
+      "count": 3
+    },
+    {
+      "card_id": "sv01-194",
+      "count": 4
+    },
+    {
+      "card_id": "sv02-188",
+      "count": 3
+    },
+    {
+      "card_id": "sv01-182",
+      "count": 2
+    },
+    {
+      "card_id": "sv01-183",
+      "count": 4
+    },
+    {
+      "card_id": "sv05-153",
+      "count": 1
+    },
+    {
+      "card_id": "sv03.5-207",
+      "count": 18
+    }
+  ]
+}

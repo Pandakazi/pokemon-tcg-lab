@@ -1,0 +1,55 @@
+# Local Python environments and generated package files
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Environment configuration and credentials; keep the safe template
+.env
+.env.*
+!.env.example
+secrets/
+.secrets/
+credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases and launcher state (bundled card data lives in src/tcg_lab/data)
+/data/
+.local-server.json
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# Test, lint, type-check, and coverage output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Local editor, OS, and temporary files
+.idea/
+.vscode/
+.DS_Store
+__MACOSX/
+Thumbs.db
+Desktop.ini
+*.log
+*.tmp
+*.swp
+*.zip

@@ -1,0 +1,724 @@
+{
+  "source": "https://api.tcgdex.net/v2/en/cards",
+  "fetched_at": "2026-09-23T00:18:59.550928+00:00",
+  "cards": [
+    {
+      "category": "Pokemon",
+      "id": "swsh11-143",
+      "illustrator": "0313",
+      "image": "https://assets.tcgdex.net/en/swsh/swsh11/143",
+      "localId": "143",
+      "name": "Snorlax",
+      "rarity": "Holo Rare",
+      "set": {
+        "cardCount": {
+          "official": 196,
+          "total": 217
+        },
+        "id": "swsh11",
+        "logo": "https://assets.tcgdex.net/en/swsh/swsh11/logo",
+        "name": "Lost Origin",
+        "symbol": "https://assets.tcgdex.net/univ/swsh/swsh11/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": true,
+        "wPromo": false
+      },
+      "dexId": [
+        143
+      ],
+      "hp": 150,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "abilities": [
+        {
+          "type": "Ability",
+          "name": "Unfazed Fat",
+          "effect": "Prevent all effects of attacks from your opponent's Pokémon done to this Pokémon. (Damage is not an effect.)"
+        }
+      ],
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "name": "Thumping Snore",
+          "effect": "This Pokémon is now Asleep. During Pokémon Checkup, flip 2 coins instead of 1. If either of them is tails, this Pokémon is still Asleep.",
+          "damage": 180
+        }
+      ],
+      "retreat": 4,
+      "regulationMark": "F",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-07-01T21:22:16+01:00"
+    },
+    {
+      "category": "Pokemon",
+      "id": "sv02-097",
+      "illustrator": "Kagemaru Himeno",
+      "image": "https://assets.tcgdex.net/en/sv/sv02/097",
+      "localId": "097",
+      "name": "Mimikyu",
+      "rarity": "Rare",
+      "set": {
+        "cardCount": {
+          "official": 193,
+          "total": 279
+        },
+        "id": "sv02",
+        "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+        "name": "Paldea Evolved",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": true,
+        "wPromo": false
+      },
+      "dexId": [
+        778
+      ],
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "description": "This Pokémon lives in dark places untouched by sunlight. When it appears before humans, it hides itself under a cloth that resembles a Pikachu.",
+      "stage": "Basic",
+      "abilities": [
+        {
+          "type": "Ability",
+          "name": "Safeguard",
+          "effect": "Prevent all damage done to this Pokémon by attacks from your opponent's Pokémon ex and Pokémon V."
+        }
+      ],
+      "attacks": [
+        {
+          "cost": [
+            "Psychic",
+            "Colorless"
+          ],
+          "name": "Ghost Eye",
+          "effect": "Put 7 damage counters on your opponent's Active Pokémon."
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-27T17:36:22+01:00"
+    },
+    {
+      "category": "Pokemon",
+      "id": "sv01-096",
+      "illustrator": "GOSSAN",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/096",
+      "localId": "096",
+      "name": "Klefki",
+      "rarity": "Rare",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": true,
+        "wPromo": false
+      },
+      "dexId": [
+        707
+      ],
+      "hp": 70,
+      "types": [
+        "Psychic"
+      ],
+      "description": "In the past, noble families entrusted their vault keys to a Klefki. They passed the Klefki down through the generations, taking good care of it.",
+      "stage": "Basic",
+      "abilities": [
+        {
+          "type": "Ability",
+          "name": "Mischievous Lock",
+          "effect": "As long as this Pokémon is in the Active Spot, Basic Pokémon in play (both yours and your opponent's) have no Abilities, except for Mischievous Lock."
+        }
+      ],
+      "attacks": [
+        {
+          "cost": [
+            "Colorless"
+          ],
+          "name": "Joust",
+          "effect": "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
+          "damage": 10
+        }
+      ],
+      "weaknesses": [
+        {
+          "type": "Metal",
+          "value": "×2"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702392,
+        "tcgplayer": 486602
+      }
+    },
+    {
+      "category": "Pokemon",
+      "id": "swsh11-137",
+      "illustrator": "Saki Hayashiro",
+      "image": "https://assets.tcgdex.net/en/swsh/swsh11/137",
+      "localId": "137",
+      "name": "Pidgeot V",
+      "rarity": "Holo Rare V",
+      "set": {
+        "cardCount": {
+          "official": 196,
+          "total": 217
+        },
+        "id": "swsh11",
+        "logo": "https://assets.tcgdex.net/en/swsh/swsh11/logo",
+        "name": "Lost Origin",
+        "symbol": "https://assets.tcgdex.net/univ/swsh/swsh11/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": false,
+        "wPromo": false
+      },
+      "dexId": [
+        18
+      ],
+      "hp": 210,
+      "types": [
+        "Colorless"
+      ],
+      "stage": "Basic",
+      "suffix": "V",
+      "abilities": [
+        {
+          "type": "Ability",
+          "name": "Vanishing Wings",
+          "effect": "Once during your turn, if this Pokémon is on your Bench, you may shuffle it and all attached cards into your deck."
+        }
+      ],
+      "attacks": [
+        {
+          "cost": [
+            "Colorless",
+            "Colorless",
+            "Colorless"
+          ],
+          "name": "Flight Surf",
+          "effect": "If you have a Stadium in play, this attack does 80 more damage.",
+          "damage": "80+"
+        }
+      ],
+      "retreat": 1,
+      "regulationMark": "F",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-07-01T21:22:16+01:00"
+    },
+    {
+      "category": "Trainer",
+      "id": "sv02-185",
+      "illustrator": "Sanosuke Sakuma",
+      "image": "https://assets.tcgdex.net/en/sv/sv02/185",
+      "localId": "185",
+      "name": "Iono",
+      "rarity": "Uncommon",
+      "set": {
+        "cardCount": {
+          "official": 193,
+          "total": 279
+        },
+        "id": "sv02",
+        "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+        "name": "Paldea Evolved",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.",
+      "trainerType": "Supporter",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T17:20:10+01:00"
+    },
+    {
+      "category": "Trainer",
+      "id": "sv02-172",
+      "illustrator": "NC Empire",
+      "image": "https://assets.tcgdex.net/en/sv/sv02/172",
+      "localId": "172",
+      "name": "Boss's Orders",
+      "rarity": "Rare",
+      "set": {
+        "cardCount": {
+          "official": 193,
+          "total": 279
+        },
+        "id": "sv02",
+        "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+        "name": "Paldea Evolved",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      "trainerType": "Supporter",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T17:20:10+01:00"
+    },
+    {
+      "category": "Trainer",
+      "id": "sv04-160",
+      "illustrator": "Toyste Beach",
+      "image": "https://assets.tcgdex.net/en/sv/sv04/160",
+      "localId": "160",
+      "name": "Counter Catcher",
+      "rarity": "Uncommon",
+      "set": {
+        "cardCount": {
+          "official": 182,
+          "total": 266
+        },
+        "id": "sv04",
+        "logo": "https://assets.tcgdex.net/en/sv/sv04/logo",
+        "name": "Paradox Rift",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv04/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "You can use this card only if you have more Prize cards remaining than your opponent.\n\nSwitch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T08:26:44+01:00"
+    },
+    {
+      "category": "Trainer",
+      "id": "sv01-181",
+      "illustrator": "Toyste Beach",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/181",
+      "localId": "181",
+      "name": "Nest Ball",
+      "rarity": "Uncommon",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702477,
+        "tcgplayer": 488087
+      }
+    },
+    {
+      "category": "Trainer",
+      "id": "sv01-196",
+      "illustrator": "Ayaka Yoshida",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/196",
+      "localId": "196",
+      "name": "Ultra Ball",
+      "rarity": "Uncommon",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702492,
+        "tcgplayer": 488105
+      }
+    },
+    {
+      "category": "Trainer",
+      "id": "sv01-194",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/194",
+      "localId": "194",
+      "name": "Switch",
+      "rarity": "Common",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Switch your Active Pokémon with 1 of your Benched Pokémon.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702490,
+        "tcgplayer": 488102
+      }
+    },
+    {
+      "category": "Trainer",
+      "id": "sv02-188",
+      "illustrator": "Toyste Beach",
+      "image": "https://assets.tcgdex.net/en/sv/sv02/188",
+      "localId": "188",
+      "name": "Super Rod",
+      "rarity": "Common",
+      "set": {
+        "cardCount": {
+          "official": 193,
+          "total": 279
+        },
+        "id": "sv02",
+        "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+        "name": "Paldea Evolved",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Shuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T17:20:10+01:00"
+    },
+    {
+      "category": "Trainer",
+      "id": "sv01-182",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/182",
+      "localId": "182",
+      "name": "Pal Pad",
+      "rarity": "Common",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Shuffle up to 2 Supporter cards from your discard pile into your deck.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702478,
+        "tcgplayer": 488088
+      }
+    },
+    {
+      "category": "Trainer",
+      "id": "sv01-183",
+      "illustrator": "yuu",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/183",
+      "localId": "183",
+      "name": "Penny",
+      "rarity": "Uncommon",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": false,
+        "normal": true,
+        "reverse": true,
+        "wPromo": false
+      },
+      "effect": "Put 1 of your Basic Pokémon and all attached cards into your hand.",
+      "trainerType": "Supporter",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702479,
+        "tcgplayer": 488089
+      }
+    },
+    {
+      "category": "Trainer",
+      "id": "sv05-153",
+      "illustrator": "Studio Bora Inc.",
+      "image": "https://assets.tcgdex.net/en/sv/sv05/153",
+      "localId": "153",
+      "name": "Master Ball",
+      "rarity": "ACE SPEC Rare",
+      "set": {
+        "cardCount": {
+          "official": 162,
+          "total": 218
+        },
+        "id": "sv05",
+        "name": "Temporal Forces",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv05/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": false,
+        "wPromo": false
+      },
+      "effect": "Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+      "trainerType": "Item",
+      "regulationMark": "H",
+      "legal": {
+        "standard": true,
+        "expanded": true
+      },
+      "updated": "2026-05-06T18:45:51Z"
+    },
+    {
+      "category": "Energy",
+      "id": "sv03.5-207",
+      "image": "https://assets.tcgdex.net/en/sv/sv03.5/207",
+      "localId": "207",
+      "name": "Basic Psychic Energy",
+      "rarity": "Hyper rare",
+      "set": {
+        "cardCount": {
+          "official": 165,
+          "total": 207
+        },
+        "id": "sv03.5",
+        "logo": "https://assets.tcgdex.net/en/sv/sv03.5/logo",
+        "name": "151",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv03.5/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": false,
+        "wPromo": false
+      },
+      "types": [
+        "Psychic"
+      ],
+      "energyType": "Normal",
+      "legal": {
+        "standard": true,
+        "expanded": true
+      },
+      "updated": "2026-05-13T16:42:54+01:00"
+    },
+    {
+      "category": "Energy",
+      "id": "sv05-162",
+      "image": "https://assets.tcgdex.net/en/sv/sv05/162",
+      "localId": "162",
+      "name": "Neo Upper Energy",
+      "rarity": "ACE SPEC Rare",
+      "set": {
+        "cardCount": {
+          "official": 162,
+          "total": 218
+        },
+        "id": "sv05",
+        "name": "Temporal Forces",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv05/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": true,
+        "reverse": false,
+        "wPromo": false
+      },
+      "effect": "As long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Stage 2 Pokémon, this card provides every type of Energy but provides only 2 Energy at a time.",
+      "energyType": "Special",
+      "regulationMark": "H",
+      "legal": {
+        "standard": true,
+        "expanded": true
+      },
+      "updated": "2026-05-06T18:45:51Z"
+    },
+    {
+      "category": "Trainer",
+      "id": "sv01-255",
+      "illustrator": "Toyste Beach",
+      "image": "https://assets.tcgdex.net/en/sv/sv01/255",
+      "localId": "255",
+      "name": "Nest Ball",
+      "rarity": "Hyper rare",
+      "set": {
+        "cardCount": {
+          "official": 198,
+          "total": 258
+        },
+        "id": "sv01",
+        "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+        "name": "Scarlet & Violet",
+        "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+      },
+      "variants": {
+        "firstEdition": false,
+        "holo": true,
+        "normal": false,
+        "reverse": false,
+        "wPromo": false
+      },
+      "effect": "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+      "trainerType": "Item",
+      "regulationMark": "G",
+      "legal": {
+        "standard": false,
+        "expanded": true
+      },
+      "updated": "2026-08-20T01:44:01+01:00",
+      "thirdParty": {
+        "cardmarket": 702551,
+        "tcgplayer": 490297
+      }
+    }
+  ]
+}
