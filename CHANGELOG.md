@@ -26,3 +26,14 @@ existing SQLite search rather than duplicating filtering in JavaScript. Wired th
 approved library controls and Gallery/List, URL query state, real card links, and
 structured detail text. Preserved frozen Qt/MCP work. Added regression/integration
 coverage and the mandatory PM QA scope matrix in docs/phase-2-library.md.
+
+## Phase 2 QA fixes — 2026-09-24
+
+- Normalized empty/duplicate multi-select values; hardened consecutive client query
+  edits. Preserved OR within families and AND across populated families.
+- Added independent category search/filter/page memory and cumulative result progress.
+- Added server-authoritative Has Ability using the source's structured Ability kind.
+- Following PM clarification, reused existing functional identity in the read-only
+  Library adapter to select the newest eligible Standard printing before pagination.
+  MCP exact-printing search, detail routes, Qt and collection state remain preserved.
+- Added API, frontend and real-data browser regressions and updated the QA scope matrix.

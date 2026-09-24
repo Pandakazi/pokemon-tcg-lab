@@ -1,8 +1,8 @@
 # Phase 2 — Library & Browsing
 
 Phase 1 was manually certified by PM. Phase 2 extends that same architecture;
-its new behavior is ready for PM QA after automated validation, not automatically
-PM-certified. No Phase 3 collection work is included.
+PM reported passing core Phase 2 behavior and requested this QA fix pass. The fixes
+await PM recheck after automated validation. No Phase 3 collection work is included.
 
 ## Behavior and API
 
@@ -16,19 +16,47 @@ not top-level tabs. Basic Energy is the display label for source classification
 - `category=Pokemon|Trainer|Energy` (default Pokemon)
 - `q`: case-insensitive name substring or exact ID, up to 100 characters
 - repeated `pokemon_types`, `stages`, `trainer_types`, `energy_types`, `regulation_marks`
+- `has_ability=true` for Pokémon with a structured `abilities[].type == "Ability"`
 - `page` 1–10000, `page_size` 1–50 (UI uses 24), `include_image` false by default
 
-One family combines values with OR; different families combine with AND. Example:
+An empty family imposes no restriction (including explicit empty query values).
+Duplicate repeated values are normalized. One family combines values with OR;
+different populated families combine with AND. Example:
 `/api/v1/cards?category=Pokemon&pokemon_types=Psychic&pokemon_types=Dragon&stages=Basic`.
 Stage values are `Basic`, `Stage1`, `Stage2`. Filters incompatible with the selected
-category are rejected, as are unknown parameters/invalid values. Category changes
-clear filter selections and reset pagination while preserving the name search.
+category are rejected, as are unknown parameters/invalid values. Has Ability is
+unchecked/unrestricted by default; legacy Powers/Bodies/Ancient Traits and arbitrary
+text mentioning “Ability” do not match. It ANDs with the other populated families.
+Category changes restore that category's independent search/filter/page state.
+A category not yet visited starts unfiltered at page 1 with no search.
 Search/filter changes reset the page. Clear filters retains category and search;
 Clear search retains category and filters.
 
 The response remains compact and includes `filter_options` and per-printing source
 provenance. React displays results; it does not classify/filter the card corpus.
 Multiple Pokémon types remain arrays and display together.
+
+### Representative Library cards (PM-approved QA clarification)
+
+The initial Phase 2 web route paginated exact printings; inspection found no active
+representative selection in that route or the preserved Qt browser. PM approved
+reusing the engine's existing conservative `functional_signature` and selecting the
+newest Standard-legal matching printing per group. The read-only web adapter now
+does this before counting/pagination. Sorting uses source set release date, then
+regulation mark and exact ID descending as deterministic tie-breakers; missing dates
+sort last. Final representatives retain stable ID ordering for page navigation.
+
+Filters apply before representative selection: an H-only query can display an H
+printing; H + J can select the newer matching printing without duplicating the group.
+Clearing filters returns all functional groups, never all historical printings.
+Names alone do not define identity. Different gameplay fields and unresolved source
+records remain distinct; existing conservative identity rules are not broadened.
+The current cache has 73 Energy groups (66 Normal/Basic and 7 Special), versus 316
+exact Energy printings. This is not a curated equivalence catalogue.
+
+This changes Library totals/pages intentionally. MCP search still returns exact
+printings, and every exact detail URL remains available, including older printings.
+No database migration, identity rebuild, re-sync or collection mutation is needed.
 
 `GET /api/v1/cards/{printing_id}` retrieves one exact printing, with structured
 abilities, attacks/costs/damage/text, Trainer/Energy text, metadata and provenance.
@@ -48,11 +76,17 @@ Library state is represented in ordinary query parameters, for example:
 Refresh and browser Back/Forward restore the query. Cards link to
 `/cards/<URL-encoded-exact-printing-ID>`; distinct printings have distinct URLs.
 A direct URL loads without first visiting the library.
+Each category's remembered query lives in the mounted client session, including
+detail navigation. The active URL is authoritative on Back/Forward and direct
+navigation. A full reload restores the active URL; other categories' in-memory
+queries and presentation preferences are not persisted across a reload.
 
 Gallery and List share the same server result page. Switching view does not fetch
 again or reset category/search/filters/page. View mode is local React presentation
 state and persists through detail navigation; a full browser refresh defaults to
 Gallery. Filter-panel open/closed state is also local, not cross-device persistence.
+The result indicator shows cumulative progress: 24/total, 48/total, etc., capped at
+the total on partial final pages. Empty results show 0/0.
 
 Cards use keyboard-focusable links (Enter opens them; ordinary browser link
 behavior supports touch and new tabs). Detail focuses the card heading after load.
@@ -101,21 +135,35 @@ initialization and macOS equivalents remain in the README. On macOS use
    Invalid query values must show a validation error with Reset library query.
 9. Stop the API to check connection errors/Retry; restart to recover. Uncached
    images may show a fallback offline, while local card text remains available.
+10. Clear Energy filters: browse all representative groups, including Special
+    Energy on later pages. Basic only, Special only, and both must have consistent
+    totals; both exhaust the source classifications in the current cache.
+11. In Trainers select Supporter + H, then add J. The group count must not decrease.
+    Deselect all marks and subtypes: neither family may constrain the result set.
+12. In Pokémon select Water + Basic, navigate to an available later page, then
+    browse/search Trainers and Energy. Returning to each category must restore its
+    own query and page. Check Back/Forward and a copied current URL too.
+13. Select Psychic + Dragon + Basic + Has Ability. Every displayed Pokémon must
+    have an actual Ability in Card Detail. Remove the type selections to browse
+    multiple pages of Basic Pokémon with Abilities; progress must advance.
+14. Clearing filters must not flood any category with equivalent reprints. Cards
+    with the same name but different gameplay may legitimately remain separate.
 
 ## Mandatory QA scope matrix
 
 ### 🟢 WIRED — must work
 
 - Header Library button: navigate to library (origin query retained from detail).
-- Pokémon / Trainers / Energy tabs: real category selection.
+- Pokémon / Trainers / Energy tabs: real category selection and independent session queries.
 - Search field and Clear search button: server query, category/filter combination.
 - Filter-panel toggle: expand/collapse; Clear filters: reset active filter families.
 - Pokémon type checkboxes: multi-select, including multi-type card matches.
 - Stage checkboxes and regulation-mark checkboxes: source-backed selections.
+- Has Ability checkbox: structured Pokémon Ability filter, URL-backed, AND with other families.
 - Trainer subtype checkboxes: Item, Supporter, Stadium, Tool where present.
 - Energy classification checkboxes: Basic/Normal and Special where present.
 - Gallery/List buttons: same results and page, different presentation.
-- Previous/Next: bounded server pagination preserving query.
+- Previous/Next: bounded representative-card pagination preserving query; cumulative progress.
 - Gallery cards and list rows: mouse/touch/keyboard links to exact printing pages.
 - Back to library link, browser Back/Forward, and direct card URLs.
 - Retry and Reset library query links/buttons in error states.
@@ -160,10 +208,10 @@ architecture change was needed.
 
 ## Engineering validation
 
-109 Python tests, 14 frontend tests and all 3 real-data Chromium tests passed.
+114 Python tests, 22 frontend tests and all 5 real-data Chromium tests passed.
 TypeScript and production build passed. All 23,736 cached records validated against
 the detail response model. The rendered filtered list/detail were inspected.
 The stale-query link and deferred-navigation timing defects found during browser
 QA were fixed and tested. Two upstream Python test-client deprecation warnings remain.
 The earlier auto-review usage-limit interruption is resolved; no validation remains
-blocked. Phase 2 is ready for PM certification, not a claim of completed PM QA.
+blocked. QA fixes await PM recheck; this is not a claim of completed PM QA.

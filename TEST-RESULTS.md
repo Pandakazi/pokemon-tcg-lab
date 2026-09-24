@@ -1,5 +1,44 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Phase 2 QA fix pass
+
+- Full Python suite: **114 passed** in 18.04 seconds; includes preserved MCP,
+  snapshot, Qt and all new API regressions. Two existing upstream deprecation
+  warnings remain. A fresh workspace `--basetemp` avoided a Windows permission
+  error in pytest's default temporary directory; no application test was skipped.
+- Frontend: **22 passed**. Added category-specific query/page restoration,
+  consecutive repeated filter changes, Has Ability URL behavior and cumulative
+  progress for full pages, partial final pages, small and empty result sets.
+- Explicit TypeScript validation and production build passed.
+- Real-data Chromium: **5 passed** in 26.1 seconds. Verified representative IDs
+  against independently grouped SQLite records, decoded real images, Energy
+  empty/Normal/Special/both, Supporter H/H+J, Ability text/kind, pagination,
+  independent category queries, view/detail/keyboard and Back/Forward/reload flows.
+  Backend non-loopback connections remained blocked; browsing did not synchronize.
+- One earlier image decoding check timed out; the unchanged image assertion passed
+  on the final full rerun. A narrow Ability query shrank to 22 representatives; the
+  browser test now checks that partial page, then broadens the type family to test
+  multi-page Basic + Ability results. It does not assume duplicate printings exist.
+- Initial diagnosis: both the baseline code and running API already returned
+  316 exact Energy printings without filters, 308 Normal, 8 Special; Supporter H
+  returned 109 and H+J returned 143. The alleged SQL union defect was not reproduced.
+  Explicit empty query entries are now normalized and client consecutive edits
+  retain the latest query. Special Energy was on later ID-sorted pages.
+- PM clarified representative behavior. Neither baseline browser used the existing
+  functional identity for deduplication; PM explicitly approved reusing it and
+  selecting the newest eligible Standard printing. Grouping now precedes Library
+  count/pagination. Fixtures with 30 old reprints across every category prove that
+  empty filters do not expand into printing spam, distinct gameplay stays separate,
+  exact detail URLs remain valid, MCP stays exact, and SQLite remains unchanged.
+- Current representative totals: Energy **73** (Normal **66**, Special **7**);
+  Supporter H **36**, H+J **52**. Source differences remain distinct under the
+  existing conservative identity rule; no new curated equivalence rules were added.
+- Gallery/list/detail screenshots inspected. Current card-detail layout retained.
+  No architecture change, credentials, collection writes or Phase 3 work.
+
+The QA scope matrix and PM recheck steps are in [Phase 2 documentation](docs/phase-2-library.md).
+This section records the latest QA pass; historical milestone results follow.
+
 ## Automated tests
 
 35 tests passed on Windows with Python 3.12. Tests cover the existing seven tools, deck counts and legality limitations, version persistence/concurrent writes, real HTTP MCP requests, `/health`, the read-only check, launcher setup/repair, preserving settings, failed installation, occupied ports, already-running detection, malformed status files, and ZIP exclusions/line endings.
