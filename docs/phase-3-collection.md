@@ -22,8 +22,12 @@ architecture. No Phase 4 functionality is included. Repository identity and the
   immediate SQLite transaction; concurrent increments cannot overwrite each other.
   Decrement at zero is a no-op, never a decrement of a different variation.
 - Variant choices reuse source `variants` flags and saved legacy variant names.
-  `unspecified` means the finish was not identified; it is not a fabricated finish.
-  Source images commonly share the same artwork across finishes.
+  Internal `unspecified` ownership is never labeled as a collectible finish. When
+  explicit finishes exist, it is excluded from variation/artwork choices. Existing
+  owned copies remain editable under **Copies with no recorded finish**, separately
+  from the artwork grid, and **Finish not recorded** in Collection/Detail. No records
+  are deleted or silently reassigned. Without explicit finish data, one printing
+  entry remains with that honest label. Source images may be shared across finishes.
 
 Gallery's number is the Library group's total. Its +/− modifies only the displayed
 printing/finish. Minus is disabled when that exact variation is zero, even when the
@@ -67,7 +71,9 @@ still prefers the newest eligible image-bearing representative when no preferenc
 overrides it. Ambiguous source Normal Energy is not reclassified.
 
 Card Detail links use `/cards/<printing-id>?variant=<variant>`. Direct URLs without
-a variant retain the legacy `unspecified` finish. Inspecting or owning another
+a variant use a meaningful available finish (Normal first), unless that printing
+has existing unassigned copies to show. Explicit legacy URLs still address those
+exact underlying records. Inspecting or owning another
 variation on Card Detail never changes the saved Library artwork. Back to library
 retains the originating Library or Collection query. Category-specific Library
 search/filter/page memory, Gallery/List and browser history remain intact.
@@ -80,14 +86,21 @@ but cannot be rendered until those records are available again.
 ## Card Detail artwork
 
 Variations is collapsible and uses a four-column desktop mini-gallery with vertical
-scrolling and bounded server pagination. Owned and unowned artwork use identical
+scrolling and bounded server pagination. Primary and variation artwork are capped
+at the same normal 250 px image width (276 px framed component); wide columns do
+not stretch them. Selecting another variation cannot change these dimensions.
+Owned and unowned artwork use identical
 color/opacity; quantities and Owned/Not owned labels communicate ownership.
 
-Mouse hover on primary or variation artwork shows a non-interactive enlarged
-preview. **Enlarge artwork** opens a keyboard/touch-accessible dialog; Escape or
+Mouse hover enlarges the embedded artwork itself by 50 px in width, toward the
+right/down with preserved aspect ratio, above adjacent content. Its fixed layout
+box does not grow; pointer exit restores the image immediately. There is no detached
+preview. **Enlarge artwork**, centered inside the frame, opens a keyboard/touch-accessible dialog; Escape or
 Close dismisses it. Image magnification is isolated to Card Detail. Library hover
 has no competitive tooltip and no magnification. No analytics or deck-printing star
 control is implemented. The card-text view remains available independently of art.
+Primary ownership controls are centered below the complete frame. Collection List
+metadata and ownership controls occupy one row above that row's bottom separator.
 
 ## API contracts
 
@@ -105,6 +118,8 @@ control is implemented. The card-text view remains available independently of ar
 - `GET /api/v1/cards/{id}/variations`: canonical group by default; `scope=library`
   is used only by the Library artwork picker. Includes recognized finishes,
   exact ownership and image URLs. `page` 1–10000 and `page_size` 1–50, default 24.
+  When relevant, `unassigned` separately carries owned copies without recorded
+  finishes for printings on the current page; these do not inflate finish counts.
 - `GET /api/v1/library/{id}/preference`: resolved printing/variant choice.
 - `PUT /api/v1/library/{id}/preference`: JSON `{ "printing_id": "...",
   "variant": "normal" }`; target must belong to the same Library group.
@@ -144,7 +159,9 @@ macOS/mobile certification is not claimed.
    entries, and use the variation-page controls if needed.
 4. Add another printing/finish. Functional total updates. Inspect its artwork by
    mouse and keyboard; exact URL, primary image, finish and metadata update.
-5. Hover primary and variation art. Check the enlarged preview; use Enlarge artwork
+5. Hover primary and variation art. Check in-place +50 px enlargement without page
+   reflow; verify normal dimensions after pointer exit and variation changes. On a
+   large viewport, artwork stays card-sized in all four columns. Use Enlarge artwork
    and Escape. Quantities, variation clicks and scrolling remain usable.
 6. Return to Library and verify prior category/search/filters/page. Owned includes
    the card even when copies belong to a different displayed printing; Unowned
@@ -174,7 +191,9 @@ macOS/mobile certification is not claimed.
 - Card Detail exact metadata/quantity +/−, functional total, Back to library.
 - Variations collapse/expand, four-column scrollable gallery, previous/next variation
   pages, exact artwork links, quantity controls, full-color Owned/Not owned labels.
-- Card Detail hover enlargement, Enlarge artwork dialog, Close/Escape and keyboard.
+- Separate unassigned ownership presentation: editable existing copies, not extra finishes.
+- Card Detail framed artwork, centered controls, in-place hover enlargement,
+  Enlarge artwork dialog, Close/Escape and keyboard.
 - Collection exact owned entries, category/search, Gallery/List, quantities and pages.
 - Retry/error messages, card image fallbacks, source/legality labels.
 - Agent panel collapse/expand (layout only).
@@ -201,8 +220,9 @@ macOS/mobile certification is not claimed.
 
 ## Validation
 
-133 Python tests, 29 frontend tests, seven real-data browser tests, TypeScript and
+135 Python tests, 31 frontend tests, eight real-data browser tests, TypeScript and
 production build passed. See [TEST-RESULTS.md](../TEST-RESULTS.md). Browser tests use
 ports 8002/5174, temporary isolated ownership storage and blocked backend external
 connections. They do not write to PM's real collection. Existing Phase 2 regression
-coverage is retained. Phase 3 awaits PM certification; no Phase 4 work is enabled.
+coverage is retained. PM accepted Phase 3 functionality; these final cleanup items
+await PM visual certification. No Phase 4 work is enabled.

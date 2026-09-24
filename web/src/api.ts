@@ -9,7 +9,8 @@ export interface Card {
   ownership?: Ownership
 }
 export interface Ownership {functional_id:string;library_id:string;variant:string;quantity:number;functional_total:number;library_total:number}
-export interface VariationPage {cards:Card[];total:number;page:number;page_size:number;next_page:number|null}
+export interface VariationPage {cards:Card[];unassigned?:Card[];total:number;page:number;page_size:number;next_page:number|null}
+export function finishLabel(variant:string) {return variant==='unspecified'?'Finish not recorded':variant}
 export interface FilterOption { parameter: string; label: string; values: string[] }
 export interface CardPage {
   cards: Card[]; page: number; page_size: number; total: number; next_page: number | null
@@ -44,8 +45,8 @@ export async function loadCards(params: URLSearchParams, signal: AbortSignal): P
     throw new Error('The card API returned an unexpected response.')
   return data
 }
-export async function loadDetail(id: string, signal: AbortSignal, variant='unspecified'): Promise<Detail> {
-  const data = await read(`/api/v1/cards/${encodeURIComponent(id)}?include_image=true&variant=${encodeURIComponent(variant)}`,signal)
+export async function loadDetail(id: string, signal: AbortSignal, variant?:string): Promise<Detail> {
+  const data = await read(`/api/v1/cards/${encodeURIComponent(id)}?include_image=true${variant?`&variant=${encodeURIComponent(variant)}`:''}`,signal)
   if (!data.card || data.card.id !== id) throw new Error('The card API returned an unexpected printing.')
   return data
 }

@@ -97,6 +97,7 @@ class CardSummary(BaseModel):
 
 class VariationPage(BaseModel):
     cards: list[CardSummary]
+    unassigned: list[CardSummary] = Field(default_factory=list)
     total: int
     page: int
     page_size: int

@@ -1,5 +1,14 @@
 # Changelog
 
+## Phase 3 final PM cleanup — 2026-09-24
+
+- Suppressed synthetic Unspecified finish choices; preserved and separately exposed
+  existing unassigned quantities without guessing or migrating finishes.
+- Framed and bounded Card Detail/variation artwork, centered primary controls,
+  replaced detached hover preview with in-place +50 px enlargement without reflow.
+- Kept all Collection List ownership content inside its row separator.
+- Preserved canonical grouping, artwork preferences and exact quantity semantics.
+
 ## Phase 3 — Collection & Variations (2026-09-24)
 
 - Reused exact printing/variant quantity semantics in separate versioned user-state

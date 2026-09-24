@@ -60,10 +60,30 @@ def test_variant_validation_and_missing_printings(setup):
 def test_variations_preferences_inspection_and_invalid_preference_fallback(setup):
     db,path,c=setup
     variations=c.get('/api/v1/cards/sm2-1/variations?page_size=2').json()
-    assert variations['total']==6 and variations['next_page']==2
+    assert variations['total']==4 and variations['next_page']==2
     all_variations=c.get('/api/v1/cards/sm2-1/variations').json()['cards']
     assert {r['id'] for r in all_variations}=={'sm2-1','sm2-2'}
-    assert {r['ownership']['variant'] for r in all_variations}=={'unspecified','normal','reverse'}
+    assert {r['ownership']['variant'] for r in all_variations}=={'normal','reverse'}
+
+
+def test_unassigned_presentation_preserves_owned_records_and_totals(setup):
+    db,path,c=setup
+    change(c,variant='unspecified',quantity=3)
+    change(c,variant='normal',quantity=2)
+    result=c.get('/api/v1/cards/sm2-1/variations').json()
+    assert all(r['ownership']['variant']!='unspecified' for r in result['cards'])
+    assert len(result['unassigned'])==1
+    assert result['unassigned'][0]['ownership']['quantity']==3
+    assert result['unassigned'][0]['ownership']['functional_total']==5
+    assert c.get('/api/v1/collection').json()['total']==2
+    assert c.get('/api/v1/cards/sm2-1').json()['card']['ownership']['variant']=='unspecified'
+    assert c.get('/api/v1/cards/sm2-2').json()['card']['ownership']['variant']=='normal'
+    assert change(c,variant='unspecified',delta=-1).json()['quantity']==2
+    assert c.get('/api/v1/cards/sm2-1/ownership?variant=normal').json()['quantity']==2
+
+
+def test_preferences_inspection_and_invalid_preference_fallback(setup):
+    db,path,c=setup
     assert c.put('/api/v1/library/sm2-2/preference',json={'printing_id':'sm2-1','variant':'reverse'}).status_code==200
     restart=TestClient(create_app(db.path,path))
     library=restart.get('/api/v1/cards').json()['cards']

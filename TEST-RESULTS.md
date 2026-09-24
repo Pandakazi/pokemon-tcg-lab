@@ -1,5 +1,19 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Phase 3 final PM QA cleanup
+
+Phase 3 functionality passed PM QA; these final presentation changes await PM visual confirmation.
+
+- Full Python suite: **135 passed** in 22.22 seconds; two unchanged upstream deprecation warnings.
+- Frontend: **31 passed**; TypeScript validation and production build passed.
+- Full real-data Chromium suite: **8 passed** in 48.3 seconds, with backend external connections blocked and isolated temporary ownership storage.
+- Regression coverage verifies explicit finish choices without synthetic unspecified tiles, preserved/editable unassigned ownership, exact mutations, stable primary dimensions after variation selection, centered frame controls, embedded +50px hover without reflow, bounded four-column artwork, and Collection separators beneath ownership controls.
+- Existing identity, Basic Energy, MCP, category/history, ownership persistence and artwork-preference regressions remain passing. Canonical identity and MCP implementation files are unchanged.
+- Screenshot review covers primary framing, wide-screen variations and complete Collection rows. No mobile/macOS certification is claimed; upstream artwork can still use the existing unavailable-image fallback.
+- No schema migration, ownership rewrite, artwork-group expansion or Phase 4 work.
+
+See the updated [Phase 3 QA scope matrix and PM walkthrough](docs/phase-3-collection.md).
+
 ## September 24, 2026 — Phase 3 Collection & Variations
 
 Phase 2 is PM-certified at `df02a1d`. This Phase 3 implementation awaits PM QA.

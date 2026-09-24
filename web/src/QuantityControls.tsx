@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { changeQuantity, type Ownership } from './api'
+import { changeQuantity, finishLabel, type Ownership } from './api'
 
 export function QuantityControls({id,ownership,total=false,onChange}:{id:string;ownership:Ownership;total?:boolean;onChange:(id:string,value:Ownership)=>void}) {
  const [busy,setBusy]=useState(false),[error,setError]=useState('')
@@ -10,12 +10,12 @@ export function QuantityControls({id,ownership,total=false,onChange}:{id:string;
   finally{setBusy(false)}
  }
  return <div className="ownership-controls">
-  <div className="quantity-row" aria-label={`Ownership ${id} ${ownership.variant}`}>
-   <button aria-label={`Remove one ${id} ${ownership.variant}`} disabled={busy||ownership.quantity===0} onClick={()=>change(-1)}>−</button>
+  <div className="quantity-row" aria-label={`Ownership ${id} ${finishLabel(ownership.variant)}`}>
+   <button aria-label={`Remove one ${id} ${finishLabel(ownership.variant)}`} disabled={busy||ownership.quantity===0} onClick={()=>change(-1)}>−</button>
    <output aria-live="polite" aria-label={total?'Total owned':'Exact variation owned'}>{total?ownership.library_total:ownership.quantity}</output>
-   <button aria-label={`Add one ${id} ${ownership.variant}`} disabled={busy||ownership.quantity>=9999} onClick={()=>change(1)}>+</button>
+   <button aria-label={`Add one ${id} ${finishLabel(ownership.variant)}`} disabled={busy||ownership.quantity>=9999} onClick={()=>change(1)}>+</button>
   </div>
-  <small>{total?'Total across variations · ':''}{ownership.variant} · this variation: {ownership.quantity}</small>
+  <small>{total?'Total across variations · ':''}{finishLabel(ownership.variant)} · this variation: {ownership.quantity}</small>
   {error && <p role="alert">{error}</p>}
  </div>
 }

@@ -14,12 +14,11 @@ export function Modal({title,onClose,children}:{title:string;onClose:()=>void;ch
 
 // Used exclusively on Card Detail; Library hover remains reserved for analytics.
 export function MagnifiedArt({card,children}:{card:Card;children?:ReactNode}) {
- const [hover,setHover]=useState(false),[open,setOpen]=useState(false)
+ const [open,setOpen]=useState(false)
  const image=card.image_url?.replace('/low.webp','/high.webp')
- return <div className="magnifiable" onPointerEnter={e=>{if(e.pointerType==='mouse')setHover(true)}} onPointerLeave={()=>setHover(false)}>
-  {children || <CardImage card={card} eager/>}
-  <button disabled={!image} onClick={()=>{setHover(false);setOpen(true)}} aria-label={`Enlarge ${card.name} ${card.id}`}>Enlarge artwork</button>
-  {hover && image && !open && createPortal(<div className="art-preview" aria-hidden="true"><img src={image} alt=""/></div>,document.body)}
+ return <div className="magnifiable artwork-frame">
+  <div className="embedded-artwork">{children || <CardImage card={card} eager/>}</div>
+  <button disabled={!image} onClick={()=>setOpen(true)} aria-label={`Enlarge ${card.name} ${card.id}`}>Enlarge artwork</button>
   {open && <Modal title={`Artwork ${card.id}`} onClose={()=>setOpen(false)}><img className="enlarged-art" src={image!} alt={`${card.name} — ${card.id}`}/></Modal>}
  </div>
 }

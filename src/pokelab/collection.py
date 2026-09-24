@@ -118,6 +118,15 @@ class CollectionSnapshot:
         if variant not in self.variants(id):
             raise ValueError('Unknown variation for this printing.')
 
+    def presentation_variants(self, id):
+        variants = self.variants(id)
+        explicit = [v for v in variants if v != 'unspecified']
+        return explicit or ['unspecified']
+
+    def default_variant(self, id):
+        variants = self.presentation_variants(id)
+        return 'normal' if 'normal' in variants else variants[0]
+
     def ownership(self, id, variant):
         record = self.records[id]
         return {'functional_id': record['functional_id'], 'library_id': record['library_id'],
@@ -130,4 +139,4 @@ class CollectionSnapshot:
         preferred = self.preferences.get(lid)
         if preferred and preferred[0] in self.records and self.records[preferred[0]]['library_id'] == lid and preferred[1] in self.variants(preferred[0]):
             return preferred
-        return id, ('normal' if 'normal' in self.variants(id) else 'unspecified')
+        return id, self.default_variant(id)

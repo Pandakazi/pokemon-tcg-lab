@@ -8,7 +8,7 @@ import { Variations } from './Variations'
 export function CardDetail() {
  const {printingId=''}=useParams()
  const location=useLocation()
- const [params]=useSearchParams(),variant=params.get('variant')||'unspecified'
+ const [params]=useSearchParams(),variant=params.get('variant')||undefined
  const [variationsOpen,setVariationsOpen]=useState(false),[revision,setRevision]=useState(0)
  const [data,setData]=useState<Detail|null>(null), [error,setError]=useState(''), [attempt,setAttempt]=useState(0)
  const title=useRef<HTMLHeadingElement>(null)

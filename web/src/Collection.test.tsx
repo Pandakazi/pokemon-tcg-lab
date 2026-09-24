@@ -82,3 +82,29 @@ test('Collection workspace exposes exact owned variations and totals',async()=>{
  fireEvent.click(screen.getByRole('button',{name:'List'}))
  expect(document.querySelectorAll('.card-row')).toHaveLength(2)
 })
+
+test('Collection preserves unassigned ownership without exposing an invented finish',async()=>{
+ window.history.replaceState({},'','/collection')
+ const unassigned={...first,ownership:{...ownership,variant:'unspecified',quantity:3}}
+ const fetch=vi.fn(async(_url:string,options?:RequestInit)=>{
+  if(options?.method==='PUT') {expect(JSON.parse(options.body as string)).toEqual({variant:'unspecified',delta:-1});return ok({...unassigned.ownership,quantity:2})}
+  return ok(page([unassigned]))
+ })
+ vi.stubGlobal('fetch',fetch);render(<App/>);await screen.findByText(/Finish not recorded/)
+ expect(document.body.textContent).not.toContain('unspecified')
+ fireEvent.click(screen.getByRole('button',{name:'Remove one sv01-1 Finish not recorded'}))
+ await waitFor(()=>expect(fetch.mock.calls.some(call=>call[1]?.method==='PUT')).toBe(true))
+})
+
+test('Variations keeps legacy copies outside the collectible finish gallery',async()=>{
+ window.history.replaceState({},'','/cards/sv01-1?variant=normal')
+ const unassigned={...first,ownership:{...ownership,variant:'unspecified',quantity:3}}
+ vi.stubGlobal('fetch',vi.fn(async(url:string)=>ok(url.includes('/variations')?{...page([first,other]),unassigned:[unassigned]}:{card:first,source:'TCGdex SQLite'})))
+ render(<App/>);await screen.findByRole('heading',{name:first.name})
+ fireEvent.click(screen.getByRole('button',{name:'Variations'}))
+ expect(await screen.findByRole('region',{name:'Copies with no recorded finish'})).toBeInTheDocument()
+ expect(document.querySelectorAll('.variation-card')).toHaveLength(2)
+ expect(document.querySelector('.variation-grid')?.textContent).not.toContain('Finish not recorded')
+ expect(document.body.textContent).not.toContain('unspecified')
+ expect(screen.getByRole('button',{name:'Remove one sv01-1 Finish not recorded'})).toBeEnabled()
+})

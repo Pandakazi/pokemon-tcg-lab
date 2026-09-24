@@ -154,8 +154,13 @@ def create_app(database=None, state_database=None):
         snapshot = state(); require_printing(printing_id, snapshot)
         record = snapshot.records[printing_id]
         ids = (snapshot.functions[record['functional_id']] if scope == 'functional' else snapshot.libraries[record['library_id']])
-        pairs = [(id,v) for id in sorted(ids) for v in snapshot.variants(id)]
-        return variation_page(snapshot, pairs, page, page_size)
+        pairs = [(id,v) for id in sorted(ids) for v in snapshot.presentation_variants(id)]
+        result = variation_page(snapshot, pairs, page, page_size)
+        page_ids = dict.fromkeys(id for id,_ in pairs[(page-1)*page_size:page*page_size])
+        result['unassigned'] = [owned_summary(snapshot,id,'unspecified') for id in page_ids
+                                if 'unspecified' not in snapshot.presentation_variants(id)
+                                and snapshot.quantities.get((id,'unspecified'),0)>0]
+        return result
 
     def variation_page(snapshot, pairs, page, page_size):
         return {'cards':[owned_summary(snapshot,id,v) for id,v in pairs[(page-1)*page_size:page*page_size]],
@@ -203,7 +208,7 @@ def create_app(database=None, state_database=None):
             raise unavailable() from None
 
     @app.get('/api/v1/cards/{printing_id}', response_model=CardDetail, response_model_exclude_unset=True)
-    def detail(printing_id: str, include_image: bool = False, variant: str=Query('unspecified',min_length=1,max_length=100)):
+    def detail(printing_id: str, include_image: bool = False, variant: str | None=Query(None,min_length=1,max_length=100)):
         try:
             check_id(printing_id)
         except CardLookupError:
@@ -220,6 +225,9 @@ def create_app(database=None, state_database=None):
                 record['card']['image_url'] = image
             record['card']['legality_provenance'] = {'source': 'TCGdex', 'checked_at': record['checked_at']}
             snapshot = state()
+            if variant is None:
+                variant = ('unspecified' if snapshot.quantities.get((printing_id,'unspecified'),0)>0
+                           else snapshot.default_variant(printing_id))
             try:
                 snapshot.validate_variant(printing_id, variant)
             except ValueError as error:
