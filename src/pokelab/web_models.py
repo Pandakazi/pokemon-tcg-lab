@@ -12,6 +12,7 @@ class LibraryQuery(BaseModel):
     include_image: bool = False
     category: Category = 'Pokemon'
     q: str = Field('', max_length=100)
+    ownership: Literal['all','owned','unowned'] = 'all'
     has_ability: bool = False
     ability: list[Literal['Yes','No']] = Field(default_factory=list, max_length=2)
     pokemon_types: list[PokemonType] = Field(default_factory=list, max_length=11)
@@ -49,6 +50,31 @@ class Provenance(BaseModel):
     source: str
     checked_at: str
 
+class Ownership(BaseModel):
+    functional_id: str
+    library_id: str
+    variant: str
+    quantity: int
+    functional_total: int
+    library_total: int
+
+class QuantityWrite(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    variant: str = Field('unspecified', min_length=1, max_length=100)
+    quantity: int | None = Field(None, strict=True, ge=0, le=9999)
+    delta: int | None = Field(None, strict=True, ge=-1, le=1)
+
+    @model_validator(mode='after')
+    def one_operation(self):
+        if (self.quantity is None) == (self.delta is None) or self.delta == 0:
+            raise ValueError('Provide quantity or delta (-1 or 1), not both.')
+        return self
+
+class Preference(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    printing_id: str = Field(min_length=1, max_length=100)
+    variant: str = Field('unspecified', min_length=1, max_length=100)
+
 class CardSummary(BaseModel):
     id: str
     name: str
@@ -67,6 +93,14 @@ class CardSummary(BaseModel):
     game: str | None = None
     image_url: str | None = None
     legality_provenance: Provenance
+    ownership: Ownership | None = None
+
+class VariationPage(BaseModel):
+    cards: list[CardSummary]
+    total: int
+    page: int
+    page_size: int
+    next_page: int | None
 
 class SyncStatus(BaseModel):
     status: str

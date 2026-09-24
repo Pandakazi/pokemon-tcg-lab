@@ -1,18 +1,19 @@
-"""Read-only web adapter. No MCP, Qt, synchronization or provider dependency."""
+"""Read-only card adapter plus isolated local collection writes. No MCP/Qt dependency."""
 from contextlib import closing
 import json
 import os
 from pathlib import Path
 import sqlite3
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 
 from tcg_lab.card_db import SQLiteCards
-from tcg_lab.cards import CardLookupError, check_id, public_card
+from tcg_lab.cards import CardLookupError, check_id, public_card, summary
+from .collection import Collection, identity
 from .images import TCGdexImages
 from .library_identity import library_signature, basic_image_priority
-from .web_models import LibraryQuery, CardPage, CardDetail, Status
+from .web_models import LibraryQuery, CardPage, CardDetail, Status, Ownership, QuantityWrite, Preference, VariationPage, Category
 
 
 def filter_options(cards, category):
@@ -36,6 +37,8 @@ class ReadOnlyCards(SQLiteCards):
     """Use existing lookup semantics without creating or migrating a database."""
     def __init__(self, path):
         self.path = Path(path).resolve()
+        self.collection_snapshot = None
+        self.ownership = 'all'
 
     def connect(self):
         db = sqlite3.connect(self.path.as_uri() + '?mode=ro', uri=True, timeout=5)
@@ -57,6 +60,10 @@ class ReadOnlyCards(SQLiteCards):
                            lambda raw: library_signature(json.loads(raw)), deterministic=True)
         db.create_function('basic_image_priority', 1,
                            lambda raw: basic_image_priority(json.loads(raw)), deterministic=True)
+        if self.collection_snapshot is not None and self.ownership != 'all':
+            totals = self.collection_snapshot.library_totals
+            db.create_function('library_owned', 1, lambda raw: totals.get(identity(library_signature(json.loads(raw))),0), deterministic=True)
+            where += ' AND library_owned(raw)' + ('>0' if self.ownership == 'owned' else '=0')
         representatives = f"""WITH eligible AS (SELECT * FROM cards WHERE {where}),
             ranked AS (
                 SELECT c.raw,c.game,c.id,ROW_NUMBER() OVER (
@@ -72,10 +79,97 @@ class ReadOnlyCards(SQLiteCards):
         return total, rows
 
 
-def create_app(database=None):
+def create_app(database=None, state_database=None):
     app = FastAPI(title='PokéLab API', version='0.1.0')
     cards = ReadOnlyCards(database or os.getenv('TCG_CARDS_DB_PATH', 'data/cards.sqlite3'))
     images = TCGdexImages()
+    collection = Collection(cards, state_database or os.getenv('POKELAB_USER_DB_PATH') or cards.path.with_name('user-state.sqlite3'))
+
+    def state():
+        try:
+            collection.catalog()
+        except (sqlite3.Error, OSError, ValueError):
+            raise unavailable() from None
+        try:
+            return collection.snapshot()
+        except (sqlite3.Error, OSError, ValueError):
+            raise HTTPException(503, detail={'code':'user_state_unavailable', 'message':'Card cache or local collection storage is unavailable. Check database paths and permissions.'}) from None
+
+    def require_printing(id, snapshot):
+        try:
+            check_id(id)
+        except ValueError:
+            raise HTTPException(422, detail='Use an exact printing ID.') from None
+        if id not in snapshot.records:
+            raise HTTPException(404, detail='Exact printing not found.')
+
+    def owned_summary(snapshot, id, variant, include_image=True):
+        record = snapshot.records[id]
+        result = summary(record['card'], False)
+        result['game'] = record['game']
+        result['legality_provenance'] = {'source':'TCGdex', 'checked_at':record['checked_at']}
+        result['ownership'] = snapshot.ownership(id, variant)
+        if include_image:
+            result['image_url'] = images.url(record['card'])
+        return result
+
+    @app.get('/api/v1/cards/{printing_id}/ownership', response_model=Ownership)
+    def ownership(printing_id: str, variant: str = Query('unspecified', min_length=1, max_length=100)):
+        snapshot = state(); require_printing(printing_id, snapshot)
+        try:
+            snapshot.validate_variant(printing_id, variant)
+            return snapshot.ownership(printing_id, variant)
+        except ValueError as error:
+            raise HTTPException(422, detail=str(error)) from None
+
+    @app.put('/api/v1/collection/{printing_id}', response_model=Ownership)
+    def set_quantity(printing_id: str, body: QuantityWrite):
+        snapshot = state(); require_printing(printing_id, snapshot)
+        try:
+            return collection.update(printing_id, **body.model_dump())
+        except ValueError as error:
+            raise HTTPException(422, detail=str(error)) from None
+        except (sqlite3.Error, OSError):
+            raise HTTPException(503, detail='Unable to save local collection.') from None
+
+    @app.get('/api/v1/library/{printing_id}/preference', response_model=Preference)
+    def preference(printing_id: str):
+        snapshot = state(); require_printing(printing_id, snapshot)
+        id, variant = snapshot.displayed(printing_id)
+        return {'printing_id':id, 'variant':variant}
+
+    @app.put('/api/v1/library/{printing_id}/preference', response_model=Preference)
+    def set_preference(printing_id: str, body: Preference):
+        snapshot = state(); require_printing(printing_id, snapshot); require_printing(body.printing_id, snapshot)
+        try:
+            return collection.prefer(printing_id, body.printing_id, body.variant)
+        except ValueError as error:
+            raise HTTPException(422, detail=str(error)) from None
+        except (sqlite3.Error, OSError):
+            raise HTTPException(503, detail='Unable to save Library preference.') from None
+
+    @app.get('/api/v1/cards/{printing_id}/variations', response_model=VariationPage, response_model_exclude_unset=True)
+    def variations(printing_id: str, scope: Literal['functional','library']='functional',
+                   page: int=Query(1,ge=1,le=10000), page_size: int=Query(24,ge=1,le=50)):
+        snapshot = state(); require_printing(printing_id, snapshot)
+        record = snapshot.records[printing_id]
+        ids = (snapshot.functions[record['functional_id']] if scope == 'functional' else snapshot.libraries[record['library_id']])
+        pairs = [(id,v) for id in sorted(ids) for v in snapshot.variants(id)]
+        return variation_page(snapshot, pairs, page, page_size)
+
+    def variation_page(snapshot, pairs, page, page_size):
+        return {'cards':[owned_summary(snapshot,id,v) for id,v in pairs[(page-1)*page_size:page*page_size]],
+                'total':len(pairs), 'page':page, 'page_size':page_size,
+                'next_page':page+1 if page*page_size<len(pairs) else None}
+
+    @app.get('/api/v1/collection', response_model=VariationPage, response_model_exclude_unset=True)
+    def owned_collection(category: Category | None=None, q: str=Query('',max_length=100),
+                         page: int=Query(1,ge=1,le=10000), page_size: int=Query(24,ge=1,le=50)):
+        snapshot = state()
+        pairs = [(id,v) for (id,v),n in sorted(snapshot.quantities.items()) if n>0 and id in snapshot.records
+                 and (category is None or snapshot.records[id]['card']['category']==category)
+                 and (not q.strip() or q.strip().casefold() in snapshot.records[id]['card']['name'].casefold() or q.strip()==id)]
+        return variation_page(snapshot, pairs, page, page_size)
 
     def unavailable():
         return HTTPException(503, detail={'code': 'card_cache_unavailable',
@@ -96,25 +190,20 @@ def create_app(database=None):
     @app.get('/api/v1/cards', response_model=CardPage, response_model_exclude_unset=True)
     def browse(query: Annotated[LibraryQuery, Query()]):
         try:
-            filters = query.model_dump(exclude={'q', 'page', 'page_size', 'include_image', 'has_ability'})
-            result = cards.search(query.q, page=query.page, page_size=query.page_size, include_image=query.include_image,
+            snapshot = state()
+            browser = ReadOnlyCards(cards.path)
+            browser.collection_snapshot, browser.ownership = snapshot, query.ownership
+            filters = query.model_dump(exclude={'q', 'page', 'page_size', 'include_image', 'has_ability', 'ownership'})
+            result = browser.search(query.q, page=query.page, page_size=query.page_size, include_image=query.include_image,
                                   format='standard', legality='legal', game='tcg', **filters)
-            ids = [card['id'] for card in result['cards']]
-            with closing(cards.connect()) as db:
-                stamps = {row['id']: row['checked_at'] for row in db.execute(
-                    'SELECT id,checked_at FROM cards WHERE id IN (' + ','.join('?' for _ in ids) + ')', ids)} if ids else {}
-            for card in result['cards']:
-                base = card.pop('image', None)
-                if query.include_image:
-                    card['image_url'] = images.url({'image': base})
-                card['legality_provenance'] = {'source': 'TCGdex', 'checked_at': stamps[card['id']]}
+            result['cards'] = [owned_summary(snapshot, *snapshot.displayed(card['id']), query.include_image) for card in result['cards']]
             result['filter_options'] = filter_options(cards, query.category)
             return result
         except (sqlite3.Error, OSError, ValueError):
             raise unavailable() from None
 
     @app.get('/api/v1/cards/{printing_id}', response_model=CardDetail, response_model_exclude_unset=True)
-    def detail(printing_id: str, include_image: bool = False):
+    def detail(printing_id: str, include_image: bool = False, variant: str=Query('unspecified',min_length=1,max_length=100)):
         try:
             check_id(printing_id)
         except CardLookupError:
@@ -130,6 +219,12 @@ def create_app(database=None):
             if include_image:
                 record['card']['image_url'] = image
             record['card']['legality_provenance'] = {'source': 'TCGdex', 'checked_at': record['checked_at']}
+            snapshot = state()
+            try:
+                snapshot.validate_variant(printing_id, variant)
+            except ValueError as error:
+                raise HTTPException(422, detail=str(error)) from None
+            record['card']['ownership'] = snapshot.ownership(printing_id, variant)
             return record
         except (sqlite3.Error, OSError, ValueError):
             raise unavailable() from None

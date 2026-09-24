@@ -12,6 +12,7 @@ import unicodedata
 
 from tcg_lab.card_db import SQLiteCards
 from tcg_lab.cards import summary
+from .quantities import read_quantity, write_quantity, validate_quantity, variant_names
 
 POKEMON_TYPES = ("Colorless", "Darkness", "Dragon", "Fairy", "Fighting", "Fire", "Grass", "Lightning", "Metal", "Psychic", "Water")
 
@@ -120,23 +121,20 @@ class PokeLabEngine:
 
     def collection_quantity(self, printing_id: str, variant: str = "unspecified") -> int:
         with closing(self.cards.connect()) as db:
-            row = db.execute("SELECT quantity FROM collection WHERE printing_id=? AND variant=?", (printing_id, variant)).fetchone()
-        return row[0] if row else 0
+            return read_quantity(db, printing_id, variant)
 
     def set_quantity(self, printing_id: str, variant: str, quantity: int) -> int:
-        if type(quantity) is not int or not 0 <= quantity <= 9999 or not variant or len(variant) > 100:
-            raise ValueError("Quantity must be a whole number from 0 to 9999.")
+        validate_quantity(variant, quantity)
         self.cards.get(printing_id)  # Reject nonexistent IDs, even through direct engine calls.
         with closing(self.cards.connect()) as db, db:
-            db.execute("INSERT INTO collection VALUES (?,?,?) ON CONFLICT(printing_id,variant) DO UPDATE SET quantity=excluded.quantity", (printing_id, variant, quantity))
+            write_quantity(db, printing_id, variant, quantity)
         return quantity
 
     def variants(self, printing_id: str) -> list[str]:
         card = self.cards.get(printing_id)["card"]
-        variants = [key for key, available in card.get("variants", {}).items() if available is True]
         with closing(self.cards.connect()) as db:
             saved = [row[0] for row in db.execute("SELECT variant FROM collection WHERE printing_id=?", (printing_id,))]
-        return list(dict.fromkeys(["unspecified", *variants, *saved]))
+        return variant_names(card, saved)
 
     def coverage(self) -> dict:
         with closing(self.cards.connect()) as db:
