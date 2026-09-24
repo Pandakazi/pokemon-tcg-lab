@@ -70,3 +70,84 @@ def test_unavailable_database(tmp_path, state):
         assert result.json()['detail']['code'] == 'card_cache_unavailable'
         assert str(path) not in result.text
     if state == 'missing': assert not path.exists()
+
+@pytest.fixture
+def library(tmp_path):
+    db = SQLiteCards(tmp_path / 'library.sqlite3')
+    db.put_set(set_record())
+    records = [
+        ('sm2-1', 'Psychic Basic', 'Pokemon', {'types':['Psychic'], 'stage':'Basic'}),
+        ('sm2-2', 'Dragon Basic', 'Pokemon', {'types':['Dragon'], 'stage':'Basic'}),
+        ('sm2-3', 'Dual Evolution', 'Pokemon', {'types':['Psychic','Dragon'], 'stage':'Stage1'}),
+        ('sm2-4', 'Water Basic', 'Pokemon', {'types':['Water'], 'stage':'Basic'}),
+        ('sm2-5', "Boss's Orders", 'Trainer', {'trainerType':'Supporter'}),
+        ('sm2-6', 'Useful Tool', 'Trainer', {'trainerType':'Tool'}),
+        ('sm2-7', 'Basic Energy', 'Energy', {'energyType':'Normal'}),
+        ('sm2-8', 'Special Energy', 'Energy', {'energyType':'Special'}),
+    ]
+    for id, name, category, fields in records:
+        record=card(id,name)
+        record.update(category=category, legal={'standard':True}, regulationMark='H', **fields)
+        db.put(record)
+    return db
+
+
+def test_category_search_and_no_results(library):
+    client=TestClient(create_app(library.path))
+    for category,count in [('Pokemon',4),('Trainer',2),('Energy',2)]:
+        result=client.get('/api/v1/cards',params={'category':category}).json()
+        assert result['total']==count
+        assert all(c['category']==category for c in result['cards'])
+    assert client.get('/api/v1/cards?category=Trainer&q=bOsS').json()['cards'][0]['id']=='sm2-5'
+    assert client.get('/api/v1/cards?category=Pokemon&q=boss').json()['total']==0
+    assert client.get('/api/v1/cards?q=nonexistent').json()['cards']==[]
+
+
+def test_filter_families_multitype_and_paging(library):
+    client=TestClient(create_app(library.path))
+    def ids(query): return [c['id'] for c in client.get('/api/v1/cards?'+query).json()['cards']]
+    assert ids('pokemon_types=Dragon')==['sm2-2','sm2-3']
+    assert ids('pokemon_types=Psychic&pokemon_types=Dragon')==['sm2-1','sm2-2','sm2-3']
+    query='pokemon_types=Psychic&pokemon_types=Dragon&stages=Basic&regulation_marks=H&q=BASIC'
+    assert ids(query)==['sm2-1','sm2-2']
+    assert ids(query+'&page_size=1&page=1')==['sm2-1']
+    assert ids(query+'&page_size=1&page=2')==['sm2-2']
+    assert ids('category=Trainer&trainer_types=Tool')==['sm2-6']
+    assert ids('category=Trainer&trainer_types=Tool&trainer_types=Supporter')==['sm2-5','sm2-6']
+    assert ids('category=Energy&energy_types=Special')==['sm2-8']
+    assert ids('regulation_marks=I')==[]
+    options=client.get('/api/v1/cards?category=Trainer').json()['filter_options']
+    assert next(f['values'] for f in options if f['parameter']=='trainer_types')==['Supporter','Tool']
+
+
+@pytest.mark.parametrize('query',['category=Tool','pokemon_types=Invalid','stages=Stage9','trainer_types=Magic',
+ 'energy_types=Magic','regulation_marks=ZZ','category=Trainer&pokemon_types=Psychic',
+ 'category=Energy&trainer_types=Item','category=Pokemon&energy_types=Normal','q='+('x'*101),'unknown=x'])
+def test_invalid_library_filters(library,query):
+    assert TestClient(create_app(library.path)).get('/api/v1/cards?'+query).status_code==422
+
+
+def test_exact_detail_metadata_and_read_only(library,monkeypatch):
+    monkeypatch.setattr(httpx.HTTPTransport,'handle_request',lambda *a,**k:pytest.fail('Upstream request'))
+    before=library.path.read_bytes()
+    client=TestClient(create_app(library.path))
+    response=client.get('/api/v1/cards/sm2-3')
+    assert response.status_code==200
+    result=response.json()
+    assert result['card']['id']=='sm2-3'
+    assert result['card']['types']==['Psychic','Dragon']
+    assert result['card']['attacks'][0]['effect']=='The Defending Pokemon cannot retreat.'
+    assert result['card']['set']['code']=='GRI'
+    assert 'image_url' not in result['card'] and 'https://assets.tcgdex.net' not in response.text
+    assert client.get('/api/v1/cards/sm2-3?include_image=true').json()['card']['image_url'].endswith('/high.webp')
+    assert client.get('/api/v1/cards/sm2-5').json()['card']['trainerType']=='Supporter'
+    assert client.get('/api/v1/cards/sm2-8').json()['card']['energyType']=='Special'
+    assert client.get('/api/v1/cards/sm2-999').status_code==404
+    assert client.get('/api/v1/cards/bad%20id').status_code==422
+    assert library.path.read_bytes()==before
+
+
+def test_detail_missing_cache_is_503_without_creating_it(tmp_path):
+    path=tmp_path/'missing.sqlite3'
+    assert TestClient(create_app(path)).get('/api/v1/cards/sm2-3').status_code==503
+    assert not path.exists()

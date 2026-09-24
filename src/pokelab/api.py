@@ -3,12 +3,31 @@ from contextlib import closing
 import os
 from pathlib import Path
 import sqlite3
+from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query
 
 from tcg_lab.card_db import SQLiteCards
-from tcg_lab.cards import CardLookupError
+from tcg_lab.cards import CardLookupError, check_id, public_card
 from .images import TCGdexImages
+from .web_models import LibraryQuery, CardPage, CardDetail, Status
+
+
+def filter_options(cards, category):
+    """Present source classifications; frontend never infers card taxonomy."""
+    families = {'Pokemon': [('pokemon_types','Pokémon type','types'), ('stages','Stage','stage')],
+                'Trainer': [('trainer_types','Trainer subtype','trainerType')],
+                'Energy': [('energy_types','Energy classification','energyType')]}
+    result = []
+    with closing(cards.connect()) as db:
+        for parameter, label, field in [*families[category], ('regulation_marks','Regulation mark','regulationMark')]:
+            # Paths come only from the fixed declarations above.
+            values = [row[0] for row in db.execute(
+                "SELECT DISTINCT j.value FROM cards c,json_each(c.raw,?) j WHERE c.standard=1 AND c.game='tcg' AND c.category=? AND j.type='text' ORDER BY j.value",
+                ('$.' + field, category))]
+            if values:
+                result.append({'parameter': parameter, 'label': label, 'values': values})
+    return result
 
 
 class ReadOnlyCards(SQLiteCards):
@@ -34,34 +53,56 @@ def create_app(database=None):
         return HTTPException(503, detail={'code': 'card_cache_unavailable',
             'message': 'The local card database is unavailable. Initialize it with python -m tcg_lab.sync_cards, then retry.'})
 
-    @app.get('/api/v1/status')
+    @app.get('/api/v1/status', response_model=Status, response_model_exclude_unset=True)
     def status():
         try:
             result = cards.status()
             if not result['cards']:
                 raise CardLookupError('Empty cache')
-            sync = result.get('last_sync') or {}
+            sync = result.get('last_sync') or {'status': 'not_completed'}
             return {'app': 'PokéLab', 'ready': True, 'source': 'TCGdex SQLite',
                     'cards': result['cards'], 'sync': {key: sync[key] for key in ('status', 'finished_at', 'missing') if key in sync}}
         except (sqlite3.Error, OSError, ValueError):
             raise unavailable() from None
 
-    @app.get('/api/v1/cards')
-    def browse(page: int = Query(1, ge=1, le=10000),
-               page_size: int = Query(24, ge=1, le=50), include_image: bool = False):
+    @app.get('/api/v1/cards', response_model=CardPage, response_model_exclude_unset=True)
+    def browse(query: Annotated[LibraryQuery, Query()]):
         try:
-            result = cards.search(page=page, page_size=page_size, include_image=include_image,
-                                  format='standard', legality='legal', category='Pokemon', game='tcg')
+            filters = query.model_dump(exclude={'q', 'page', 'page_size', 'include_image'})
+            result = cards.search(query.q, page=query.page, page_size=query.page_size, include_image=query.include_image,
+                                  format='standard', legality='legal', game='tcg', **filters)
             ids = [card['id'] for card in result['cards']]
             with closing(cards.connect()) as db:
                 stamps = {row['id']: row['checked_at'] for row in db.execute(
                     'SELECT id,checked_at FROM cards WHERE id IN (' + ','.join('?' for _ in ids) + ')', ids)} if ids else {}
             for card in result['cards']:
                 base = card.pop('image', None)
-                if include_image:
+                if query.include_image:
                     card['image_url'] = images.url({'image': base})
                 card['legality_provenance'] = {'source': 'TCGdex', 'checked_at': stamps[card['id']]}
+            result['filter_options'] = filter_options(cards, query.category)
             return result
+        except (sqlite3.Error, OSError, ValueError):
+            raise unavailable() from None
+
+    @app.get('/api/v1/cards/{printing_id}', response_model=CardDetail, response_model_exclude_unset=True)
+    def detail(printing_id: str, include_image: bool = False):
+        try:
+            check_id(printing_id)
+        except CardLookupError:
+            raise HTTPException(422, detail={'code': 'invalid_printing_id', 'message': 'Use an exact printing ID.'}) from None
+        try:
+            with closing(cards.connect()) as db:
+                cards._ready(db)
+                if not db.execute('SELECT 1 FROM cards WHERE id=?', (printing_id,)).fetchone():
+                    raise HTTPException(404, detail={'code': 'card_not_found', 'message': 'This exact printing is not in the local database.'})
+            record = cards.get(printing_id, include_image=True)
+            image = images.url(record['card'], large=True)
+            record['card'] = public_card(record['card'], False)
+            if include_image:
+                record['card']['image_url'] = image
+            record['card']['legality_provenance'] = {'source': 'TCGdex', 'checked_at': record['checked_at']}
+            return record
         except (sqlite3.Error, OSError, ValueError):
             raise unavailable() from None
 

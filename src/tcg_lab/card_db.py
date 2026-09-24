@@ -157,6 +157,19 @@ class SQLiteCards:
         if "pokemon_type" in filters:
             clauses.append("EXISTS (SELECT 1 FROM json_each(raw, '$.types') WHERE value = ? COLLATE NOCASE)")
             params.append(filters["pokemon_type"])
+        # Multi-select families: one OR/IN clause each, joined by AND below.
+        families = {"pokemon_types": "EXISTS (SELECT 1 FROM json_each(raw, '$.types') WHERE value IN ({marks}))",
+                    "stages": "json_extract(raw,'$.stage') IN ({marks})",
+                    "trainer_types": "trainer_type IN ({marks})",
+                    "energy_types": "json_extract(raw,'$.energyType') IN ({marks})",
+                    "regulation_marks": "regulation IN ({marks})"}
+        for key, expression in families.items():
+            selected = filters.get(key, ())
+            if not isinstance(selected, (list, tuple)) or len(selected) > 26 or any(not isinstance(v, str) or len(v) > 30 for v in selected):
+                raise ValueError("Invalid multi-select filter")
+            if selected:
+                clauses.append(expression.format(marks=",".join("?" for _ in selected)))
+                params.extend(selected)
         if "format" in filters:
             fmt = filters["format"]
             if fmt not in ("standard", "expanded", "unlimited"):
@@ -170,7 +183,7 @@ class SQLiteCards:
                 params.append(int(legality == "legal"))
         elif "legality" in filters:
             raise ValueError("legality requires format")
-        if set(filters) - (set(columns) | {"text", "pokemon_type", "format", "legality"}):
+        if set(filters) - (set(columns) | set(families) | {"text", "pokemon_type", "format", "legality"}):
             raise ValueError("Unsupported search filter")
         where = " AND ".join(clauses) or "1"
         with closing(self.connect()) as db:
