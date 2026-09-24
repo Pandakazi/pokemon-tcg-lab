@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Query
 from tcg_lab.card_db import SQLiteCards
 from tcg_lab.cards import CardLookupError, check_id, public_card
 from .images import TCGdexImages
-from .library_identity import library_signature
+from .library_identity import library_signature, basic_image_priority
 from .web_models import LibraryQuery, CardPage, CardDetail, Status
 
 
@@ -55,11 +55,14 @@ class ReadOnlyCards(SQLiteCards):
         """
         db.create_function('functional_identity', 1,
                            lambda raw: library_signature(json.loads(raw)), deterministic=True)
+        db.create_function('basic_image_priority', 1,
+                           lambda raw: basic_image_priority(json.loads(raw)), deterministic=True)
         representatives = f"""WITH eligible AS (SELECT * FROM cards WHERE {where}),
             ranked AS (
                 SELECT c.raw,c.game,c.id,ROW_NUMBER() OVER (
                     PARTITION BY functional_identity(c.raw)
-                    ORDER BY COALESCE(json_extract(s.raw,'$.releaseDate'),'') DESC,
+                    ORDER BY basic_image_priority(c.raw) DESC,
+                             COALESCE(json_extract(s.raw,'$.releaseDate'),'') DESC,
                              COALESCE(c.regulation,'') DESC,c.id DESC) representative
                 FROM eligible c LEFT JOIN sets s ON s.id=c.set_id)
             """

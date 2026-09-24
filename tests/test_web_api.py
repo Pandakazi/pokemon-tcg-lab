@@ -238,6 +238,44 @@ def test_library_basic_energy_curates_types_without_changing_engine_identity(tmp
     assert db.path.read_bytes() == before
 
 
+def test_basic_energy_prefers_newest_eligible_image_without_affecting_special(tmp_path):
+    db = SQLiteCards(tmp_path / 'images.sqlite3')
+    for id, date in [('old','2020-01-01'),('middle','2024-01-01'),('new','2026-01-01')]:
+        record = set_record(id); record['releaseDate'] = date; db.put_set(record)
+    for type_index, kind in enumerate(('Grass','Fire','Water','Lightning','Psychic','Fighting','Darkness','Metal')):
+        for set_id in ('old','middle','new'):
+            record = card(f'{set_id}-{type_index}', f'Basic {kind} Energy')
+            record.update(category='Energy', energyType='Normal', types=[kind], legal={'standard':True})
+            if set_id == 'new': record.pop('image')
+            # Fire has no legal image-bearing candidate. Water's newest URL is unsafe.
+            if kind == 'Fire' and set_id != 'new': record['legal']['standard'] = False
+            if kind == 'Water' and set_id == 'new': record['image'] = 'https://other.invalid/card'
+            db.put(record)
+    for set_id in ('old','new'):
+        record = card(f'{set_id}-99', 'Special Energy')
+        record.update(category='Energy', energyType='Special', legal={'standard':True})
+        if set_id == 'new': record.pop('image')
+        db.put(record)
+    client = TestClient(create_app(db.path))
+    before = db.path.read_bytes()
+    result = client.get('/api/v1/cards?category=Energy&include_image=true').json()
+    assert result['total'] == 9
+    chosen = {r['name']: r for r in result['cards']}
+    for index, kind in enumerate(('Grass','Fire','Water','Lightning','Psychic','Fighting','Darkness','Metal')):
+        record = chosen[f'Basic {kind} Energy']
+        assert record['id'] == f'{"new" if kind == "Fire" else "middle"}-{index}'
+        assert (record['image_url'] is not None) == (kind != 'Fire')
+        assert record['legal']['standard'] is True
+    assert chosen['Special Energy']['id'] == 'new-99'
+    assert chosen['Special Energy']['image_url'] is None
+    # Opting out of images must not change representative IDs.
+    without = client.get('/api/v1/cards?category=Energy').json()
+    assert [r['id'] for r in without['cards']] == [r['id'] for r in result['cards']]
+    assert all('image_url' not in r for r in without['cards'])
+    assert client.get('/api/v1/cards/new-0').json()['card']['id'] == 'new-0'
+    assert db.path.read_bytes() == before
+
+
 @pytest.mark.parametrize('category,fields', [
     ('Pokemon', {'types': ['Water'], 'stage': 'Basic'}),
     ('Trainer', {'trainerType': 'Supporter'}),

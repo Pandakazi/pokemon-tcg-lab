@@ -149,7 +149,7 @@ On macOS use `.venv/bin/python`, `npm`, and `npx` equivalents.
 If Windows pytest cannot access its default temp folder, supply `--basetemp` with a
 new disposable directory (pytest owns and may clear that directory).
 
-Validated on September 24, 2026: **115 Python tests, 23 frontend tests, 6 real-data
+Validated on September 24, 2026: **116 Python tests, 23 frontend tests, 6 real-data
 Chromium integration tests; TypeScript and production build passed**. Two upstream
 Python test-client deprecation warnings remain. See [test results](TEST-RESULTS.md).
 

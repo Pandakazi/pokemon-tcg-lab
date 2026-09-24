@@ -1,5 +1,27 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Basic Energy representative images
+
+Diagnosis: all eight newest selected `mee-001` through `mee-008` records lacked
+source image metadata. Date-only ranking displaced older legal image-bearing cards.
+The Library now prefers usable allowlisted image metadata for recognized Basic
+Energy only, then chooses the newest eligible printing. Standard legality and active
+query filters are applied first. No eligible image means the correct newest card
+keeps its fallback; Special Energy ranking and canonical identities are unchanged.
+
+- 116 Python tests passed (two existing upstream warnings); 23 frontend tests,
+  TypeScript and production build passed.
+- Six real-data browser tests passed, including actual image decoding for each of
+  the eight Basic Energy representatives, with backend external connections blocked.
+- New regression verifies newest image-bearing selection, rejection of unsafe URLs,
+  no fallback to illegal image-bearing cards, image-less fallback, unchanged Special
+  Energy selection, exact detail IDs, stable IDs with image opt-out, and read-only DB.
+- Selected cache IDs: Lightning `sv01-257`, Fighting `sv01-258`, Grass `sv02-278`,
+  Water `sv02-279`, Fire `sv03-230`, Psychic `sv03.5-207`, Darkness `sv06.5-098`,
+  Metal `sv06.5-099`. All eight decoded real TCGdex images in Chromium.
+- Browsing uses stored metadata, not network availability probes. Asset-host outages
+  can still produce the existing fallback. No sync, migration or image packaging.
+
 ## September 24, 2026 — final Phase 2 cleanup
 
 - **115 Python tests**, **23 frontend tests**, **6 real-data Chromium tests** passed.

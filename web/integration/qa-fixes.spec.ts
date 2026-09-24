@@ -114,6 +114,11 @@ test('Ability No/both/empty and curated Basic Energy remain server-authoritative
  expect(basic.length).toBe(8) // Current synchronized Standard pool, no Fairy.
  expect(new Set(basic.map((c:{name:string})=>c.name.replace(/^Basic /,''))).size).toBe(8)
  await page.getByRole('button',{name:'Energy',exact:true}).click()
- for(const card of basic) await expect(page.locator(`article[data-printing-id="${card.id}"]`)).toHaveCount(1)
+ for(const card of basic) {
+  const tile=page.locator(`article[data-printing-id="${card.id}"]`)
+  await expect(tile).toHaveCount(1)
+  await tile.scrollIntoViewIfNeeded()
+  await expect.poll(()=>tile.locator('img').evaluateAll(images=>images.some(img=>(img as HTMLImageElement).naturalWidth>0)),{timeout:45000}).toBe(true)
+ }
  await page.screenshot({path:'test-results/phase2-energy-curated.png',fullPage:true})
 })

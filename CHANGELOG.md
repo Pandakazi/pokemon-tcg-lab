@@ -1,5 +1,12 @@
 # Changelog
 
+## Phase 2 Basic Energy image fix — 2026-09-24
+
+Prefer the newest eligible Standard Basic Energy printing with usable TCGdex image
+metadata. Retain the correct image-less representative when none is eligible.
+Special Energy, canonical identity and MCP behavior remain unchanged. Added
+selection regressions and browser image decoding checks for all eight Basic types.
+
 ## Phase 2 final cleanup — 2026-09-24
 
 - Curated Basic Energy grouping by type only in the human-facing Library; canonical

@@ -59,7 +59,10 @@ Water Energy / Basic Water Energy group by Energy type, despite historical text,
 artwork or source differences. An available structured type must agree with the
 curated name. Missing historical types can use that exact name mapping. Selection
 still requires source-marked Standard legality and uses the same newest-printing
-ranking. Canonical `functional_signature`, database records and MCP are unchanged.
+ranking, preferring eligible Basic Energy records with a usable TCGdex image URL
+before release date. If none has an eligible image, the newest correct representative
+and image fallback remain. No remote image probes occur during browsing; temporary
+asset-host failures still use the fallback. Canonical `functional_signature`, database records and MCP are unchanged.
 Special Energy and unrecognized/ambiguous records retain functional grouping.
 
 The current cache yields eight recognized Basic Energy representatives and 27
@@ -228,7 +231,7 @@ architecture change was needed.
 
 ## Engineering validation
 
-115 Python tests, 23 frontend tests and all 6 real-data Chromium tests passed.
+116 Python tests, 23 frontend tests and all 6 real-data Chromium tests passed.
 TypeScript and production build passed. All 23,736 cached records validated against
 the detail response model. The rendered filtered list/detail were inspected.
 The stale-query link and deferred-navigation timing defects found during browser
