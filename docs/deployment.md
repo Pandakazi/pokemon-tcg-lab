@@ -1,3 +1,5 @@
+> Historical optional MCP deployment guidance, not the web application's hosting plan. See [ADR 001](adr-001-web-first.md).
+
 # Private connection and later public deployment
 
 V0 is a single-owner local backend. Local HTTP and stdio work now; account registration, hosted authentication, public hosting, and directory submission are future steps.
@@ -23,3 +25,4 @@ Add authentication discovery/OAuth according to the [official authentication gui
 Package the plugin after the server connection is registered, using the actual assigned connection identifier and the current [plugin packaging instructions](https://developers.openai.com/plugins/build/plugins). Do not invent a connection ID or reuse the obsolete ChatGPT `ai-plugin.json` format. Complete the current privacy, data-rights, support, and review requirements before submission.
 
 OpenAI's [MCP server guide](https://developers.openai.com/plugins/build/mcp-server) requires a stable public HTTPS endpoint for public submission; a Secure MCP Tunnel alone, temporary tunnel, or local endpoint does not meet that requirement. Hosting and registration are intentionally not performed as part of this local milestone.
+

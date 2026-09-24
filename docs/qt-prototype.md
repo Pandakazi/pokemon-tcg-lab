@@ -1,10 +1,12 @@
+> Historical Qt reference guide. The web-first decision supersedes this product direction. The packaged EXE remains uncertified with a known DLL startup failure. See [ADR 001](adr-001-web-first.md).
+
 # PokéLab Desktop
 
 **The agent proposes. The player decides. PokéLab remembers.**
 
 PokéLab is a Windows-first, local-first Standard Pokémon TCG card browser, collection tracker, and competitive research tool. Python and SQLite own the business logic. The desktop does not require MCP, Inspector, or a separately running server.
 
-This is an engineering QA candidate. Mike is the final usability and certification gate. The [architecture assessment](docs/pokelab-architecture.md) explains the changes and known source limitations; the [manual QA checklist](docs/pokelab-qa.md) covers certification.
+This is an engineering QA candidate. Mike is the final usability and certification gate. The [architecture assessment](pokelab-architecture.md) explains the changes and known source limitations; the [manual QA checklist](pokelab-qa.md) covers certification.
 
 ## Run PokeLab.exe
 
@@ -108,10 +110,11 @@ The executable is written to `dist/PokeLab.exe`. It includes Python, Qt, and the
 - **Current Format error:** configure its start date in Settings.
 - **AI authentication/billing error:** verify the API credential, model access, and provider billing in your own account. Keys/errors are not logged into source files.
 - **Build import error:** install `.[dev,desktop,build]` using the same `.venv` interpreter used for packaging.
-- **Need the earlier MCP workflow:** see [MCP and card-data instructions](docs/mcp-and-card-data.md). That adapter remains optional and uses the same reusable card/deck code.
+- **Need the earlier MCP workflow:** see [MCP and card-data instructions](mcp-and-card-data.md). That adapter remains optional and uses the same reusable card/deck code.
 
 ## Scope
 
 Included: Standard card browser, collection quantities, multi-type filters, cached competitive evidence, intentional interactive hover, archetype drill-down, selected-card read-only Agent, and Windows executable packaging.
 
 Not included: deck-building UI, notebook/research mode, simulation, self-play, mobile, Expanded browser, automated synergy discovery, or AI write workflows. Existing legacy deck-engine functions remain available through the optional MCP adapter.
+

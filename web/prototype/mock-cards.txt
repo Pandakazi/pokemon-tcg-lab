@@ -25,4 +25,3 @@ const CARDS: CardData[] = [
   { id: 23, name: 'Rayquaza V',      type: 'Dragon',    set: 'CRE', num: '110/198', hp: 220, stage: 'Basic',   baseQty: 1, price: 5.75,  usagePct: 6.8,  avgCopies: 3.6, decklistsAnalyzed: 234,  excluded: 43,  archetypes: [{ name: 'Rayquaza VMAX', pct: 100 }, { name: 'Sky High', pct: 78.4 }, { name: 'Dragon Box', pct: 43.2 }, { name: 'Storm', pct: 61.7 }, { name: 'Ancient Dragon', pct: 18.4 }] },
   { id: 24, name: 'Dialga V',        type: 'Metal',     set: 'ASR', num: '058/189', hp: 220, stage: 'Basic',   baseQty: 0, price: 5.00,  usagePct: 5.1,  avgCopies: 3.5, decklistsAnalyzed: 175,  excluded: 32,  archetypes: [{ name: 'Dialga VSTAR', pct: 100 }, { name: 'Time Control', pct: 74.3 }, { name: 'Metal Box', pct: 51.8 }, { name: 'Origin Forme', pct: 87.2 }, { name: 'Turbo Steel', pct: 28.4 }] },
 ]
-
