@@ -30,7 +30,7 @@ test('categories, search, OR/AND filters, paging, views, exact detail and histor
  await page.screenshot({path:'test-results/phase2-list.png',fullPage:true})
  const link=page.locator('.card-row a').first()
  await link.focus();await page.keyboard.press('Enter')
- await expect(page).toHaveURL(new RegExp(`/cards/${id}$`))
+ await expect(page).toHaveURL(new RegExp(`/cards/${id}\\?variant=`))
  await expect(page.getByRole('heading',{name:'Card text',exact:true})).toBeVisible()
  await expect(page.locator('code')).toHaveText(id!)
  await page.screenshot({path:'test-results/phase2-detail.png',fullPage:true})

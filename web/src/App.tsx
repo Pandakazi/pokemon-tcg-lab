@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LibraryControls, TopBar } from './Shell'
-import { loadCards, type CardPage, type FilterOption } from './api'
+import { loadCards, withOwnership, type CardPage, type FilterOption, type Ownership } from './api'
 import { CardTile } from './CardTile'
 import { Filters, filterFamilies, abilityValues } from './Filters'
 import { CardDetail } from './CardDetail'
+import { CollectionPage } from './CollectionPage'
 
 type CategoryMemory = {current:Record<string,string>}
 function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
@@ -25,7 +26,8 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
  const page=Number(params.get('page') || 1)
  useEffect(()=>{
   const controller=new AbortController()
-  setLoading(true); setError(''); setData(null)
+  if(resolvedQuery!==query) {setLoading(true);setData(null)}
+  setError('')
   const timer=setTimeout(()=>loadCards(new URLSearchParams(query),controller.signal).then(result=>{
    if(!controller.signal.aborted) {setData(result);setResolvedQuery(query);setOptions(result.filter_options || [])}
   }).catch(reason=>{
@@ -54,12 +56,13 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
   selected.forEach(v=>next.append(key,v))
  })
  const clear=()=>update(next=>filterFamilies.forEach(key=>next.delete(key)))
+ const changed=(id:string,o:Ownership)=>{setData(old=>old?{...old,cards:old.cards.map(c=>withOwnership(c,id,o))}:old);setAttempt(v=>v+1)}
  return <>
   {filterOpen && <Filters options={options} params={params} onChange={toggle} onClear={clear}/>}
   <main>
    <h1 className="sr-only">Card library</h1>
    <LibraryControls category={category==='Trainer'?'trainers':category==='Energy'?'energy':'pokemon'} onCategoryChange={changeCategory}
-    scope="all" onScopeChange={()=>{}} viewMode={view} onViewModeChange={setView}
+    scope={(params.get('ownership')||'all') as 'all'|'owned'|'unowned'} onScopeChange={scope=>update(next=>{scope==='all'?next.delete('ownership'):next.set('ownership',scope)})} viewMode={view} onViewModeChange={setView}
     searchQuery={params.get('q') || ''} onSearchChange={q=>update(next=>{q?next.set('q',q):next.delete('q')},true)}
     filterOpen={filterOpen} onFilterToggle={()=>setFilterOpen(v=>!v)} totalCards={data?.total??0} filteredCount={data?Math.min((data.page-1)*data.page_size+data.cards.length,data.total):0}/>
    <div className="source-note">TCGdex · local SQLite · Standard {category==='Pokemon'?'Pokémon':category}
@@ -71,7 +74,7 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
     {data && !data.cards.length && <p role="status">No cards match this query.</p>}
     {data && <div className={view==='gallery'?'card-grid':'card-list'}>
      {view==='list' && <div className="list-heading" aria-hidden="true"><span>Card</span><span>Name</span><span>Set · Number</span><span>Printing ID</span><span>Classification</span><span>Legality</span></div>}
-     {data.cards.map(card=><CardTile key={card.id} card={card} list={view==='list'}/>)}</div>}
+     {data.cards.map(card=><CardTile key={card.id} card={card} list={view==='list'} onChange={changed} onPreference={()=>setAttempt(v=>v+1)}/>)}</div>}
    </section>
    <nav className="pagination" aria-label="Pagination">
     <button disabled={loading || page<=1} onClick={()=>{const next=new URLSearchParams(params);next.set('page',String(page-1));setParams(next)}}>Previous</button>
@@ -86,10 +89,13 @@ export function Application() {
  const [agentOpen,setAgentOpen]=useState(true)
  const [view,setView]=useState<'gallery'|'list'>('gallery')
  const navigate=useNavigate(), location=useLocation()
- return <div className="mica-bg app-shell"><TopBar activeNav="Library" onNavChange={()=>navigate(location.state?.library || '/')}/>
+ const lastLibrary=useRef('/'),lastCollection=useRef('/collection')
+ useEffect(()=>{if(location.pathname==='/')lastLibrary.current='/'+location.search;if(location.pathname==='/collection')lastCollection.current='/collection'+location.search},[location])
+ return <div className="mica-bg app-shell"><TopBar activeNav={location.pathname==='/collection'?'Collection':'Library'} onNavChange={nav=>navigate(nav==='Collection'?lastCollection.current:lastLibrary.current)}/>
   <div className="workspace"><Routes>
    <Route path="/" element={<Library view={view} setView={setView} memory={categoryMemory}/>}/>
    <Route path="/cards/:printingId" element={<CardDetail/>}/>
+   <Route path="/collection" element={<CollectionPage/>}/>
    <Route path="*" element={<main className="gallery-scroll"><h1>Page not found</h1><Link to="/">Open library</Link></main>}/>
   </Routes>
   <aside className={`agent-panel ${agentOpen?'':'collapsed'}`} aria-label="PokéLab Agent">

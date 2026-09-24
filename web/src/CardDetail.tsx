@@ -1,27 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router'
-import { loadDetail, classification, type Detail } from './api'
-import { CardImage } from './CardTile'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router'
+import { loadDetail, classification, withOwnership, type Detail, type Ownership } from './api'
+import { MagnifiedArt } from './MagnifiedArt'
+import { QuantityControls } from './QuantityControls'
+import { Variations } from './Variations'
 
 export function CardDetail() {
  const {printingId=''}=useParams()
  const location=useLocation()
+ const [params]=useSearchParams(),variant=params.get('variant')||'unspecified'
+ const [variationsOpen,setVariationsOpen]=useState(false),[revision,setRevision]=useState(0)
  const [data,setData]=useState<Detail|null>(null), [error,setError]=useState(''), [attempt,setAttempt]=useState(0)
  const title=useRef<HTMLHeadingElement>(null)
  useEffect(()=>{
   const controller=new AbortController();setData(null);setError('')
-  loadDetail(printingId,controller.signal).then(result=>{if(!controller.signal.aborted)setData(result)})
+  loadDetail(printingId,controller.signal,variant).then(result=>{if(!controller.signal.aborted)setData(result)})
    .catch(reason=>{if(!controller.signal.aborted)setError(reason instanceof Error?reason.message:'Unable to load this printing.')})
   return ()=>controller.abort()
- },[printingId,attempt])
- useEffect(()=>{if(data)title.current?.focus()},[data])
+ },[printingId,variant,attempt])
+ useEffect(()=>{if(data)title.current?.focus()},[data?.card.id,data?.card.ownership?.variant])
  const card=data?.card
+ function changed(id:string,owned:Ownership) {setData(old=>old?{...old,card:withOwnership(old.card,id,owned)}:old)}
  return <main className="detail-page">
   <Link to={location.state?.library || '/'}>← Back to library</Link>
   {!card && !error && <p role="status">Loading card…</p>}
   {error && <div role="alert"><h1>Card could not be loaded</h1><p>{error}</p><button onClick={()=>setAttempt(v=>v+1)}>Retry</button></div>}
   {card && data && <>
-   <div className="detail-layout"><div className="detail-art"><CardImage key={card.id} card={card} eager/></div>
+   <div className="detail-layout"><div className="detail-art"><MagnifiedArt key={card.id} card={card}/>
+    {card.ownership && <><QuantityControls id={card.id} ownership={card.ownership} onChange={(id,o)=>{changed(id,o);setRevision(v=>v+1)}}/>
+     <p>Functional total: <output aria-label="Functional total" aria-live="polite">{card.ownership.functional_total}</output></p></>}
+   </div>
     <section><p className="source-note">CARD DETAILS · EXACT PRINTING</p><h1 ref={title} tabIndex={-1}>{card.name}</h1>
      <p>{classification(card)}</p><dl>
       <dt>Printing ID</dt><dd><code>{card.id}</code></dd>
@@ -47,6 +55,8 @@ export function CardDetail() {
      <h2>Source legality</h2><p>{Object.entries(card.legal || {}).map(([format,legal])=>`${format}: ${legal?'legal':'not legal'}`).join(' · ') || 'Not supplied'}</p>
      <p className="source-note">Source: {data.source}<br/>Checked: {data.checked_at}<br/>Fetched: {data.fetched_at}<br/>Legality reflects dated source flags; a missing format is unknown.</p>
     </section></div>
+   {card.ownership && <section className="variations-section"><button aria-expanded={variationsOpen} onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>
+    {variationsOpen && <Variations key={printingId} id={printingId} revision={revision} onChange={changed}/>}</section>}
   </>}
  </main>
 }

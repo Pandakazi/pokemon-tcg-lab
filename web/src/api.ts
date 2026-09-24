@@ -6,7 +6,10 @@ export interface Card {
   trainerType?: string; energyType?: string; suffix?: string
   image_url?: string | null
   legality_provenance: { source: string; checked_at: string }
+  ownership?: Ownership
 }
+export interface Ownership {functional_id:string;library_id:string;variant:string;quantity:number;functional_total:number;library_total:number}
+export interface VariationPage {cards:Card[];total:number;page:number;page_size:number;next_page:number|null}
 export interface FilterOption { parameter: string; label: string; values: string[] }
 export interface CardPage {
   cards: Card[]; page: number; page_size: number; total: number; next_page: number | null
@@ -21,6 +24,10 @@ export interface Detail {
 }
 async function read(url: string, signal: AbortSignal) {
   const response = await fetch(url, { signal })
+  if(response.status===503) {
+    let body;try{body=await response.json()}catch{/* Non-JSON gateway failure uses the generic message below. */}
+    if(body?.detail?.code==='user_state_unavailable') throw new Error('Local collection storage is unavailable. Check the user-state database path and permissions, then retry.')
+  }
   if (!response.ok) throw new Error(response.status === 503
     ? 'The local card database is unavailable. Initialize or check the database, then retry.'
     : response.status === 404 ? 'This exact printing was not found in the local database.'
@@ -37,10 +44,36 @@ export async function loadCards(params: URLSearchParams, signal: AbortSignal): P
     throw new Error('The card API returned an unexpected response.')
   return data
 }
-export async function loadDetail(id: string, signal: AbortSignal): Promise<Detail> {
-  const data = await read(`/api/v1/cards/${encodeURIComponent(id)}?include_image=true`,signal)
+export async function loadDetail(id: string, signal: AbortSignal, variant='unspecified'): Promise<Detail> {
+  const data = await read(`/api/v1/cards/${encodeURIComponent(id)}?include_image=true&variant=${encodeURIComponent(variant)}`,signal)
   if (!data.card || data.card.id !== id) throw new Error('The card API returned an unexpected printing.')
   return data
+}
+export async function loadVariations(id:string,scope:'functional'|'library',page:number,signal:AbortSignal):Promise<VariationPage> {
+ return read(`/api/v1/cards/${encodeURIComponent(id)}/variations?scope=${scope}&page=${page}&page_size=24`,signal)
+}
+export async function loadCollection(params:URLSearchParams,signal:AbortSignal):Promise<VariationPage> {
+ const query=new URLSearchParams(params);query.set('page_size','24')
+ return read(`/api/v1/collection?${query}`,signal)
+}
+async function write(url:string,body:object) {
+ const response=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+ if(!response.ok) throw new Error(response.status===422?'That quantity or variation is not valid.':'Unable to save local changes. Please retry.')
+ return response.json()
+}
+export async function changeQuantity(id:string,variant:string,delta:number):Promise<Ownership> {
+ return write(`/api/v1/collection/${encodeURIComponent(id)}`,{variant,delta})
+}
+export async function savePreference(anchor:string,card:Card) {
+ return write(`/api/v1/library/${encodeURIComponent(anchor)}/preference`,{printing_id:card.id,variant:card.ownership!.variant})
+}
+export function withOwnership<T extends Card>(card:T,id:string,owned:Ownership):T {
+ const current=card.ownership
+ if(!current)return card
+ return {...card,ownership:{...current,
+  quantity:card.id===id && current.variant===owned.variant?owned.quantity:current.quantity,
+  functional_total:current.functional_id===owned.functional_id?owned.functional_total:current.functional_total,
+  library_total:current.library_id===owned.library_id?owned.library_total:current.library_total}}
 }
 export function classification(card: Card) {
   return [card.category, card.stage, card.types?.join(' / '), card.trainerType,

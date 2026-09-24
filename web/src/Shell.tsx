@@ -28,7 +28,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
         {['Library', 'Collection', 'Analytics'].map(nav => (
           <button
             key={nav}
-            disabled={nav !== "Library"} onClick={() => onNavChange(nav)}
+            disabled={nav === "Analytics"} onClick={() => onNavChange(nav)}
             style={{
               padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
               fontSize: 13, fontWeight: activeNav === nav ? 600 : 400,
@@ -47,7 +47,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{color:'#8892a4',fontSize:11}}>Library · Phase 2</span>
+        <span style={{color:'#8892a4',fontSize:11}}>Local collection · Phase 3</span>
       </div>
     </div>
   )
@@ -109,7 +109,7 @@ export function LibraryControls({
         {(['all', 'owned', 'unowned'] as Scope[]).map(s => (
           <button
             key={s}
-            disabled onClick={() => onScopeChange(s)}
+            aria-pressed={scope===s} onClick={() => onScopeChange(s)}
             style={{
               padding: '4px 10px', borderRadius: 5, border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: scope === s ? 600 : 400,

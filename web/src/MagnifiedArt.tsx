@@ -1,0 +1,25 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { CardImage } from './CardTile'
+import type { Card } from './api'
+
+export function Modal({title,onClose,children}:{title:string;onClose:()=>void;children:ReactNode}) {
+ const dialog=useRef<HTMLDialogElement>(null)
+ useEffect(()=>{dialog.current?.showModal();return ()=>dialog.current?.close()},[])
+ return createPortal(<dialog ref={dialog} className="card-dialog" aria-label={title} onCancel={onClose}>
+  <button className="dialog-close" onClick={onClose} aria-label={`Close ${title}`}>Close</button>
+  <h2>{title}</h2>{children}
+ </dialog>,document.body)
+}
+
+// Used exclusively on Card Detail; Library hover remains reserved for analytics.
+export function MagnifiedArt({card,children}:{card:Card;children?:ReactNode}) {
+ const [hover,setHover]=useState(false),[open,setOpen]=useState(false)
+ const image=card.image_url?.replace('/low.webp','/high.webp')
+ return <div className="magnifiable" onPointerEnter={e=>{if(e.pointerType==='mouse')setHover(true)}} onPointerLeave={()=>setHover(false)}>
+  {children || <CardImage card={card} eager/>}
+  <button disabled={!image} onClick={()=>{setHover(false);setOpen(true)}} aria-label={`Enlarge ${card.name} ${card.id}`}>Enlarge artwork</button>
+  {hover && image && !open && createPortal(<div className="art-preview" aria-hidden="true"><img src={image} alt=""/></div>,document.body)}
+  {open && <Modal title={`Artwork ${card.id}`} onClose={()=>setOpen(false)}><img className="enlarged-art" src={image!} alt={`${card.name} — ${card.id}`}/></Modal>}
+ </div>
+}
