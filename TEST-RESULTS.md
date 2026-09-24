@@ -1,5 +1,35 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Phase 3 Collection & Variations
+
+Phase 2 is PM-certified at `df02a1d`. This Phase 3 implementation awaits PM QA.
+
+- Full Python suite: **133 passed** in 23.58 seconds. Two pre-existing upstream
+  test-client deprecation warnings remain. Existing MCP, Qt, snapshot, card-data
+  and Phase 2 behavior remain covered.
+- Frontend: **29 passed**. TypeScript validation and Vite production build passed.
+- Chromium real-data suite: **7 passed** in 43.3 seconds. The new acceptance flow
+  uses real Ultra Ball printings and tests Gallery keyboard +/−, canonical rollup,
+  exact Card Detail quantity, full-opacity variations, variation inspection,
+  no preference mutation from inspection, hover/enlarge/Escape, Owned/Unowned,
+  saved Library artwork, zero-quantity minus disabling, reload/new page persistence,
+  exact Collection Gallery/List and return navigation. Earlier Phase 2 browser
+  tests remain, including all eight Basic Energy images and category/history state.
+- Backend tests cover exact quantity bounds and zero, concurrent atomic increments,
+  restart persistence, rollup across printings/finishes, ownership plus existing
+  filters, canonical variations and pagination, persisted/invalid preferences,
+  read-only source bytes, one-time legacy migration, unsupported schema safety,
+  state/cache path separation and the PM-approved Basic Energy Library rollup.
+- Browser user state is isolated in a temporary ignored directory. PM ownership
+  was not modified. Backend external connections stayed blocked; no browsing sync.
+- Inspected rendered Collection list and Card Detail/Variations screenshots.
+  Gallery artwork remains full-color regardless of ownership; magnification is
+  confined to Card Detail. No mobile/macOS certification is claimed.
+- No new runtime dependencies, no canonical-identity changes, no card-cache writes,
+  no authentication/analytics/Agent/Conditions and no Phase 4 work.
+
+See [Phase 3 contracts, storage migration, PM walkthrough and mandatory QA matrix](docs/phase-3-collection.md).
+
 ## September 24, 2026 — Basic Energy representative images
 
 Diagnosis: all eight newest selected `mee-001` through `mee-008` records lacked

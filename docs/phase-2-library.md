@@ -1,5 +1,8 @@
 # Phase 2 — Library & Browsing
 
+Phase 2 is now PM-certified at `df02a1d`. This document preserves that milestone.
+Current collection/variation controls are documented in [Phase 3](phase-3-collection.md).
+
 Phase 1 was manually certified by PM. Phase 2 extends that same architecture;
 PM reported passing core Phase 2 behavior and requested this QA fix pass. The fixes
 await PM recheck after automated validation. No Phase 3 collection work is included.

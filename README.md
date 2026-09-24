@@ -2,8 +2,8 @@
 
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
-The roadmap describes future capabilities. Phase 1 was manually certified by PM;
-Phase 2 now provides a read-only Standard card library and exact-printing detail pages.
+The roadmap describes future capabilities. Phase 2 is PM-certified; Phase 3 adds
+local exact-printing collection ownership and variations and awaits PM QA.
 
 The approved PokéLab Web Prototype v0.1 Figma Make frontend supplies the visual
 and interaction direction. We reuse its generated source, not a screenshot recreation.
@@ -17,8 +17,12 @@ and interaction direction. We reuse its generated source, not a screenshot recre
 - Real, lazily loaded images; meaningful missing-image fallback.
 - Pagination, loading/error states and retry; collapsible side panels.
 - Normal browsing reads SQLite and never initiates TCGdex synchronization.
+- Persistent exact printing/finish quantities, functional Owned/Unowned filtering,
+  and independently saved Library artwork preferences.
+- Card Detail variations, quantity controls and artwork magnification; an exact
+  owned-printing Collection workspace.
 
-Collection, Owned/Unowned, competitive analytics, Agent and authentication remain
+Competitive analytics, Agent and authentication remain
 disabled/unconnected in this slice. PWA installation,
 offline service workers, hosting and billing are not implemented.
 
@@ -31,6 +35,12 @@ React 19 + TypeScript + Vite + Tailwind (`web/`)
 Card text is synchronized from TCGdex. Images load on demand from TCGdex assets;
 no image library is bundled. Standard legality uses structured source flags and
 shows source freshness; it is not guessed by AI.
+Card data remains read-only during browsing and collection edits. Ownership and
+artwork preferences live separately in `data/user-state.sqlite3` (override with
+`POKELAB_USER_DB_PATH`). Existing Qt collection rows, when present, are copied once
+by a transactional versioned migration; source records are never overwritten.
+Back up the user-state file with the API stopped. See the
+[Phase 3 ownership model, migration, acceptance walkthrough and QA matrix](docs/phase-3-collection.md).
 
 Existing collection, filtering, functional/printing identities, competitive analytics
 and provider-independent Agent groundwork remain in the Python engine. Analytics
@@ -124,7 +134,9 @@ macOS instructions use standard tooling; this milestone was executed on Windows.
   tests require ports 8002 and 5174 free; they launch and stop isolated servers.
 - Missing images: the text cache still works offline, but uncached images need
   access to `assets.tcgdex.net`. A fallback is expected when an image cannot load.
-- Disabled controls are intentional Phase 2 boundaries, not broken connections.
+- Disabled Analytics and Agent features are intentional Phase 3 boundaries.
+- Collection unavailable: check write permission for `data/user-state.sqlite3` or
+  your `POKELAB_USER_DB_PATH`. Do not delete ownership storage to repair card data.
 
 ## Tests and build
 
@@ -149,18 +161,19 @@ On macOS use `.venv/bin/python`, `npm`, and `npx` equivalents.
 If Windows pytest cannot access its default temp folder, supply `--basetemp` with a
 new disposable directory (pytest owns and may clear that directory).
 
-Validated on September 24, 2026: **116 Python tests, 23 frontend tests, 6 real-data
+Validated on September 24, 2026: **133 Python tests, 29 frontend tests, 7 real-data
 Chromium integration tests; TypeScript and production build passed**. Two upstream
 Python test-client deprecation warnings remain. See [test results](TEST-RESULTS.md).
 
 ## Roadmap and history
 
-Next, after PM review: user-aware collection, competitive analytics,
+Next, after PM review: competitive analytics,
 archetype evidence, authentication before hosted private/paid use, Agent with metering,
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
 No later slice is activated by this milestone.
 
 See [Phase 2 behavior, API contracts, PM walkthrough and QA scope matrix](docs/phase-2-library.md).
+For current controls, use the [Phase 3 QA scope matrix](docs/phase-3-collection.md#mandatory-qa-scope-matrix).
 Restart the API and run `npm ci` in `web/` when upgrading from Phase 1.
 Browser library URL: `/`; exact-printing detail URL: `/cards/<printing-id>`.
 The Phase 2 QA pass adds independent category browsing state, cumulative page
@@ -174,5 +187,7 @@ queries last for the mounted client session; the active URL survives refresh.
 
 The annotated `pre-web-pivot-2026-09-24` tag preserves Python/Qt/MCP history.
 The `web-pivot` development line contains the Figma import and web implementation.
+Phase 2 is preserved on `phase-2-library`; current collection work is on
+`phase-3-collection` and awaits PM QA.
 SQLite files, credentials, personal profiles, generated executables and dependencies
 are excluded from Git. Never put provider keys in browser configuration.

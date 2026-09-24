@@ -1,5 +1,17 @@
 # Changelog
 
+## Phase 3 — Collection & Variations (2026-09-24)
+
+- Reused exact printing/variant quantity semantics in separate versioned user-state
+  storage, with a transactional one-time copy of legacy Qt ownership when present.
+- Added functional Library ownership filters/totals and exact +/− controls, persisted
+  Library artwork preferences, canonical Card Detail variations and exact quantities.
+- Added full-color four-column variation browsing, detail-only artwork enlargement,
+  and an exact owned-printing Collection workspace. Preserved Phase 2 identity,
+  Basic Energy selection, navigation, filtering and optional MCP behavior.
+- Documented ownership boundaries, migration, local QA and the complete scope matrix.
+  Conditions and all Phase 4 features remain unimplemented.
+
 ## Phase 2 Basic Energy image fix — 2026-09-24
 
 Prefer the newest eligible Standard Basic Energy printing with usable TCGdex image
