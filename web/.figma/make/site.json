@@ -1,0 +1,10 @@
+{
+  "description": "An advanced desktop tool for Pokémon TCG enthusiasts offering card collection management, competitive analytics, and AI-assisted research in a sleek interface.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

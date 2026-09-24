@@ -56,3 +56,10 @@ Desktop.ini
 *.tmp
 *.swp
 *.zip
+
+# Web dependencies, generated outputs and browser reports
+node_modules/
+web/dist/
+playwright-report/
+test-results/
+*.tsbuildinfo
