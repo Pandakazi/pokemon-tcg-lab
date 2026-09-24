@@ -34,3 +34,19 @@ The ZIP builder includes only release source, tests, documentation, the two laun
 - First installation, repair and changed requirements need internet access. Corporate package proxies, organization PowerShell policies and offline first installation were not end-to-end tested.
 - ChatGPT connection guidance was checked against current official OpenAI documentation. No tunnel/account registration or end-to-end ChatGPT installation was performed.
 - V0 remains a single-owner, loopback-only server without OAuth. The sample is a demo, and passing supported deck checks is not tournament certification. See README.md for validation scope.
+
+## September 24, 2026 — web Phase 1
+
+- 94 Python tests passed, including all 82 pre-pivot tests and 12 new API cases.
+- 6 frontend tests passed: loading, real response rendering, unavailable database/retry,
+  network failure, pagination, image fallback and malformed response handling.
+- TypeScript type-check and Vite production build passed.
+- 1 Chromium real-data integration test passed: compared 48 exact printings across
+  two pages to synchronized SQLite; verified actual image decoding. Backend external
+  socket connections were blocked. Browser TCGdex data-API calls were prohibited.
+- Live cache contained 2,584 Standard Pokémon printings (a subset of 3,345 Standard
+  printings across categories); source sync dated September 23, 2026.
+- Two upstream Python test-client deprecation warnings; no test failures.
+- npm audit reported zero vulnerabilities for the installed dependency lock.
+- Windows tested; macOS run instructions not executed. Qt EXE remains uncertified
+  with the preserved DLL startup failure. No later web phases implemented.
