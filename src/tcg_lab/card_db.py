@@ -174,6 +174,12 @@ class SQLiteCards:
             raise ValueError('has_ability must be boolean')
         if filters.get('has_ability'):
             clauses.append("category='Pokemon' AND EXISTS (SELECT 1 FROM json_each(raw,'$.abilities') a WHERE json_extract(a.value,'$.type')='Ability')")
+        ability = filters.get('ability', [])
+        if not isinstance(ability, (list, tuple)) or any(v not in ('Yes', 'No') for v in ability):
+            raise ValueError('Invalid Ability selection')
+        if len(set(ability)) == 1:
+            predicate = "EXISTS (SELECT 1 FROM json_each(raw,'$.abilities') a WHERE json_extract(a.value,'$.type')='Ability')"
+            clauses.append("category='Pokemon' AND " + ("NOT " if ability[0] == 'No' else '') + predicate)
         if "format" in filters:
             fmt = filters["format"]
             if fmt not in ("standard", "expanded", "unlimited"):
@@ -187,7 +193,7 @@ class SQLiteCards:
                 params.append(int(legality == "legal"))
         elif "legality" in filters:
             raise ValueError("legality requires format")
-        if set(filters) - (set(columns) | set(families) | {"text", "pokemon_type", "format", "legality", "has_ability"}):
+        if set(filters) - (set(columns) | set(families) | {"text", "pokemon_type", "format", "legality", "has_ability", "ability"}):
             raise ValueError("Unsupported search filter")
         where = " AND ".join(clauses) or "1"
         with closing(self.connect()) as db:

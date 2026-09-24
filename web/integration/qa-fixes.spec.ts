@@ -35,13 +35,13 @@ test('empty Energy and repeated Trainer selections agree with authoritative cate
 })
 
 test('Ability, cumulative pagination, per-category state and browser history use real data',async({page,request})=>{
- const query='category=Pokemon&pokemon_types=Psychic&pokemon_types=Dragon&stages=Basic&has_ability=true'
+ const query='category=Pokemon&pokemon_types=Psychic&pokemon_types=Dragon&stages=Basic&ability=Yes'
  const response=await request.get('/api/v1/cards?'+query+'&page_size=24')
  expect(response.ok()).toBeTruthy()
  let expected=await response.json()
  expect(expected.total).toBeGreaterThan(0)
  await page.goto('/?'+query)
- await expect(page.getByLabel('Has Ability',{exact:true})).toBeChecked()
+ await expect(page.getByLabel('Yes',{exact:true})).toBeChecked()
  await expect(page.getByTestId('result-progress')).toHaveText(`${Math.min(24,expected.total)}/${expected.total}`)
  for(const card of expected.cards){
   const detail=await (await request.get('/api/v1/cards/'+encodeURIComponent(card.id))).json()
@@ -53,7 +53,7 @@ test('Ability, cumulative pagination, per-category state and browser history use
  // Broaden only the type family to exercise Ability pagination on real cards.
  await page.getByLabel('Psychic',{exact:true}).click()
  await page.getByLabel('Dragon',{exact:true}).click()
- expected=await (await request.get('/api/v1/cards?category=Pokemon&stages=Basic&has_ability=true&page_size=24')).json()
+ expected=await (await request.get('/api/v1/cards?category=Pokemon&stages=Basic&ability=Yes&page_size=24')).json()
  expect(expected.total).toBeGreaterThan(24)
  await expect(page.getByTestId('result-progress')).toHaveText(`24/${expected.total}`)
  await page.getByRole('button',{name:'Next',exact:true}).click()
@@ -76,9 +76,44 @@ test('Ability, cumulative pagination, per-category state and browser history use
  await page.goBack();await expect(page).toHaveURL(trainerURL)
  await page.goForward();await expect(page).toHaveURL(energyURL)
  await page.getByRole('button',{name:'Pokémon',exact:true}).click();await expect(page).toHaveURL(pokemonURL)
- await page.reload();await expect(page.getByLabel('Has Ability',{exact:true})).toBeChecked()
+ await page.reload();await expect(page.getByLabel('Yes',{exact:true})).toBeChecked()
  await expect(page.getByTestId('result-progress')).toHaveText(`${Math.min(48,expected.total)}/${expected.total}`)
- await page.getByLabel('Has Ability',{exact:true}).click()
- expect(new URL(page.url()).searchParams.has('has_ability')).toBe(false)
+ await page.getByLabel('Yes',{exact:true}).click()
+ expect(new URL(page.url()).searchParams.has('ability')).toBe(false)
  expect(new URL(page.url()).searchParams.has('page')).toBe(false)
+})
+
+test('Ability No/both/empty and curated Basic Energy remain server-authoritative',async({page,request})=>{
+ const base='category=Pokemon&stages=Basic&pokemon_types=Psychic&pokemon_types=Dragon'
+ const read=async(query:string)=>(await request.get('/api/v1/cards?'+query+'&page_size=24')).json()
+ const unrestricted=await read(base)
+ const no=await read(base+'&ability=No')
+ const yes=await read(base+'&ability=Yes')
+ expect(no.total+yes.total).toBe(unrestricted.total)
+ await page.goto('/?'+base+'&ability=No')
+ await expect(page.getByLabel('No',{exact:true})).toBeChecked()
+ await expect(page.getByTestId('result-progress')).toHaveText(`${Math.min(24,no.total)}/${no.total}`)
+ for(const card of no.cards) {
+  const detail=await (await request.get('/api/v1/cards/'+card.id)).json()
+  expect((detail.card.abilities||[]).some((a:{type:string})=>a.type==='Ability')).toBe(false)
+ }
+ const legends=await page.locator('legend').allTextContents()
+ expect(legends.indexOf('Ability')).toBe(legends.indexOf('Stage')+1)
+ expect(legends.indexOf('Regulation mark')).toBe(legends.indexOf('Ability')+1)
+ await page.getByLabel('Yes',{exact:true}).click()
+ await expect(page.getByTestId('result-progress')).toHaveText(`${Math.min(24,unrestricted.total)}/${unrestricted.total}`)
+ await page.reload();await expect(page.getByLabel('No',{exact:true})).toBeChecked()
+ await expect(page.getByLabel('Yes',{exact:true})).toBeChecked()
+ await page.getByLabel('No',{exact:true}).click()
+ await expect(page.getByTestId('result-progress')).toHaveText(`${Math.min(24,yes.total)}/${yes.total}`)
+ await page.getByLabel('Yes',{exact:true}).click()
+ await expect(page.getByTestId('result-progress')).toHaveText(`${Math.min(24,unrestricted.total)}/${unrestricted.total}`)
+ const energy=await (await request.get('/api/v1/cards?category=Energy&page_size=50')).json()
+ expect(energy.next_page).toBeNull()
+ const basic=energy.cards.filter((c:{name:string})=>/^(Basic )?(Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Fairy) Energy$/.test(c.name))
+ expect(basic.length).toBe(8) // Current synchronized Standard pool, no Fairy.
+ expect(new Set(basic.map((c:{name:string})=>c.name.replace(/^Basic /,''))).size).toBe(8)
+ await page.getByRole('button',{name:'Energy',exact:true}).click()
+ for(const card of basic) await expect(page.locator(`article[data-printing-id="${card.id}"]`)).toHaveCount(1)
+ await page.screenshot({path:'test-results/phase2-energy-curated.png',fullPage:true})
 })

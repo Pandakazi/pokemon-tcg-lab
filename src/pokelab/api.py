@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Query
 from tcg_lab.card_db import SQLiteCards
 from tcg_lab.cards import CardLookupError, check_id, public_card
 from .images import TCGdexImages
-from .engine import functional_signature
+from .library_identity import library_signature
 from .web_models import LibraryQuery, CardPage, CardDetail, Status
 
 
@@ -54,7 +54,7 @@ class ReadOnlyCards(SQLiteCards):
         MCP keeps the base service's exact-printing search contract.
         """
         db.create_function('functional_identity', 1,
-                           lambda raw: functional_signature(json.loads(raw)), deterministic=True)
+                           lambda raw: library_signature(json.loads(raw)), deterministic=True)
         representatives = f"""WITH eligible AS (SELECT * FROM cards WHERE {where}),
             ranked AS (
                 SELECT c.raw,c.game,c.id,ROW_NUMBER() OVER (
@@ -93,7 +93,7 @@ def create_app(database=None):
     @app.get('/api/v1/cards', response_model=CardPage, response_model_exclude_unset=True)
     def browse(query: Annotated[LibraryQuery, Query()]):
         try:
-            filters = query.model_dump(exclude={'q', 'page', 'page_size', 'include_image'})
+            filters = query.model_dump(exclude={'q', 'page', 'page_size', 'include_image', 'has_ability'})
             result = cards.search(query.q, page=query.page, page_size=query.page_size, include_image=query.include_image,
                                   format='standard', legality='legal', game='tcg', **filters)
             ids = [card['id'] for card in result['cards']]

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearch
 import { LibraryControls, TopBar } from './Shell'
 import { loadCards, type CardPage, type FilterOption } from './api'
 import { CardTile } from './CardTile'
-import { Filters, filterFamilies } from './Filters'
+import { Filters, filterFamilies, abilityValues } from './Filters'
 import { CardDetail } from './CardDetail'
 
 type CategoryMemory = {current:Record<string,string>}
@@ -45,9 +45,9 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
   next.set('category',target);latestQuery.current=next.toString();setOptions([]);setParams(next)
  }
  const toggle=(key:string,value:string)=>update(next=>{
-  if(key==='has_ability') {
-   const active=['true','1','yes','on'].includes((next.get(key)||'').toLowerCase())
-   next.delete(key);if(!active)next.set(key,'true');return
+  if(key==='ability') {
+   const selected=abilityValues(next);next.delete('has_ability');next.delete('ability')
+   selected.forEach(v=>next.append('ability',v))
   }
   const values=next.getAll(key);next.delete(key)
   const selected=values.includes(value)?values.filter(v=>v!==value):[...values,value]

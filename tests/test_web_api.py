@@ -195,6 +195,47 @@ def test_has_ability_uses_structured_kind_and_combines_with_filters(library):
     assert client.get('/api/v1/cards?has_ability=invalid').status_code == 422
     assert client.get('/api/v1/cards?category=Trainer&has_ability=true').status_code == 422
     assert client.get('/api/v1/cards?category=Energy&has_ability=true').status_code == 422
+    assert client.get('/api/v1/cards?ability=Yes').json()['total'] == 2
+    assert client.get('/api/v1/cards?ability=No').json()['total'] == 2
+    assert client.get('/api/v1/cards?ability=Yes&ability=No&ability=Yes').json()['total'] == 4
+    assert client.get('/api/v1/cards?ability=').json()['total'] == 4
+    assert client.get('/api/v1/cards?ability=No&stages=Basic&pokemon_types=Psychic&pokemon_types=Water').json()['cards'][0]['id'] == 'sm2-4'
+    assert client.get('/api/v1/cards?ability=Maybe').status_code == 422
+    assert client.get('/api/v1/cards?category=Energy&ability=No').status_code == 422
+
+
+def test_library_basic_energy_curates_types_without_changing_engine_identity(tmp_path):
+    from pokelab.engine import functional_signature
+    from pokelab.library_identity import library_signature
+    db = SQLiteCards(tmp_path / 'basic.sqlite3')
+    old = set_record('old'); old['releaseDate'] = '2020-01-01'
+    new = set_record('new'); new['releaseDate'] = '2026-01-01'
+    db.put_set(old); db.put_set(new)
+    for n in range(30):
+        record = card(f'old-{n}', 'Water Energy')
+        record.update(category='Energy', energyType='Normal', types=['Water'], legal={'standard':True}, effect=str(n))
+        db.put(record)
+    newest = card('new-1', 'Basic Water Energy')
+    newest.update(category='Energy', energyType='Normal', types=['Water'], legal={'standard':True})
+    db.put(newest)
+    fire = dict(newest, id='new-2', name='Basic Fire Energy', types=['Fire']); db.put(fire)
+    illegal = dict(newest, id='new-9', legal={'standard':False}); db.put(illegal)
+    special = dict(newest, id='new-3', name='Special Water Energy', energyType='Special'); db.put(special)
+    ambiguous = dict(newest, id='new-4', name='Prism Energy', types=[]); db.put(ambiguous)
+    assert functional_signature(record) != functional_signature(newest)
+    assert library_signature(record) == library_signature(newest)
+    assert library_signature(special) == functional_signature(special)
+    assert library_signature(ambiguous) == functional_signature(ambiguous)
+    client = TestClient(create_app(db.path))
+    before = db.path.read_bytes()
+    all_cards = client.get('/api/v1/cards?category=Energy').json()
+    assert [r['id'] for r in all_cards['cards']] == ['new-1','new-2','new-3','new-4']
+    for query in ('energy_types=', 'energy_types=Normal&energy_types=Special'):
+        assert client.get('/api/v1/cards?category=Energy&'+query).json()['total'] == 4
+    assert client.get('/api/v1/cards?category=Energy&energy_types=Special').json()['total'] == 1
+    assert client.get('/api/v1/cards/old-1').json()['card']['id'] == 'old-1'
+    assert db.search('', category='Energy', format='standard')['total'] == 34
+    assert db.path.read_bytes() == before
 
 
 @pytest.mark.parametrize('category,fields', [
