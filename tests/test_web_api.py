@@ -14,6 +14,7 @@ def cache(tmp_path):
     db.put_set(set_record())
     for n in range(3):
         record = card(f'sm2-{n}')
+        record['attacks'][0]['damage'] = n * 10  # Three distinct functional cards.
         record['legal']['standard'] = True
         db.put(record)
     db.put(card('sm2-99'))  # Illegal records must not leak into the gallery.
@@ -151,3 +152,92 @@ def test_detail_missing_cache_is_503_without_creating_it(tmp_path):
     path=tmp_path/'missing.sqlite3'
     assert TestClient(create_app(path)).get('/api/v1/cards/sm2-3').status_code==503
     assert not path.exists()
+
+
+def test_empty_families_repeated_values_and_category_unions(library):
+    for id, subtype, mark in [('sm2-10', 'Supporter', 'J'), ('sm2-11', 'Item', 'J')]:
+        record = card(id, id)
+        record.update(category='Trainer', trainerType=subtype, regulationMark=mark, legal={'standard': True})
+        library.put(record)
+    client = TestClient(create_app(library.path))
+    def ids(query):
+        response = client.get('/api/v1/cards?' + query)
+        assert response.status_code == 200, response.text
+        return {c['id'] for c in response.json()['cards']}
+    all_trainers = {'sm2-5', 'sm2-6', 'sm2-10', 'sm2-11'}
+    assert ids('category=Trainer') == all_trainers
+    assert ids('category=Trainer&trainer_types=&regulation_marks=') == all_trainers
+    assert ids('category=Trainer&trainer_types=Supporter&regulation_marks=H') == {'sm2-5'}
+    assert ids('category=Trainer&trainer_types=Supporter&regulation_marks=H&regulation_marks=J&regulation_marks=H') == {'sm2-5', 'sm2-10'}
+    assert ids('category=Trainer&trainer_types=Supporter&trainer_types=Item&regulation_marks=J') == {'sm2-10', 'sm2-11'}
+    assert ids('category=Energy&energy_types=') == ids('category=Energy') == {'sm2-7', 'sm2-8'}
+    assert ids('category=Energy&energy_types=Normal') == {'sm2-7'}
+    assert ids('category=Energy&energy_types=Special') == {'sm2-8'}
+    assert ids('category=Energy&energy_types=Normal&energy_types=Special&energy_types=Normal&energy_types=') == {'sm2-7', 'sm2-8'}
+    assert ids('pokemon_types=&stages=&regulation_marks=') == ids('category=Pokemon')
+
+
+def test_has_ability_uses_structured_kind_and_combines_with_filters(library):
+    # A legacy power and arbitrary text mentioning Ability are not an Ability.
+    for id, abilities in [('sm2-3', [{'type': 'Ancient Trait', 'name': 'Ability'}]), ('sm2-4', [])]:
+        record = library.get(id)['card']
+        record.update(abilities=abilities, effect='The word Ability alone must not match')
+        library.put(record)
+    client = TestClient(create_app(library.path))
+    query = 'pokemon_types=Psychic&pokemon_types=Dragon&stages=Basic&has_ability=true&page_size=1'
+    first = client.get('/api/v1/cards?' + query).json()
+    second = client.get('/api/v1/cards?' + query + '&page=2').json()
+    assert first['total'] == 2 and first['next_page'] == 2
+    assert first['cards'][0]['id'] == 'sm2-1'
+    assert second['cards'][0]['id'] == 'sm2-2' and second['next_page'] is None
+    assert client.get('/api/v1/cards?has_ability=true').json()['total'] == 2
+    assert client.get('/api/v1/cards?has_ability=false').json()['total'] == 4
+    assert client.get('/api/v1/cards?has_ability=invalid').status_code == 422
+    assert client.get('/api/v1/cards?category=Trainer&has_ability=true').status_code == 422
+    assert client.get('/api/v1/cards?category=Energy&has_ability=true').status_code == 422
+
+
+@pytest.mark.parametrize('category,fields', [
+    ('Pokemon', {'types': ['Water'], 'stage': 'Basic'}),
+    ('Trainer', {'trainerType': 'Supporter'}),
+    ('Energy', {'energyType': 'Normal'}),
+])
+def test_library_representatives_prevent_reprint_spam_before_paging(tmp_path, category, fields):
+    db = SQLiteCards(tmp_path / 'representatives.sqlite3')
+    old_set = set_record(); old_set.update(id='old', releaseDate='2020-01-01')
+    new_set = set_record(); new_set.update(id='new', releaseDate='2026-01-01')
+    db.put_set(old_set); db.put_set(new_set)
+    for n in range(30):
+        record = card(f'old-{n}', 'Repeated card')
+        record.update(category=category, set={'id':'old','name':'Older set'},
+                      legal={'standard':True}, regulationMark='H', **fields)
+        db.put(record)
+    latest = card('new-1', 'Repeated card')
+    latest.update(category=category, set={'id':'new','name':'New set'},
+                  legal={'standard':True}, regulationMark='J', **fields)
+    db.put(latest)
+    # A newer nonlegal printing must not replace the legal representative.
+    illegal = dict(latest, id='new-99', legal={'standard':False})
+    db.put(illegal)
+    different = card('new-2', 'Repeated card')
+    different.update(category=category, set=latest['set'], legal={'standard':True}, **fields)
+    different['attacks'][0]['damage'] = 999  # Same name, different gameplay stays distinct.
+    db.put(different)
+    client = TestClient(create_app(db.path))
+    before = db.path.read_bytes()
+    query = f'category={category}&page_size=1'
+    first = client.get('/api/v1/cards?' + query).json()
+    second = client.get('/api/v1/cards?' + query + '&page=2').json()
+    assert first['total'] == 2 and first['next_page'] == 2
+    assert first['cards'][0]['id'] == 'new-1'
+    assert second['cards'][0]['id'] == 'new-2' and second['next_page'] is None
+    empty = client.get('/api/v1/cards?' + query + '&regulation_marks=').json()
+    assert empty['total'] == 2 and empty['cards'] == first['cards']
+    marked = client.get('/api/v1/cards?' + query + '&regulation_marks=H&regulation_marks=J').json()
+    assert marked['total'] == 1 and marked['cards'][0]['id'] == 'new-1'
+    h_only = client.get('/api/v1/cards?' + query + '&regulation_marks=H').json()
+    assert h_only['total'] == 1 and h_only['cards'][0]['id'].startswith('old-')
+    assert client.get('/api/v1/cards/new-1').json()['card']['id'] == 'new-1'
+    assert client.get('/api/v1/cards/old-1').json()['card']['id'] == 'old-1'
+    assert db.search('', category=category, format='standard')['total'] == 32  # MCP remains exact.
+    assert db.path.read_bytes() == before

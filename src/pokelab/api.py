@@ -1,5 +1,6 @@
 """Read-only web adapter. No MCP, Qt, synchronization or provider dependency."""
 from contextlib import closing
+import json
 import os
 from pathlib import Path
 import sqlite3
@@ -10,6 +11,7 @@ from fastapi import FastAPI, HTTPException, Query
 from tcg_lab.card_db import SQLiteCards
 from tcg_lab.cards import CardLookupError, check_id, public_card
 from .images import TCGdexImages
+from .engine import functional_signature
 from .web_models import LibraryQuery, CardPage, CardDetail, Status
 
 
@@ -42,6 +44,29 @@ class ReadOnlyCards(SQLiteCards):
             db.close()
             raise CardLookupError('Unsupported database version')
         return db
+
+    def _search_page(self, db, where, params, page, page_size):
+        """One newest eligible printing per conservative engine identity.
+
+        Filter first so a mark-specific search can select that printing. Group and
+        count before pagination. Missing release dates sort last; regulation and
+        exact ID break release-date ties. No identity tables or cache writes needed.
+        MCP keeps the base service's exact-printing search contract.
+        """
+        db.create_function('functional_identity', 1,
+                           lambda raw: functional_signature(json.loads(raw)), deterministic=True)
+        representatives = f"""WITH eligible AS (SELECT * FROM cards WHERE {where}),
+            ranked AS (
+                SELECT c.raw,c.game,c.id,ROW_NUMBER() OVER (
+                    PARTITION BY functional_identity(c.raw)
+                    ORDER BY COALESCE(json_extract(s.raw,'$.releaseDate'),'') DESC,
+                             COALESCE(c.regulation,'') DESC,c.id DESC) representative
+                FROM eligible c LEFT JOIN sets s ON s.id=c.set_id)
+            """
+        total = db.execute(representatives + 'SELECT count(*) FROM ranked WHERE representative=1', params).fetchone()[0]
+        rows = db.execute(representatives + 'SELECT raw,game FROM ranked WHERE representative=1 ORDER BY id LIMIT ? OFFSET ?',
+                          [*params, page_size, (page - 1) * page_size]).fetchall()
+        return total, rows
 
 
 def create_app(database=None):

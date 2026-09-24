@@ -124,7 +124,7 @@ export function LibraryControls({
       </div>
 
       {/* Card count */}
-      <span style={{ fontSize: 11, color: '#505c70', fontFamily: 'JetBrains Mono', flexShrink: 0 }}>
+      <span data-testid="result-progress" style={{ fontSize: 11, color: '#505c70', fontFamily: 'JetBrains Mono', flexShrink: 0 }}>
         {filteredCount}/{totalCards}
       </span>
 

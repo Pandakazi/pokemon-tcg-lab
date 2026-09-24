@@ -1,6 +1,6 @@
 """Bounded library HTTP contracts; source fields remain canonical in SQLite."""
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 Category = Literal['Pokemon', 'Trainer', 'Energy']
 PokemonType = Literal['Colorless','Darkness','Dragon','Fairy','Fighting','Fire','Grass','Lightning','Metal','Psychic','Water']
@@ -12,15 +12,24 @@ class LibraryQuery(BaseModel):
     include_image: bool = False
     category: Category = 'Pokemon'
     q: str = Field('', max_length=100)
+    has_ability: bool = False
     pokemon_types: list[PokemonType] = Field(default_factory=list, max_length=11)
     stages: list[Literal['Basic','Stage1','Stage2']] = Field(default_factory=list, max_length=3)
     trainer_types: list[Literal['Item','Supporter','Stadium','Tool']] = Field(default_factory=list, max_length=4)
     energy_types: list[Literal['Normal','Special']] = Field(default_factory=list, max_length=2)
     regulation_marks: list[str] = Field(default_factory=list, max_length=26)
 
+    @field_validator('pokemon_types', 'stages', 'trainer_types', 'energy_types', 'regulation_marks', mode='before')
+    @classmethod
+    def empty_selections(cls, values):
+        # Empty HTML/query values are an unselected family, not an SQL constraint.
+        if isinstance(values, (list, tuple)):
+            return list(dict.fromkeys(value for value in values if value != ''))
+        return values
+
     @model_validator(mode='after')
     def compatible(self):
-        if (self.category != 'Pokemon' and (self.pokemon_types or self.stages)
+        if (self.category != 'Pokemon' and (self.pokemon_types or self.stages or self.has_ability)
             or self.category != 'Trainer' and self.trainer_types
             or self.category != 'Energy' and self.energy_types):
             raise ValueError('Filter family does not apply to this category')

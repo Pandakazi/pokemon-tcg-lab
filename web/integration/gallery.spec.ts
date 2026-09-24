@@ -5,7 +5,16 @@ import path from 'node:path'
 test('approved gallery → API → synchronized SQLite, with real images and no upstream data requests',async ({page,request})=>{
  const root=path.resolve('..')
  const python=process.env.POKELAB_TEST_PYTHON || path.join(root,'.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python')
- const sql="import os,sqlite3,json; c=sqlite3.connect('file:'+os.getenv('TCG_CARDS_DB_PATH','data/cards.sqlite3')+'?mode=ro',uri=True); print(json.dumps([json.loads(r[0]) for r in c.execute(\"SELECT raw FROM cards WHERE standard=1 AND game='tcg' AND category='Pokemon' ORDER BY id LIMIT 48\")]))"
+ const sql=`import os,sqlite3,json
+from pokelab.engine import functional_signature
+c=sqlite3.connect('file:'+os.getenv('TCG_CARDS_DB_PATH','data/cards.sqlite3')+'?mode=ro',uri=True)
+groups={}
+for raw,release in c.execute("SELECT c.raw,COALESCE(json_extract(s.raw,'$.releaseDate'),'') FROM cards c LEFT JOIN sets s ON s.id=c.set_id WHERE c.standard=1 AND c.game='tcg' AND c.category='Pokemon'"):
+ card=json.loads(raw)
+ key=functional_signature(card)
+ rank=(release,card.get('regulationMark',''),card['id'])
+ if key not in groups or rank>groups[key][0]: groups[key]=(rank,card)
+print(json.dumps(sorted([v[1] for v in groups.values()],key=lambda card:card['id'])[:48]))`
  const expected=JSON.parse(execFileSync(python,['-c',sql],{cwd:root,encoding:'utf8'}))
  expect(expected.length).toBe(48)
  const upstream:string[]=[]

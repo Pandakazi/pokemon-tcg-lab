@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LibraryControls, TopBar } from './Shell'
 import { loadCards, type CardPage, type FilterOption } from './api'
@@ -6,7 +6,8 @@ import { CardTile } from './CardTile'
 import { Filters, filterFamilies } from './Filters'
 import { CardDetail } from './CardDetail'
 
-function Library({view,setView}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void}) {
+type CategoryMemory = {current:Record<string,string>}
+function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
  const [params,setParams]=useSearchParams()
  const [filterOpen,setFilterOpen]=useState(true)
  const [attempt,setAttempt]=useState(0)
@@ -16,6 +17,8 @@ function Library({view,setView}:{view:'gallery'|'list';setView:(v:'gallery'|'lis
  const [error,setError]=useState('')
  const [pending,setLoading]=useState(true)
  const query=params.toString(), category=params.get('category') || 'Pokemon'
+ const latestQuery=useRef(query)
+ useEffect(()=>{latestQuery.current=query;memory.current[category]=query},[query,category,memory])
  // Never render links from the previous query while URL state is changing.
  const data=resolvedQuery===query?result:null
  const loading=pending || resolvedQuery!==query
@@ -31,13 +34,21 @@ function Library({view,setView}:{view:'gallery'|'list';setView:(v:'gallery'|'lis
   return ()=>{clearTimeout(timer);controller.abort()}
  },[query,attempt])
  const update=(fn:(next:URLSearchParams)=>void,replace=false)=>{
-  const next=new URLSearchParams(params);next.delete('page');fn(next);setParams(next,{replace})
+  const next=new URLSearchParams(latestQuery.current);next.delete('page');fn(next)
+  latestQuery.current=next.toString();setParams(next,{replace})
  }
- const changeCategory=(value:string)=>{setOptions([]);update(next=>{
-  next.set('category',({pokemon:'Pokemon',trainers:'Trainer',energy:'Energy'} as Record<string,string>)[value])
-  filterFamilies.forEach(key=>next.delete(key))
- })}
+ const changeCategory=(value:string)=>{
+  const target=({pokemon:'Pokemon',trainers:'Trainer',energy:'Energy'} as Record<string,string>)[value]
+  if(target===category)return
+  memory.current[category]=latestQuery.current
+  const next=new URLSearchParams(memory.current[target] || `category=${target}`)
+  next.set('category',target);latestQuery.current=next.toString();setOptions([]);setParams(next)
+ }
  const toggle=(key:string,value:string)=>update(next=>{
+  if(key==='has_ability') {
+   const active=['true','1','yes','on'].includes((next.get(key)||'').toLowerCase())
+   next.delete(key);if(!active)next.set(key,'true');return
+  }
   const values=next.getAll(key);next.delete(key)
   const selected=values.includes(value)?values.filter(v=>v!==value):[...values,value]
   selected.forEach(v=>next.append(key,v))
@@ -50,7 +61,7 @@ function Library({view,setView}:{view:'gallery'|'list';setView:(v:'gallery'|'lis
    <LibraryControls category={category==='Trainer'?'trainers':category==='Energy'?'energy':'pokemon'} onCategoryChange={changeCategory}
     scope="all" onScopeChange={()=>{}} viewMode={view} onViewModeChange={setView}
     searchQuery={params.get('q') || ''} onSearchChange={q=>update(next=>{q?next.set('q',q):next.delete('q')},true)}
-    filterOpen={filterOpen} onFilterToggle={()=>setFilterOpen(v=>!v)} totalCards={data?.total??0} filteredCount={data?.cards.length??0}/>
+    filterOpen={filterOpen} onFilterToggle={()=>setFilterOpen(v=>!v)} totalCards={data?.total??0} filteredCount={data?Math.min((data.page-1)*data.page_size+data.cards.length,data.total):0}/>
    <div className="source-note">TCGdex · local SQLite · Standard {category==='Pokemon'?'Pokémon':category}
     {data && <span> · Sync: {data.sync.status}{data.sync.finished_at?` · ${data.sync.finished_at.slice(0,10)}`:''}</span>}
    </div>
@@ -71,12 +82,13 @@ function Library({view,setView}:{view:'gallery'|'list';setView:(v:'gallery'|'lis
  </>
 }
 export function Application() {
+ const categoryMemory=useRef<Record<string,string>>({})
  const [agentOpen,setAgentOpen]=useState(true)
  const [view,setView]=useState<'gallery'|'list'>('gallery')
  const navigate=useNavigate(), location=useLocation()
  return <div className="mica-bg app-shell"><TopBar activeNav="Library" onNavChange={()=>navigate(location.state?.library || '/')}/>
   <div className="workspace"><Routes>
-   <Route path="/" element={<Library view={view} setView={setView}/>}/>
+   <Route path="/" element={<Library view={view} setView={setView} memory={categoryMemory}/>}/>
    <Route path="/cards/:printingId" element={<CardDetail/>}/>
    <Route path="*" element={<main className="gallery-scroll"><h1>Page not found</h1><Link to="/">Open library</Link></main>}/>
   </Routes>

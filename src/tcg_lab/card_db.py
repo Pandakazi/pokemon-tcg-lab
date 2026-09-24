@@ -170,6 +170,10 @@ class SQLiteCards:
             if selected:
                 clauses.append(expression.format(marks=",".join("?" for _ in selected)))
                 params.extend(selected)
+        if 'has_ability' in filters and type(filters['has_ability']) is not bool:
+            raise ValueError('has_ability must be boolean')
+        if filters.get('has_ability'):
+            clauses.append("category='Pokemon' AND EXISTS (SELECT 1 FROM json_each(raw,'$.abilities') a WHERE json_extract(a.value,'$.type')='Ability')")
         if "format" in filters:
             fmt = filters["format"]
             if fmt not in ("standard", "expanded", "unlimited"):
@@ -183,14 +187,12 @@ class SQLiteCards:
                 params.append(int(legality == "legal"))
         elif "legality" in filters:
             raise ValueError("legality requires format")
-        if set(filters) - (set(columns) | set(families) | {"text", "pokemon_type", "format", "legality"}):
+        if set(filters) - (set(columns) | set(families) | {"text", "pokemon_type", "format", "legality", "has_ability"}):
             raise ValueError("Unsupported search filter")
         where = " AND ".join(clauses) or "1"
         with closing(self.connect()) as db:
             self._ready(db)
-            total = db.execute(f"SELECT count(*) FROM cards WHERE {where}", params).fetchone()[0]
-            rows = db.execute(f"SELECT raw,game FROM cards WHERE {where} ORDER BY id LIMIT ? OFFSET ?",
-                              [*params, page_size, (page - 1) * page_size]).fetchall()
+            total, rows = self._search_page(db, where, params, page, page_size)
         result = {"cards": [dict(summary(json.loads(r["raw"]), include_image), game=r["game"]) for r in rows],
                   "page": page, "page_size": page_size, "total": total,
                   "next_page": page + 1 if page * page_size < total else None, "scope": "local TCGdex database"}
@@ -200,3 +202,10 @@ class SQLiteCards:
         else:
             result["sync"] = {"status": "not_completed"}
         return result
+
+    def _search_page(self, db, where, params, page, page_size):
+        """Exact-printing pagination; presentation adapters may select representatives."""
+        total = db.execute(f"SELECT count(*) FROM cards WHERE {where}", params).fetchone()[0]
+        rows = db.execute(f"SELECT raw,game FROM cards WHERE {where} ORDER BY id LIMIT ? OFFSET ?",
+                          [*params, page_size, (page - 1) * page_size]).fetchall()
+        return total, rows
