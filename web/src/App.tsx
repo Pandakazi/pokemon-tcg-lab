@@ -1,59 +1,90 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { LibraryControls, TopBar } from './Shell'
-import { loadCards, type CardPage } from './api'
+import { loadCards, type CardPage, type FilterOption } from './api'
 import { CardTile } from './CardTile'
+import { Filters, filterFamilies } from './Filters'
+import { CardDetail } from './CardDetail'
 
-export default function App() {
-  const [filterOpen, setFilterOpen] = useState(true)
-  const [agentOpen, setAgentOpen] = useState(true)
-  const [page, setPage] = useState(1)
-  const [attempt, setAttempt] = useState(0)
-  const [data, setData] = useState<CardPage | null>(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true); setError(''); setData(null)
-    loadCards(page, controller.signal).then(result => {
-      if (!controller.signal.aborted) setData(result)
-    }).catch(reason => {
-      if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : 'Unable to reach the card API.')
-    }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
-  }, [page, attempt])
-  return <div className="mica-bg app-shell">
-    <TopBar activeNav="Library" onNavChange={() => {}} />
-    <div className="workspace">
-      {filterOpen && <aside className="filter-panel" aria-label="Filters">
-        <h2>FILTERS</h2><p>Filters are unavailable in Phase 1.</p><h3>POKÉMON TYPE</h3>
-        {['Grass','Fire','Water','Lightning','Psychic','Fighting','Darkness','Metal','Dragon','Colorless'].map(type =>
-          <label key={type}><input disabled type="checkbox"/> {type}</label>)}
-        <p>Showing Standard Pokémon printings using TCGdex legality flags.</p>
-      </aside>}
-      <main>
-        <LibraryControls category="pokemon" onCategoryChange={() => {}} scope="all" onScopeChange={() => {}}
-          viewMode="gallery" onViewModeChange={() => {}} searchQuery="" onSearchChange={() => {}}
-          filterOpen={filterOpen} onFilterToggle={() => setFilterOpen(v => !v)}
-          totalCards={data?.total ?? 0} filteredCount={data?.cards.length ?? 0}/>
-        <div className="source-note">TCGdex · local SQLite · Standard Pokémon
-          {data && <span> · Sync: {data.sync.status}{data.sync.finished_at ? ` · ${data.sync.finished_at.slice(0, 10)}` : ''}</span>}
-        </div>
-        <section className="gallery-scroll" aria-label="Card gallery" aria-busy={loading}>
-          {loading && <p role="status">Loading cards…</p>}
-          {error && <div role="alert"><h2>Cards could not be loaded</h2><p>{error}</p><button onClick={() => setAttempt(v => v+1)}>Retry</button></div>}
-          {data && !data.cards.length && <p>No Standard Pokémon printings on this page.</p>}
-          {data && <div className="card-grid">{data.cards.map(card => <CardTile key={card.id} card={card}/>)}</div>}
-        </section>
-        <nav className="pagination" aria-label="Pagination">
-          <button disabled={loading || page === 1} onClick={() => setPage(v => v-1)}>Previous</button>
-          <span>Page {page}{data ? ` of ${Math.max(1, Math.ceil(data.total/data.page_size))}` : ''}</span>
-          <button disabled={loading || !data?.next_page} onClick={() => setPage(data!.next_page!)}>Next</button>
-        </nav>
-      </main>
-      <aside className={`agent-panel ${agentOpen ? '' : 'collapsed'}`} aria-label="PokéLab Agent">
-        <button aria-expanded={agentOpen} onClick={() => setAgentOpen(v => !v)}>{agentOpen ? 'PokéLab Agent  ›' : '‹'}</button>
-        {agentOpen && <p>The Agent workspace is preserved for a later slice. No AI provider is connected.</p>}
-      </aside>
-    </div>
-  </div>
+function Library({view,setView}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void}) {
+ const [params,setParams]=useSearchParams()
+ const [filterOpen,setFilterOpen]=useState(true)
+ const [attempt,setAttempt]=useState(0)
+ const [result,setData]=useState<CardPage|null>(null)
+ const [resolvedQuery,setResolvedQuery]=useState<string|null>(null)
+ const [options,setOptions]=useState<FilterOption[]>([])
+ const [error,setError]=useState('')
+ const [pending,setLoading]=useState(true)
+ const query=params.toString(), category=params.get('category') || 'Pokemon'
+ // Never render links from the previous query while URL state is changing.
+ const data=resolvedQuery===query?result:null
+ const loading=pending || resolvedQuery!==query
+ const page=Number(params.get('page') || 1)
+ useEffect(()=>{
+  const controller=new AbortController()
+  setLoading(true); setError(''); setData(null)
+  const timer=setTimeout(()=>loadCards(new URLSearchParams(query),controller.signal).then(result=>{
+   if(!controller.signal.aborted) {setData(result);setResolvedQuery(query);setOptions(result.filter_options || [])}
+  }).catch(reason=>{
+   if(!controller.signal.aborted) {setError(reason instanceof Error?reason.message:'Unable to reach the card API.');setResolvedQuery(query)}
+  }).finally(()=>{if(!controller.signal.aborted)setLoading(false)}),150)
+  return ()=>{clearTimeout(timer);controller.abort()}
+ },[query,attempt])
+ const update=(fn:(next:URLSearchParams)=>void,replace=false)=>{
+  const next=new URLSearchParams(params);next.delete('page');fn(next);setParams(next,{replace})
+ }
+ const changeCategory=(value:string)=>{setOptions([]);update(next=>{
+  next.set('category',({pokemon:'Pokemon',trainers:'Trainer',energy:'Energy'} as Record<string,string>)[value])
+  filterFamilies.forEach(key=>next.delete(key))
+ })}
+ const toggle=(key:string,value:string)=>update(next=>{
+  const values=next.getAll(key);next.delete(key)
+  const selected=values.includes(value)?values.filter(v=>v!==value):[...values,value]
+  selected.forEach(v=>next.append(key,v))
+ })
+ const clear=()=>update(next=>filterFamilies.forEach(key=>next.delete(key)))
+ return <>
+  {filterOpen && <Filters options={options} params={params} onChange={toggle} onClear={clear}/>}
+  <main>
+   <h1 className="sr-only">Card library</h1>
+   <LibraryControls category={category==='Trainer'?'trainers':category==='Energy'?'energy':'pokemon'} onCategoryChange={changeCategory}
+    scope="all" onScopeChange={()=>{}} viewMode={view} onViewModeChange={setView}
+    searchQuery={params.get('q') || ''} onSearchChange={q=>update(next=>{q?next.set('q',q):next.delete('q')},true)}
+    filterOpen={filterOpen} onFilterToggle={()=>setFilterOpen(v=>!v)} totalCards={data?.total??0} filteredCount={data?.cards.length??0}/>
+   <div className="source-note">TCGdex · local SQLite · Standard {category==='Pokemon'?'Pokémon':category}
+    {data && <span> · Sync: {data.sync.status}{data.sync.finished_at?` · ${data.sync.finished_at.slice(0,10)}`:''}</span>}
+   </div>
+   <section className="gallery-scroll" aria-label="Card library results" aria-busy={loading}>
+    {loading && <p role="status">Loading cards…</p>}
+    {error && resolvedQuery===query && <div role="alert"><h2>Cards could not be loaded</h2><p>{error}</p><button onClick={()=>setAttempt(v=>v+1)}>Retry</button> <Link to="/">Reset library query</Link></div>}
+    {data && !data.cards.length && <p role="status">No cards match this query.</p>}
+    {data && <div className={view==='gallery'?'card-grid':'card-list'}>
+     {view==='list' && <div className="list-heading" aria-hidden="true"><span>Card</span><span>Name</span><span>Set · Number</span><span>Printing ID</span><span>Classification</span><span>Legality</span></div>}
+     {data.cards.map(card=><CardTile key={card.id} card={card} list={view==='list'}/>)}</div>}
+   </section>
+   <nav className="pagination" aria-label="Pagination">
+    <button disabled={loading || page<=1} onClick={()=>{const next=new URLSearchParams(params);next.set('page',String(page-1));setParams(next)}}>Previous</button>
+    <span>Page {page}{data?` of ${Math.max(1,Math.ceil(data.total/data.page_size))}`:''}</span>
+    <button disabled={loading || !data?.next_page} onClick={()=>{const next=new URLSearchParams(params);next.set('page',String(data!.next_page));setParams(next)}}>Next</button>
+   </nav>
+  </main>
+ </>
 }
+export function Application() {
+ const [agentOpen,setAgentOpen]=useState(true)
+ const [view,setView]=useState<'gallery'|'list'>('gallery')
+ const navigate=useNavigate(), location=useLocation()
+ return <div className="mica-bg app-shell"><TopBar activeNav="Library" onNavChange={()=>navigate(location.state?.library || '/')}/>
+  <div className="workspace"><Routes>
+   <Route path="/" element={<Library view={view} setView={setView}/>}/>
+   <Route path="/cards/:printingId" element={<CardDetail/>}/>
+   <Route path="*" element={<main className="gallery-scroll"><h1>Page not found</h1><Link to="/">Open library</Link></main>}/>
+  </Routes>
+  <aside className={`agent-panel ${agentOpen?'':'collapsed'}`} aria-label="PokéLab Agent">
+   <button aria-expanded={agentOpen} onClick={()=>setAgentOpen(v=>!v)}>{agentOpen?'PokéLab Agent  ›':'‹'}</button>
+   {agentOpen && <p>The Agent workspace is preserved for a later slice. No AI provider is connected.</p>}
+  </aside></div>
+ </div>
+}
+// Query controls must update synchronously with the URL, not in a delayed transition.
+export default function App() {return <BrowserRouter useTransitions={false}><Application/></BrowserRouter>}

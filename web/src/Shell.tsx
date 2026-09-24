@@ -47,7 +47,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{color:'#8892a4',fontSize:11}}>Web prototype · Phase 1</span>
+        <span style={{color:'#8892a4',fontSize:11}}>Library · Phase 2</span>
       </div>
     </div>
   )
@@ -80,7 +80,7 @@ export function LibraryControls({
           color: filterOpen ? '#a78bfa' : '#6b7280', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
         }}
-        title="Toggle filters"
+        aria-label="Toggle filters" aria-expanded={filterOpen} title="Toggle filters"
       >
         ⊞
       </button>
@@ -90,7 +90,7 @@ export function LibraryControls({
         {(['pokemon', 'trainers', 'energy'] as Category[]).map(cat => (
           <button
             key={cat}
-            disabled onClick={() => onCategoryChange(cat)}
+            aria-pressed={category === cat} onClick={() => onCategoryChange(cat)}
             style={{
               padding: '4px 14px', borderRadius: 5, border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: category === cat ? 600 : 400,
@@ -136,16 +136,16 @@ export function LibraryControls({
       }}>
         <span style={{ color: '#505c70', fontSize: 12, flexShrink: 0 }}>⌕</span>
         <input
-          disabled value={searchQuery}
+          aria-label="Search cards" maxLength={100} value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
-          placeholder="Search available in a later slice"
+          placeholder="Search cards…"
           style={{
             flex: 1, background: 'none', border: 'none', outline: 'none',
             fontSize: 12, color: '#dde1ed', fontFamily: 'Inter',
           }}
         />
         {searchQuery && (
-          <button onClick={() => onSearchChange('')} style={{ background: 'none', border: 'none', color: '#505c70', cursor: 'pointer', fontSize: 13, padding: 0 }}>×</button>
+          <button aria-label="Clear search" onClick={() => onSearchChange('')} style={{ background: 'none', border: 'none', color: '#505c70', cursor: 'pointer', fontSize: 13, padding: 0 }}>×</button>
         )}
       </div>
 
@@ -159,7 +159,7 @@ export function LibraryControls({
         ].map(({ mode, icon, label }) => (
           <button
             key={mode}
-            disabled={mode === "list"} onClick={() => onViewModeChange(mode)}
+            aria-pressed={viewMode === mode} aria-label={label} onClick={() => onViewModeChange(mode)}
             title={label}
             style={{
               padding: '4px 10px', borderRadius: 5, border: 'none', cursor: 'pointer',

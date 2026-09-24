@@ -64,3 +64,16 @@ button:focus-visible,input:focus-visible {outline:2px solid #a78bfa;outline-offs
 .card-details,.card-tile small {font-size:10px;color:#8892a4}
 .image-fallback {height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px;padding:10px;color:#a5b4fc}
 .pagination {display:flex;align-items:center;justify-content:center;gap:20px;padding:12px;border-top:1px solid #ffffff12;font-size:12px}
+.card-link {display:flex;flex-direction:column;gap:4px;color:inherit;text-decoration:none;min-width:0}
+a:focus-visible {outline:2px solid #a78bfa;outline-offset:4px;border-radius:4px}
+.card-link>strong {font-size:11px;color:#c8cee0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-link small {font-size:10px;color:#8892a4}
+.card-row .card-link,.list-heading {display:grid;grid-template-columns:48px minmax(100px,1fr) minmax(90px,1fr) 100px minmax(110px,1fr) 100px;align-items:center;gap:12px;padding:8px 4px;border-bottom:1px solid #ffffff12}
+.card-list {min-width:660px}.card-row:hover{background:#ffffff05}.list-heading{position:sticky;top:-20px;background:#10131b;color:#8892a4;font-size:11px}
+.filter-panel fieldset{border:0;padding:0;margin-top:20px}.filter-panel legend{font-family:Outfit,sans-serif;font-size:12px;color:#c4b5fd}
+.filter-panel button,.detail-page button{border:1px solid #ffffff20;border-radius:6px;background:#ffffff09;color:#c4b5fd;padding:6px 10px}
+.detail-page{overflow:auto;padding:24px;display:block}.detail-page>a{color:#c4b5fd}.detail-layout{display:grid;grid-template-columns:minmax(160px,300px) minmax(240px,1fr);gap:32px;margin-top:24px}
+.detail-page h1{font-family:Outfit,sans-serif;font-size:26px;margin:12px 0}.detail-page h2{margin:24px 0 12px;font-size:16px}.detail-page p{line-height:1.65;color:#b5bfd2;margin-bottom:12px;white-space:pre-wrap}
+.detail-page dl{display:grid;grid-template-columns:140px 1fr;gap:8px;margin:20px 0;font-size:13px}.detail-page dt{color:#8892a4}.detail-page dd{overflow-wrap:anywhere}.detail-page .source-note{padding:8px 0}
+.rule-text{padding:12px;border:1px solid #ffffff12;border-radius:6px;margin-bottom:10px}.rule-text h3{margin-bottom:8px}
+@media(max-width:850px){.detail-layout{grid-template-columns:1fr}.detail-art{max-width:280px}.agent-panel{width:180px}.filter-panel{width:160px}}

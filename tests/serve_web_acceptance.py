@@ -1,5 +1,6 @@
 """Browser acceptance server: reject all outbound socket connections."""
 import socket
+import os
 import uvicorn
 
 original_connect = socket.socket.connect
@@ -15,4 +16,4 @@ def guarded(original):
 
 socket.socket.connect = guarded(original_connect)
 socket.socket.connect_ex = guarded(original_connect_ex)
-uvicorn.run('pokelab.api:app', host='127.0.0.1', port=8001)
+uvicorn.run('pokelab.api:app', host='127.0.0.1', port=int(os.getenv('POKELAB_TEST_API_PORT', '8002')))
