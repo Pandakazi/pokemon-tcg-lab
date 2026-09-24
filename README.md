@@ -149,7 +149,7 @@ On macOS use `.venv/bin/python`, `npm`, and `npx` equivalents.
 If Windows pytest cannot access its default temp folder, supply `--basetemp` with a
 new disposable directory (pytest owns and may clear that directory).
 
-Validated on September 24, 2026: **114 Python tests, 22 frontend tests, 5 real-data
+Validated on September 24, 2026: **115 Python tests, 23 frontend tests, 6 real-data
 Chromium integration tests; TypeScript and production build passed**. Two upstream
 Python test-client deprecation warnings remain. See [test results](TEST-RESULTS.md).
 
@@ -164,10 +164,11 @@ See [Phase 2 behavior, API contracts, PM walkthrough and QA scope matrix](docs/p
 Restart the API and run `npm ci` in `web/` when upgrading from Phase 1.
 Browser library URL: `/`; exact-printing detail URL: `/cards/<printing-id>`.
 The Phase 2 QA pass adds independent category browsing state, cumulative page
-progress and a structured Pokémon **Has Ability** filter. Empty filter families
+progress and a structured Pokémon **Ability: Yes / No** filter. Empty filter families
 are unrestricted; selections OR within a family and AND across families. The
 Library displays the newest matching Standard-legal representative per existing
-functional-card identity, retaining exact detail IDs. Restart the API after this
+functional-card identity, with a Library-only Basic Energy type grouping, retaining
+exact detail IDs. Canonical engine identity and MCP remain unchanged. Restart the API after this
 update; no database migration or re-sync is required. Other categories' remembered
 queries last for the mounted client session; the active URL survives refresh.
 

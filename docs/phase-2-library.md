@@ -16,7 +16,7 @@ not top-level tabs. Basic Energy is the display label for source classification
 - `category=Pokemon|Trainer|Energy` (default Pokemon)
 - `q`: case-insensitive name substring or exact ID, up to 100 characters
 - repeated `pokemon_types`, `stages`, `trainer_types`, `energy_types`, `regulation_marks`
-- `has_ability=true` for Pokémon with a structured `abilities[].type == "Ability"`
+- repeated `ability=Yes|No`; legacy `has_ability=true` remains a Yes alias
 - `page` 1–10000, `page_size` 1–50 (UI uses 24), `include_image` false by default
 
 An empty family imposes no restriction (including explicit empty query values).
@@ -24,9 +24,12 @@ Duplicate repeated values are normalized. One family combines values with OR;
 different populated families combine with AND. Example:
 `/api/v1/cards?category=Pokemon&pokemon_types=Psychic&pokemon_types=Dragon&stages=Basic`.
 Stage values are `Basic`, `Stage1`, `Stage2`. Filters incompatible with the selected
-category are rejected, as are unknown parameters/invalid values. Has Ability is
-unchecked/unrestricted by default; legacy Powers/Bodies/Ancient Traits and arbitrary
-text mentioning “Ability” do not match. It ANDs with the other populated families.
+category are rejected, as are unknown parameters/invalid values. The Pokémon
+**Ability** group sits between Stage and Regulation mark. Neither selected or
+Yes + No means unrestricted; Yes requires a structured `abilities[].type == "Ability"`;
+No requires none. Legacy Powers/Bodies/Ancient Traits and arbitrary text mentioning
+“Ability” do not count. The family ANDs with other populated families. A nonempty
+`ability` family takes precedence over the legacy alias; editing it uses the new URL.
 Category changes restore that category's independent search/filter/page state.
 A category not yet visited starts unfiltered at page 1 with no search.
 Search/filter changes reset the page. Clear filters retains category and search;
@@ -51,8 +54,21 @@ printing; H + J can select the newer matching printing without duplicating the g
 Clearing filters returns all functional groups, never all historical printings.
 Names alone do not define identity. Different gameplay fields and unresolved source
 records remain distinct; existing conservative identity rules are not broadened.
-The current cache has 73 Energy groups (66 Normal/Basic and 7 Special), versus 316
-exact Energy printings. This is not a curated equivalence catalogue.
+Basic Energy has one additional **Library-only** rule: recognized names such as
+Water Energy / Basic Water Energy group by Energy type, despite historical text,
+artwork or source differences. An available structured type must agree with the
+curated name. Missing historical types can use that exact name mapping. Selection
+still requires source-marked Standard legality and uses the same newest-printing
+ranking. Canonical `functional_signature`, database records and MCP are unchanged.
+Special Energy and unrecognized/ambiguous records retain functional grouping.
+
+The current cache yields eight recognized Basic Energy representatives and 27
+Energy groups overall. Source classification still reports 20 Normal and 7 Special:
+12 other groups, including Prism/Ignition Energy, are labeled Normal upstream.
+They remain distinct; they are not collapsed into Basic types or silently relabeled.
+Correcting upstream classification is outside this cleanup. Existing classification
+filter behavior remains source-backed; Basic/Normal may therefore include these
+ambiguous records. This rule is not a general curated equivalence catalogue.
 
 This changes Library totals/pages intentionally. MCP search still returns exact
 printings, and every exact detail URL remains available, including older printings.
@@ -143,9 +159,12 @@ initialization and macOS equivalents remain in the README. On macOS use
 12. In Pokémon select Water + Basic, navigate to an available later page, then
     browse/search Trainers and Energy. Returning to each category must restore its
     own query and page. Check Back/Forward and a copied current URL too.
-13. Select Psychic + Dragon + Basic + Has Ability. Every displayed Pokémon must
+13. Select Psychic + Dragon + Basic + Ability: Yes. Every displayed Pokémon must
     have an actual Ability in Card Detail. Remove the type selections to browse
     multiple pages of Basic Pokémon with Abilities; progress must advance.
+    Select No alone: cards must have no structured Ability. Select both or neither:
+    the Ability family must impose no restriction. Verify its position between
+    Stage and Regulation mark and reload the shared URL.
 14. Clearing filters must not flood any category with equivalent reprints. Cards
     with the same name but different gameplay may legitimately remain separate.
 
@@ -159,7 +178,8 @@ initialization and macOS equivalents remain in the README. On macOS use
 - Filter-panel toggle: expand/collapse; Clear filters: reset active filter families.
 - Pokémon type checkboxes: multi-select, including multi-type card matches.
 - Stage checkboxes and regulation-mark checkboxes: source-backed selections.
-- Has Ability checkbox: structured Pokémon Ability filter, URL-backed, AND with other families.
+- Ability Yes/No checkboxes: structured Pokémon Ability family between Stage and
+  Regulation mark, URL-backed; OR within the family and AND with other families.
 - Trainer subtype checkboxes: Item, Supporter, Stadium, Tool where present.
 - Energy classification checkboxes: Basic/Normal and Special where present.
 - Gallery/List buttons: same results and page, different presentation.
@@ -208,7 +228,7 @@ architecture change was needed.
 
 ## Engineering validation
 
-114 Python tests, 22 frontend tests and all 5 real-data Chromium tests passed.
+115 Python tests, 23 frontend tests and all 6 real-data Chromium tests passed.
 TypeScript and production build passed. All 23,736 cached records validated against
 the detail response model. The rendered filtered list/detail were inspected.
 The stale-query link and deferred-navigation timing defects found during browser

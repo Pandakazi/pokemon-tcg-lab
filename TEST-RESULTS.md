@@ -1,5 +1,28 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — final Phase 2 cleanup
+
+- **115 Python tests**, **23 frontend tests**, **6 real-data Chromium tests** passed.
+  Explicit TypeScript validation and production build passed. Python: 18.01 seconds;
+  browser: 31.1 seconds. Two existing upstream Python deprecation warnings remain.
+- Library-only Basic Energy identity merges historical/source variants by curated
+  Energy type and selects the newest eligible Standard printing. Regression fixtures
+  preserve canonical identity, distinct Special/ambiguous Energy, exact old detail
+  lookup, MCP exact search and unchanged database bytes.
+- Real cache/browser verification found exactly eight recognized Basic Energy
+  representatives. Source-labeled Normal also includes 12 distinct non-Basic/ambiguous
+  groups; these retain functional identity and source classification rather than
+  being merged or silently corrected. Overall Energy totals: 27, Normal 20, Special 7.
+- Ability Yes/No tested for neither, Yes, No, both, repeated values, invalid values,
+  Stage/Type combinations, legacy shared URLs, group placement, pagination,
+  category memory and browser reload. Detection remains structured and server-owned.
+- Entire previous regression suites passed, including Gallery/List, search, history,
+  keyboard, images, exact details, MCP, Qt and snapshot behavior. Browser backend
+  outbound connections remain blocked. No upstream sync occurs during browsing.
+- Updated QA scope matrix in [Phase 2 documentation](docs/phase-2-library.md).
+  PM confirmed the preceding five QA fixes; this cleanup awaits final certification.
+  No Phase 3 work and no canonical identity or collection-state changes.
+
 ## September 24, 2026 — Phase 2 QA fix pass
 
 - Full Python suite: **114 passed** in 18.04 seconds; includes preserved MCP,

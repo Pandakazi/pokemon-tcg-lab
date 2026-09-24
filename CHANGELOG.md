@@ -1,5 +1,14 @@
 # Changelog
 
+## Phase 2 final cleanup — 2026-09-24
+
+- Curated Basic Energy grouping by type only in the human-facing Library; canonical
+  functional identities, Special Energy grouping and exact-printing access retained.
+- Replaced Has Ability with an Ability Yes/No family between Stage and Regulation.
+  Neither/both are unrestricted; single selections use structured Ability presence.
+  Legacy `has_ability=true` links remain supported.
+- Updated regression/browser coverage and the final PM QA scope matrix.
+
 ## 0.1.1 — Installation and distribution cleanup
 
 - Replaced fragile Windows import probes with automatic environment creation, installation checks, updates when requirements change, and an explicit repair option. Pytest is development-only.
