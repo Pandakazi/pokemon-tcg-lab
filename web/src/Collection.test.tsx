@@ -63,6 +63,8 @@ test('Detail variation inspection preserves preference and exact quantities; mag
  const fetch=vi.fn(async(url:string)=>ok(url.includes('/variations')?page([first,other]):{card:url.includes('sv02-2')?other:first,source:'TCGdex SQLite',checked_at:'today',fetched_at:'today',live:false,game:'tcg'}))
  vi.stubGlobal('fetch',fetch);render(<App/>);await screen.findByRole('heading',{name:first.name})
  expect(screen.getByLabelText('Exact variation owned')).toHaveTextContent('2')
+ expect(screen.getByText('Click to enlarge')).toBeInTheDocument()
+ expect(screen.queryByRole('button',{name:'Enlarge artwork'})).not.toBeInTheDocument()
  fireEvent.click(screen.getByRole('button',{name:'Enlarge Collection test card sv01-1'}))
  expect(screen.getByRole('dialog',{name:'Artwork sv01-1'})).toBeInTheDocument()
  fireEvent.click(screen.getByRole('button',{name:'Close Artwork sv01-1'}))
@@ -70,6 +72,8 @@ test('Detail variation inspection preserves preference and exact quantities; mag
  fireEvent.click(await screen.findByRole('link',{name:'Inspect sv02-2 reverse'}))
  await waitFor(()=>expect(window.location.pathname).toBe('/cards/sv02-2'))
  expect(window.location.search).toBe('?variant=reverse')
+ fireEvent.click(await screen.findByRole('button',{name:`Enlarge ${other.name} ${other.id}`}))
+ expect(screen.getByRole('dialog',{name:`Artwork ${other.id}`})).toBeInTheDocument()
  expect(fetch.mock.calls.every(args=>!args[0].includes('/preference'))).toBe(true)
 })
 

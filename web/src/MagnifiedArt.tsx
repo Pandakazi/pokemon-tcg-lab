@@ -17,8 +17,8 @@ export function MagnifiedArt({card,children}:{card:Card;children?:ReactNode}) {
  const [open,setOpen]=useState(false)
  const image=card.image_url?.replace('/low.webp','/high.webp')
  return <div className="magnifiable artwork-frame">
-  <div className="embedded-artwork">{children || <CardImage card={card} eager/>}</div>
-  <button disabled={!image} onClick={()=>setOpen(true)} aria-label={`Enlarge ${card.name} ${card.id}`}>Enlarge artwork</button>
+  <div className="embedded-artwork">{children || <button className="artwork-trigger" disabled={!image} onClick={()=>setOpen(true)} aria-label={`Enlarge ${card.name} ${card.id}`}><CardImage card={card} eager/></button>}</div>
+  {!children && <p className="artwork-hint">Click to enlarge</p>}
   {open && <Modal title={`Artwork ${card.id}`} onClose={()=>setOpen(false)}><img className="enlarged-art" src={image!} alt={`${card.name} — ${card.id}`}/></Modal>}
  </div>
 }
