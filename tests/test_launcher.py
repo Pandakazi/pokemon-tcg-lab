@@ -107,7 +107,7 @@ def test_distribution_allowlist(tmp_path):
     root.mkdir()
     for name in module.TOP_FILES:
         (root / name).write_text("example\n")
-    for name in [".env", "data/private.sqlite3", ".venv/bin/python", "src/tcg_lab/__pycache__/x.pyc", "debug.log", "build/secrets.json"]:
+    for name in [".env", "data/private.sqlite3", ".venv/bin/python", "src/tcg_lab/__pycache__/x.pyc", "debug.log", "build/secrets.json", "web/node_modules/private.js", "web/dist/app.js", "web/.env", "web/test-results/private.json"]:
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("private")

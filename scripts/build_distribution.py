@@ -7,7 +7,9 @@ ROOT = Path(__file__).resolve().parents[1]
 TOP_FILES = ["README.md", "CHANGELOG.md", "TEST-RESULTS.md", "pyproject.toml", ".gitignore",
              ".gitattributes", ".env.example", "Run-Local.ps1", "Run-Local.command"]
 PATTERNS = ["src/tcg_lab/*.py", "src/pokelab/*.py", "src/tcg_lab/data/cards.json", "scripts/*.py", "tests/*.py",
-            "docs/*.md", "examples/bully-box-demo.json"]
+            "docs/*.md", "examples/bully-box-demo.json", "web/package.json", "web/package-lock.json",
+            "web/index.html", "web/*.ts", "web/tsconfig.json", "web/src/*.ts", "web/src/*.tsx",
+            "web/src/*.css", "web/integration/*.ts", "web/prototype/*", "web/.figma/make/site.json"]
 
 
 def build(root, output):
