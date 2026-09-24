@@ -13,7 +13,8 @@ class Lab:
     def validate(self, deck: Deck) -> dict:
         counts = deck.counts()
         total = sum(counts.values())
-        errors, unknown, resolved = [], [], {}
+        errors, unknown = [], []
+        sources = {}
         by_name, categories = Counter(), Counter()
         basic, ace_spec = 0, 0
         if total != 60:
@@ -25,7 +26,12 @@ class Lab:
                 unknown.append(f"{card_id}: {exc}")
                 continue
             card = record["card"]
-            resolved[card_id] = record
+            source = sources.setdefault(record["source"], {"cards": 0, "fetched_at_min": record["fetched_at"], "fetched_at_max": record["fetched_at"]})
+            source["cards"] += 1
+            source["fetched_at_min"] = min(source["fetched_at_min"], record["fetched_at"])
+            source["fetched_at_max"] = max(source["fetched_at_max"], record["fetched_at"])
+            if record.get("game") == "pocket":
+                errors.append(f"{card_id}: Pokemon TCG Pocket cards cannot be used in a physical TCG deck.")
             category = card.get("category")
             categories[category or "Unknown"] += count
             if category not in ("Pokemon", "Trainer", "Energy"):
@@ -68,7 +74,7 @@ class Lab:
                 "limitations": ["Checks 60 cards, normal four-copy rule across printings, Basic Pokemon, ACE SPEC count, and provider format flags.",
                                 "Not tournament certification: card-specific deck rules, historical rulings, reprint equivalence and bans need independent verification.",
                                 "Provider legality can be stale; bundled snapshots are dated and never represent a live rules check."],
-                "card_sources": {key: {k: v for k, v in rec.items() if k != "card"} for key, rec in resolved.items()}}
+                "sources": sources}
 
     def save(self, deck: Deck, allow_invalid: bool = False) -> dict:
         result = self.validate(deck)

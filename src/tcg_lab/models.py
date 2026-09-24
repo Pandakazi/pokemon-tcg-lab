@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 Label = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
-CardId = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9.-]{0,79}$")]
+CardId = Annotated[str, StringConstraints(max_length=80, pattern=r"^[A-Za-z0-9](?:[A-Za-z0-9.!?-]|%[0-9A-Fa-f]{2}){0,79}$")]
 Format = Literal["standard", "expanded", "unlimited"]
 
 

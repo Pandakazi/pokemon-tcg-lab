@@ -6,7 +6,7 @@ from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 ROOT = Path(__file__).resolve().parents[1]
 TOP_FILES = ["README.md", "CHANGELOG.md", "TEST-RESULTS.md", "pyproject.toml", ".gitignore",
              ".gitattributes", ".env.example", "Run-Local.ps1", "Run-Local.command"]
-PATTERNS = ["src/tcg_lab/*.py", "src/tcg_lab/data/cards.json", "scripts/*.py", "tests/*.py",
+PATTERNS = ["src/tcg_lab/*.py", "src/pokelab/*.py", "src/tcg_lab/data/cards.json", "scripts/*.py", "tests/*.py",
             "docs/*.md", "examples/bully-box-demo.json"]
 
 

@@ -20,6 +20,9 @@ credentials.json
 *.key
 *.p12
 *.pfx
+*.secret
+*.exe
+image-cache/
 
 # Local databases and launcher state (bundled card data lives in src/tcg_lab/data)
 /data/
