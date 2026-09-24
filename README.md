@@ -2,22 +2,24 @@
 
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
-The roadmap describes future capabilities; Phase 1 currently provides a read-only
-web gallery of real Standard Pokémon printings.
+The roadmap describes future capabilities. Phase 1 was manually certified by PM;
+Phase 2 now provides a read-only Standard card library and exact-printing detail pages.
 
 The approved PokéLab Web Prototype v0.1 Figma Make frontend supplies the visual
 and interaction direction. We reuse its generated source, not a screenshot recreation.
 
 ## What works now
 
-- Real TCGdex-backed Standard Pokémon printings from local SQLite.
+- Real TCGdex-backed Standard Pokémon, Trainer and Energy printings from local SQLite.
+- Server-backed search and category-specific multi-select filters (OR within / AND across groups).
+- Gallery/List views and shareable query URLs; exact-printing card-detail routes.
 - Exact printing IDs, names, sets, collector numbers and dated legality provenance.
 - Real, lazily loaded images; meaningful missing-image fallback.
 - Pagination, loading/error states and retry; collapsible side panels.
 - Normal browsing reads SQLite and never initiates TCGdex synchronization.
 
-Filters, Trainer/Energy navigation, list view, collection, competitive analytics,
-Agent and authentication are disabled/unconnected in this slice. PWA installation,
+Collection, Owned/Unowned, competitive analytics, Agent and authentication remain
+disabled/unconnected in this slice. PWA installation,
 offline service workers, hosting and billing are not implemented.
 
 ## Architecture
@@ -119,10 +121,10 @@ macOS instructions use standard tooling; this milestone was executed on Windows.
 - API not reachable: verify the API terminal is still running and visit
   `http://127.0.0.1:8001/api/v1/status`. Click Retry after fixing the problem.
 - Port occupied: stop your earlier web dev server before restarting. Integration
-  tests require ports 8001 and 5173 free; they launch and stop their own servers.
+  tests require ports 8002 and 5174 free; they launch and stop isolated servers.
 - Missing images: the text cache still works offline, but uncached images need
   access to `assets.tcgdex.net`. A fallback is expected when an image cannot load.
-- Disabled controls are intentional Phase 1 boundaries, not broken connections.
+- Disabled controls are intentional Phase 2 boundaries, not broken connections.
 
 ## Tests and build
 
@@ -141,22 +143,26 @@ npm.cmd run test:integration
 `desktop` installs the optional Qt dependencies so preserved UI regression tests run.
 The build explicitly runs TypeScript type checking. Browser integration requires a
 synchronized database, internet access for real-image verification, and free ports
-8001/5173. It compares the first two pages against SQLite and blocks non-loopback
+8002/5174. It compares the first two pages against SQLite and blocks non-loopback
 outbound connections from the backend. Unit tests use deterministic fixtures.
 On macOS use `.venv/bin/python`, `npm`, and `npx` equivalents.
 If Windows pytest cannot access its default temp folder, supply `--basetemp` with a
 new disposable directory (pytest owns and may clear that directory).
 
-Validated on September 24, 2026: **94 Python tests, 6 frontend tests, 1 real-data
-Chromium integration test; TypeScript and production build passed**. Two upstream
+Validated on September 24, 2026: **109 Python tests, 14 frontend tests, 3 real-data
+Chromium integration tests; TypeScript and production build passed**. Two upstream
 Python test-client deprecation warnings remain. See [test results](TEST-RESULTS.md).
 
 ## Roadmap and history
 
-Next, after PM review: real filtering, user-aware collection, competitive analytics,
+Next, after PM review: user-aware collection, competitive analytics,
 archetype evidence, authentication before hosted private/paid use, Agent with metering,
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
 No later slice is activated by this milestone.
+
+See [Phase 2 behavior, API contracts, PM walkthrough and QA scope matrix](docs/phase-2-library.md).
+Restart the API and run `npm ci` in `web/` when upgrading from Phase 1.
+Browser library URL: `/`; exact-printing detail URL: `/cards/<printing-id>`.
 
 The annotated `pre-web-pivot-2026-09-24` tag preserves Python/Qt/MCP history.
 The `web-pivot` development line contains the Figma import and web implementation.

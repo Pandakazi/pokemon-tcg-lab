@@ -50,3 +50,27 @@ The ZIP builder includes only release source, tests, documentation, the two laun
 - npm audit reported zero vulnerabilities for the installed dependency lock.
 - Windows tested; macOS run instructions not executed. Qt EXE remains uncertified
   with the preserved DLL startup failure. No later web phases implemented.
+
+## September 24, 2026 — Phase 2 final validation
+
+Phase 1 was manually certified by PM; Phase 2 awaits its own PM QA.
+
+- Full Python suite: 109 passed in 19.97 seconds. Existing MCP, Qt and snapshot
+  regressions remain included; two upstream test-client deprecation warnings remain.
+- Frontend: 14 tests passed, including URL query/view preservation, direct detail,
+  errors, multi-select request construction and immediate removal of stale card links.
+- Explicit TypeScript validation and Vite production build passed.
+- Chromium: all 3 integration tests passed in 15.5 seconds. Verified actual decoded
+  card images, exact IDs against SQLite, categories, search, OR/AND filter selections,
+  page 2, Gallery/List, keyboard Enter navigation, detail text, Back/Forward, direct
+  reload and missing-printing handling. Backend external connections remained blocked.
+- Read-only model audit: all 23,736 cached records validated against the detail model.
+- Rendered filtered list and detail inspected; screenshots retained as local QA outputs.
+- An earlier browser run exposed delayed router state and briefly stale result links.
+  Query navigation now commits synchronously; previous-query links are hidden while
+  loading. A regression test covers the stale-link case.
+- One intermediate external-image check timed out; the final complete run decoded
+  real images successfully. Image-host availability remains an external dependency.
+- The usage-limit interruption declined build/test and browser commands before
+  execution. Both were later executed successfully through normal approval review.
+- No Phase 3 work, production deployment, live Agent call or mobile certification.

@@ -17,3 +17,12 @@ provenance; adopted a web-first monorepo. Added a read-only FastAPI status/cards
 boundary and paginated real Standard Pokémon gallery with real images and error
 states. Existing Python services and Qt/MCP behavior retained. No collection,
 filtering, analytics, Agent, authentication or PWA implementation activated.
+
+## Phase 2 — Library & Browsing (2026-09-24)
+
+Added validated category/name/multi-select query contracts to the read-only card API,
+an exact-printing detail endpoint, and source-derived filter choices. Extended the
+existing SQLite search rather than duplicating filtering in JavaScript. Wired the
+approved library controls and Gallery/List, URL query state, real card links, and
+structured detail text. Preserved frozen Qt/MCP work. Added regression/integration
+coverage and the mandatory PM QA scope matrix in docs/phase-2-library.md.
