@@ -7,7 +7,7 @@ import type { Workspace } from './DeckBuilder'
 import type { Card } from './api'
 
 const card:Card={id:'test-1',name:'Test Basic',deck_identity:'functional-test',category:'Pokemon',localId:'1',set:{id:'test'},legal:{standard:true},legality_provenance:{source:'TCGdex',checked_at:'2026-09-25'},ownership:{functional_id:'functional-test',library_id:'library-test',variant:'normal',quantity:2,functional_total:3,library_total:3}}
-const fresh=():Workspace=>({schema_version:1,revision:0,deck:{id:'draft',name:'New Deck',format:'standard',entries:[],has_saved:false,dirty:false},validation:{state:'EMPTY',total:0,categories:{},reasons:[],unknown:[],limitations:[]},saved:[]})
+const fresh=():Workspace=>({schema_version:2,defaults:{},revision:0,deck:{id:'draft',name:'New Deck',format:'standard',entries:[],has_saved:false,dirty:false},validation:{state:'EMPTY',total:0,categories:{},reasons:[],unknown:[],limitations:[]},saved:[]})
 function setup(path='/deck-builder',intercept?:(body:any)=>Promise<void>){
  let workspace=fresh()
  const fetch=vi.fn(async(url:string,options?:RequestInit)=>{
@@ -17,7 +17,7 @@ function setup(path='/deck-builder',intercept?:(body:any)=>Promise<void>){
     const body=JSON.parse(options.body as string);await intercept?.(body)
     expect(body.revision).toBe(workspace.revision)
     const quantity=(workspace.deck.entries[0]?.quantity||0)+(body.delta||0)
-    workspace={...workspace,revision:workspace.revision+1,deck:{...workspace.deck,dirty:true,entries:quantity?[{identity:card.deck_identity!,printing_id:card.id,variant:'normal',quantity,name:card.name,category:card.category,presentation_available:true,owned:card.ownership!}]:[]}}
+    workspace={...workspace,revision:workspace.revision+1,deck:{...workspace.deck,dirty:true,entries:quantity?[{allocations:[{printing_id:card.id,variant:'normal',quantity,available:true,owned:card.ownership!}],identity:card.deck_identity!,printing_id:card.id,variant:'normal',quantity,name:card.name,category:card.category,presentation_available:true,owned:card.ownership!}]:[]}}
    }
    result=workspace
   }else if(url.includes('/variations'))result={cards:[card],unassigned:[{...card,ownership:{...card.ownership!,variant:'unspecified'}}],total:1,page:1,page_size:24,next_page:null}

@@ -60,19 +60,19 @@ export function useCompetitiveHover(enabled:boolean) {
  useEffect(()=>()=>clear(),[])
  useEffect(()=>{if(!open)return;const close=(event:Event)=>{if(event.type==='scroll'&&event.target instanceof Element&&event.target.closest('.competitive-popup'))return;clear();setOpen(false)};window.addEventListener('scroll',close,true);window.addEventListener('resize',close);return()=>{window.removeEventListener('scroll',close,true);window.removeEventListener('resize',close)}},[open])
  const enter=(element:HTMLElement)=>{
-  if(!enabled)return;clearTimeout(grace.current);if(open)return
+  if(!enabled||element.tagName!=='IMG')return;clearTimeout(grace.current);if(open)return
   clearTimeout(delay.current)
-  delay.current=setTimeout(()=>{const rect=element.getBoundingClientRect();setPosition({left:Math.max(8,Math.min(rect.left,window.innerWidth-338)),top:Math.max(8,Math.min(rect.bottom+6,window.innerHeight-440))});setOpen(true)},1000)
+  delay.current=setTimeout(()=>{const rect=element.getBoundingClientRect();setPosition({left:Math.max(8,Math.min(rect.left,window.innerWidth-338)),top:Math.max(8,Math.min(rect.bottom+6,window.innerHeight-440))});setOpen(true)},500)
  }
  const leave=()=>{clearTimeout(delay.current);clearTimeout(grace.current);grace.current=setTimeout(()=>setOpen(false),180)}
  return {open,position,enter,leave,keep:()=>clearTimeout(grace.current),close:()=>{clear();setOpen(false)}}
 }
-export function CompetitivePopup({id,name,hover}:{id:string;name:string;hover:ReturnType<typeof useCompetitiveHover>}) {
+export function CompetitivePopup({id,name,deckIdentity,hover}:{id:string;name:string;deckIdentity?:string;hover:ReturnType<typeof useCompetitiveHover>}) {
  const builder=useBuilder(),location=useLocation()
  const {data,error,window}=useResearch(id,hover.open,false)
  if(!hover.open)return null
  return createPortal(<aside role="dialog" aria-label={`${name} competitive preview`} className="competitive-popup" style={hover.position} onPointerEnter={hover.keep} onPointerLeave={hover.leave} onFocus={hover.keep} onBlur={hover.leave} onKeyDown={e=>{if(e.key==='Escape')hover.close()}}>
-  <strong>{name}</strong><p>Competitive • {window==='format'?'Current Format':`Last ${window} Days`}</p><State data={data} error={error}/>
+  <strong>{name}</strong>{builder?.data&&deckIdentity&&<p><strong>{(()=>{const n=builder.data.deck.entries.find(e=>e.identity===deckIdentity)?.quantity||0;return `${n} ${n===1?'Card':'Cards'} in deck`})()}</strong></p>}<p>Competitive • {window==='format'?'Current Format':`Last ${window} Days`}</p><State data={data} error={error}/>
   {data&&<><dl><dt>Usage</dt><dd>{pct(data.usage_percent)}</dd><dt>Average copies</dt><dd>{decimal(data.average_copies)}</dd></dl>
    <h3>Top five archetypes</h3><ol>{data.top_archetypes.slice(0,5).map(a=><li key={a.id}>{a.name} <span>{pct(a.share_percent)}</span></li>)}</ol>{!data.top_archetypes.length&&<p>No archetype observations.</p>}<Sample data={data}/></>}
   <p>Source: Limitless</p><Link to={detailPath(id,!!builder)} state={{library:location.pathname+location.search}} onClick={hover.close}>Click for full research →</Link>

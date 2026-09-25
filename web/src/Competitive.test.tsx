@@ -15,9 +15,9 @@ function mount(list=false,competitive=true){return render(<MemoryRouter><Competi
 beforeEach(()=>{HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};HTMLDialogElement.prototype.close=function(){this.removeAttribute('open')};vi.useFakeTimers();vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>data}))})
 afterEach(()=>{cleanup();vi.useRealTimers();vi.unstubAllGlobals()})
 
-test.each([false,true])('Library hover waits exactly 1000ms, top five only; list=%s',async list=>{
- const view=mount(list),tile=view.container.querySelector('article')!
- fireEvent.pointerEnter(tile);await advance(999)
+test.each([false,true])('Library hover waits exactly 500ms, top five only; list=%s',async list=>{
+ const view=mount(list),tile=view.container.querySelector('img')!
+ fireEvent.pointerEnter(tile);await advance(499)
  expect(screen.queryByRole('dialog')).toBeNull();expect(fetch).not.toHaveBeenCalled()
  await advance(1)
  expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -26,10 +26,10 @@ test.each([false,true])('Library hover waits exactly 1000ms, top five only; list
  expect(screen.queryByText('Archetype 5')).toBeNull()
 })
 test('early leave cancels and crossing to popup preserves it until grace expires',async()=>{
- const view=mount(),tile=view.container.querySelector('article')!
- fireEvent.pointerEnter(tile);await advance(800);fireEvent.pointerLeave(tile);await advance(1000)
+ const view=mount(),tile=view.container.querySelector('img')!
+ fireEvent.pointerEnter(tile);await advance(400);fireEvent.pointerLeave(tile);await advance(500)
  expect(fetch).not.toHaveBeenCalled()
- fireEvent.pointerEnter(tile);await advance(1000)
+ fireEvent.pointerEnter(tile);await advance(500)
  fireEvent.pointerLeave(tile);await advance(100);fireEvent.pointerEnter(screen.getByRole('dialog'));await advance(300)
  expect(screen.getByRole('dialog')).toBeInTheDocument()
  fireEvent.scroll(screen.getByRole('dialog'));expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -37,7 +37,7 @@ test('early leave cancels and crossing to popup preserves it until grace expires
  await advance(1);expect(screen.queryByRole('dialog')).toBeNull()
 })
 test('non-Library tiles never request competitive hover',async()=>{
- const view=mount(false,false);fireEvent.pointerEnter(view.container.querySelector('article')!);await advance(2000)
+ const view=mount(false,false);fireEvent.pointerEnter(view.container.querySelector('img')!);await advance(2000)
  expect(fetch).not.toHaveBeenCalled();expect(screen.queryByRole('dialog')).toBeNull()
 })
 test('dashboard is continuous, threshold state and all trend series persist across window switch',async()=>{
@@ -89,7 +89,7 @@ test('archetype insufficient sample uses singular and plural; 15 reports prevale
 test('average copies and percentages are presentation-rounded in popup, dashboard and trend',async()=>{
  const values={...data,average_copies:1.5611,usage_percent:43.4600,trend:data.trend.map(s=>({...s,points:s.points.map(p=>({...p,usage_percent:43.4667}))}))}
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>values} as Response)
- const view=mount();fireEvent.pointerEnter(view.container.querySelector('article')!);await advance(1000)
+ const view=mount();fireEvent.pointerEnter(view.container.querySelector('img')!);await advance(500)
  expect(screen.getByText('1.56')).toBeInTheDocument();expect(screen.getByText('43.46%')).toBeInTheDocument()
  view.unmount()
  render(<CompetitiveDashboard id="test-1"/>);await advance(0)

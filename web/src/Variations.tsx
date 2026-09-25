@@ -4,7 +4,7 @@ import { loadVariations, savePreference, withOwnership, finishLabel, type Card, 
 import { CardImage } from './CardTile'
 import { MagnifiedArt } from './MagnifiedArt'
 import { QuantityControls } from './QuantityControls'
-import { useBuilder, detailPath, DeckControls } from './DeckBuilder'
+import { useBuilder, detailPath, DeckControls, DefaultPrinting } from './DeckBuilder'
 
 export function Variations({id,library=false,onSelected,onChange,revision=0}:{id:string;library?:boolean;onSelected?:()=>void;onChange?:(id:string,o:Ownership)=>void;revision?:number}) {
  const location=useLocation()
@@ -12,10 +12,10 @@ export function Variations({id,library=false,onSelected,onChange,revision=0}:{id
  const [data,setData]=useState<VariationPage|null>(null),[page,setPage]=useState(1),[error,setError]=useState(''),[busy,setBusy]=useState(false)
  useEffect(()=>{
   const controller=new AbortController();setData(null);setError('')
-  loadVariations(id,library?'library':'functional',page,controller.signal).then(r=>{if(!controller.signal.aborted)setData(r)})
+  loadVariations(id,library?'library':builder?'deck':'functional',page,controller.signal).then(r=>{if(!controller.signal.aborted)setData(r)})
    .catch(e=>{if(!controller.signal.aborted)setError(e.message)})
   return ()=>controller.abort()
- },[id,library,page,revision])
+ },[id,library,!!builder,page,revision])
  async function choose(card:Card) {
   setBusy(true);setError('')
   try{await savePreference(id,card);onSelected?.()}catch(e){setError(e instanceof Error?e.message:'Unable to save artwork.')}finally{setBusy(false)}
@@ -33,11 +33,11 @@ export function Variations({id,library=false,onSelected,onChange,revision=0}:{id
      <MagnifiedArt card={card}><Link to={`${detailPath(card.id,!!builder)}?variant=${encodeURIComponent(card.ownership!.variant)}`} state={{library:location.state?.library||(builder?'/deck-builder':'/')}} aria-label={`Inspect ${card.id} ${finishLabel(card.ownership!.variant)}`}><CardImage card={card}/></Link></MagnifiedArt>}
     <strong>{card.name}</strong><p>{card.set.name || card.set.id} · {card.localId}</p><code>{card.id}</code><p>{finishLabel(card.ownership!.variant)}</p>
     <small>{card.ownership!.quantity?`Owned ×${card.ownership!.quantity}`:'Not owned'}</small>
-    {!library && (builder?<DeckControls card={card} presentation/>:<QuantityControls id={card.id} ownership={card.ownership!} onChange={changed}/>)}
+    {!library && (builder?<><DeckControls card={card} exact/><DefaultPrinting card={card}/></>:<QuantityControls id={card.id} ownership={card.ownership!} onChange={changed}/>)}
    </article>)}
   </div>
   {!library && !!data?.unassigned?.length && <section className="unassigned-ownership" aria-label="Copies with no recorded finish"><h3>Copies with no recorded finish</h3><p>These existing copies are included in your total. They have not been assigned a finish.</p>
-   {data.unassigned.map(card=><div key={card.id}><Link to={`${detailPath(card.id,!!builder)}?variant=unspecified`} state={{library:location.state?.library||(builder?'/deck-builder':'/')}}>{card.name} · {card.id}</Link>{builder?<><p>Owned: {card.ownership!.quantity}</p><DeckControls card={card}/></>:<QuantityControls id={card.id} ownership={card.ownership!} onChange={changed}/>}</div>)}
+   {data.unassigned.map(card=><div key={card.id}><Link to={`${detailPath(card.id,!!builder)}?variant=unspecified`} state={{library:location.state?.library||(builder?'/deck-builder':'/')}}>{card.name} · {card.id}</Link>{builder?<><p>Owned: {card.ownership!.quantity}</p><DeckControls card={card} exact/></>:<QuantityControls id={card.id} ownership={card.ownership!} onChange={changed}/>}</div>)}
   </section>}
   {data && <nav className="pagination" aria-label="Variation pages"><button disabled={page<=1||busy} onClick={()=>setPage(p=>p-1)}>Previous variations</button><span>Page {page} of {Math.max(1,Math.ceil(data.total/data.page_size))}</span><button disabled={!data.next_page||busy} onClick={()=>setPage(p=>p+1)}>Next variations</button></nav>}
  </section>

@@ -22,7 +22,7 @@ export function CardDetail() {
   return ()=>controller.abort()
  },[printingId,variant,attempt])
  useEffect(()=>{if(data)title.current?.focus()},[data?.card.id,data?.card.ownership?.variant])
- const card=data?.card
+ const card=data?.card.id===printingId?data.card:undefined
  function changed(id:string,owned:Ownership) {setData(old=>old?{...old,card:withOwnership(old.card,id,owned)}:old)}
  return <main className="detail-page">
   <Link to={location.state?.library || (builder?'/deck-builder':'/')}>← Back to {builder?'Deck Builder':'library'}</Link>
@@ -30,7 +30,7 @@ export function CardDetail() {
   {error && <div role="alert"><h1>Card could not be loaded</h1><p>{error}</p><button onClick={()=>setAttempt(v=>v+1)}>Retry</button></div>}
   {card && data && <>
    <div className="detail-layout"><div className="detail-art"><MagnifiedArt key={card.id} card={card}/>
-    {builder?<><ReadOnlyOwnership card={card} detail/><DeckControls card={card} presentation/></>:card.ownership && <><QuantityControls id={card.id} ownership={card.ownership} onChange={(id,o)=>{changed(id,o);setRevision(v=>v+1)}}/>
+    {builder?<><ReadOnlyOwnership card={card} detail/><DeckControls card={card} detail/></>:card.ownership && <><QuantityControls id={card.id} ownership={card.ownership} onChange={(id,o)=>{changed(id,o);setRevision(v=>v+1)}}/>
      <p>Functional total: <output aria-label="Functional total" aria-live="polite">{card.ownership.functional_total}</output></p></>}
     {card.ownership && <button className="detail-variations-toggle" aria-expanded={variationsOpen} aria-controls="detail-variations" onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>}
    </div>

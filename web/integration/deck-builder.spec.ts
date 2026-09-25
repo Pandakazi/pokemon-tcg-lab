@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test'
 
 async function command(request:APIRequestContext,body:object){
  const current=await (await request.get('/api/v1/deck-workspace')).json()
- const response=await request.post('/api/v1/deck-workspace',{data:{...body,revision:current.revision}})
+ const response=await request.post('/api/v1/deck-workspace',{data:{...body,schema_version:2,revision:current.revision}})
  expect(response.ok()).toBeTruthy();return response.json()
 }
 test.beforeEach(async({request})=>{await command(request,{action:'new',discard:true})})
@@ -57,11 +57,11 @@ test('builder reuses browsing, read-only ownership, tray, detail, research, and 
  expect(await (await request.get(`/api/v1/cards/${card.id}/ownership?variant=${card.ownership.variant}`)).json()).toEqual(ownership)
 })
 
-test('builder competitive hover stays at one second and Full Research retains context',async({page})=>{
+test('builder competitive hover uses artwork only at half a second and Full Research retains context',async({page})=>{
  await page.goto('/deck-builder?category=Trainer&q=Ultra+Ball')
  const tile=page.locator('[data-printing-id]').first();await expect(tile).toBeVisible()
  await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+1000))
- await tile.hover();await page.clock.runFor(999)
+ await tile.locator('.card-art img').hover();await page.clock.runFor(499)
  await expect(page.locator('.competitive-popup')).toHaveCount(0)
  await page.clock.runFor(1)
  const popup=page.getByRole('dialog',{name:/competitive preview/});await expect(popup).toBeVisible()
@@ -92,7 +92,9 @@ test('draft persistence, save-state validation, New guard, reopen and selected f
  await tray.getByRole('link',{name:card.name,exact:true}).click()
  await page.getByRole('button',{name:'Variations',exact:true}).click()
  const choice=page.locator('.variation-card').first();await expect(choice).toBeVisible()
- await choice.getByRole('button',{name:'Use this printing / finish in deck',exact:true}).click()
+ await choice.getByRole('button',{name:'Set as default printing',exact:true}).click()
+ await expect(choice.getByRole('button',{name:'✓ Default printing',exact:true})).toBeVisible()
+ await page.locator('.detail-art').getByRole('button',{name:'Add '+card.name+' to deck',exact:true}).click()
  await expect(tray.locator('footer')).toContainText('Draft stored')
  page.once('dialog',dialog=>dialog.dismiss())
  await tray.getByRole('button',{name:'New',exact:true}).click();await expect(tray).toContainText(card.name)
@@ -102,11 +104,11 @@ test('draft persistence, save-state validation, New guard, reopen and selected f
  await tray.getByRole('button',{name:'New',exact:true}).click();await expect(tray).toContainText('EMPTY')
  await tray.getByRole('button',{name:'Open',exact:true}).click()
  await tray.getByRole('button',{name:'Phase 5 browser draft',exact:true}).click()
- await expect(tray).toContainText('59 cards remaining')
+ await expect(tray).toContainText('58 cards remaining')
  const reopened=(await (await request.get('/api/v1/deck-workspace')).json()).deck.entries[0]
  expect(reopened).toEqual(selected)
  await tray.getByRole('button',{name:`Increase ${card.name} in tray`,exact:true}).click()
- await expect(tray).toContainText('58 cards remaining')
+ await expect(tray).toContainText('57 cards remaining')
  await page.screenshot({path:info.outputPath('builder-saved-incomplete.png')})
 })
 
@@ -135,7 +137,7 @@ test('dense real-card deck scrolls independently, valid and invalid states, keyb
  expect(cards).toHaveLength(20)
  let state=await (await request.get('/api/v1/deck-workspace')).json()
  for(const card of cards)for(let n=0;n<3;n++){
-  const response=await request.post('/api/v1/deck-workspace',{data:{action:'quantity',revision:state.revision,printing_id:card.id,delta:1}})
+  const response=await request.post('/api/v1/deck-workspace',{data:{schema_version:2,action:'quantity',revision:state.revision,printing_id:card.id,delta:1}})
   expect(response.ok()).toBeTruthy();state=await response.json()
  }
  expect(state.validation.state).toBe('VALID')

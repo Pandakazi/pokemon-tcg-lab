@@ -34,7 +34,7 @@ def setup(tmp_path):
 
 def mutate(c,action,**kwargs):
     revision=c.get('/api/v1/deck-workspace').json()['revision']
-    r=c.post('/api/v1/deck-workspace',json=dict(action=action,revision=revision,**kwargs))
+    r=c.post('/api/v1/deck-workspace',json=dict(schema_version=2,action=action,revision=revision,**kwargs))
     assert r.status_code==200,r.text
     return r.json()
 
@@ -69,17 +69,17 @@ def test_functional_counts_presentation_and_rule_name_limits(setup):
     add(c,'sm2-1',2); grouped=add(c,'sm2-2',2)
     assert len(grouped['deck']['entries'])==1 and grouped['deck']['entries'][0]['quantity']==4
     key=grouped['deck']['entries'][0]['identity']
-    result=mutate(c,'presentation',identity=key,printing_id='sm2-2',variant='reverse')
+    result=mutate(c,'default_printing',identity=key,printing_id='sm2-2',variant='reverse')
     assert result['deck']['entries'][0]['quantity']==4
     assert result['validation']['state']=='IN PROGRESS'  # Historical artwork uses a legal equivalent.
     mutate(c,'save'); mutate(c,'new'); result=mutate(c,'open',deck_id=result['deck']['id'])
-    assert result['deck']['entries'][0]['variant']=='reverse'
-    assert result['deck']['entries'][0]['printing_id']=='sm2-2'
+    assert result['defaults'][key]['variant']=='reverse'
+    assert result['defaults'][key]['printing_id']=='sm2-2'
     distinct=add(c,'sm2-3')
     assert len(distinct['deck']['entries'])==2
     assert any('5 copies across printings' in r for r in distinct['validation']['reasons'])
     revision=distinct['revision']
-    wrong=c.post('/api/v1/deck-workspace',json=dict(action='presentation',revision=revision,identity=key,printing_id='sm2-3'))
+    wrong=c.post('/api/v1/deck-workspace',json=dict(schema_version=2,action='default_printing',revision=revision,identity=key,printing_id='sm2-3'))
     assert wrong.status_code==422
 
 
@@ -122,7 +122,7 @@ def test_unsaved_complete_and_saved_empty(setup):
 def test_zero_removal_and_new_open_discard_guard(setup):
     c=setup[2]; draft=add(c,'sm2-1')
     for action in ('new','open'):
-        assert c.post('/api/v1/deck-workspace',json=dict(action=action,revision=draft['revision'])).status_code==409
+        assert c.post('/api/v1/deck-workspace',json=dict(schema_version=2,action=action,revision=draft['revision'])).status_code==409
     result=mutate(c,'quantity',printing_id='sm2-2',delta=-1)
     assert not result['deck']['entries']
     assert mutate(c,'new',discard=True)['validation']['state']=='EMPTY'
@@ -130,7 +130,7 @@ def test_zero_removal_and_new_open_discard_guard(setup):
 
 def test_concurrent_revision_conflict_prevents_lost_updates(setup):
     c=setup[2]; revision=c.get('/api/v1/deck-workspace').json()['revision']
-    def post(_): return c.post('/api/v1/deck-workspace',json=dict(action='quantity',revision=revision,printing_id='sm2-1',delta=1)).status_code
+    def post(_): return c.post('/api/v1/deck-workspace',json=dict(schema_version=2,action='quantity',revision=revision,printing_id='sm2-1',delta=1)).status_code
     with ThreadPoolExecutor(max_workers=2) as pool: results=list(pool.map(post,range(2)))
     assert sorted(results)==[200,409]
     assert c.get('/api/v1/deck-workspace').json()['deck']['entries'][0]['quantity']==1
@@ -141,7 +141,7 @@ def test_save_failure_visible_without_losing_draft(setup,monkeypatch):
     original=Decks.apply
     def fail(self,command): raise sqlite3.OperationalError('disk full')
     monkeypatch.setattr(Decks,'apply',fail)
-    assert c.post('/api/v1/deck-workspace',json=dict(action='save',revision=draft['revision'])).status_code==503
+    assert c.post('/api/v1/deck-workspace',json=dict(schema_version=2,action='save',revision=draft['revision'])).status_code==503
     monkeypatch.setattr(Decks,'apply',original)
     assert c.get('/api/v1/deck-workspace').json()['deck']==draft['deck']
 

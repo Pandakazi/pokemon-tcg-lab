@@ -2,9 +2,10 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Link, useLocation } from 'react-router'
 import { finishLabel, type Card, type Ownership } from './api'
 
-type Entry = {identity:string;quantity:number;printing_id:string;variant:string;name:string;category:string;presentation_available:boolean;owned:Ownership|null}
-export type Workspace = {schema_version:1;revision:number;deck:{id:string;name:string;format:string;entries:Entry[];has_saved:boolean;dirty:boolean};validation:{state:'EMPTY'|'IN PROGRESS'|'VALID'|'INVALID';total:number;categories:Record<string,number>;reasons:string[];unknown:string[];limitations:string[]};saved:{id:string;name:string;updated_at:string}[]}
-type Command = {action:'quantity'|'remove'|'presentation'|'rename'|'save'|'new'|'open';printing_id?:string;variant?:string;identity?:string;delta?:number;name?:string;deck_id?:string;discard?:boolean}
+type Allocation = {printing_id:string;variant:string;quantity:number;available:boolean;owned:Ownership|null}
+type Entry = {identity:string;quantity:number;allocations:Allocation[];printing_id:string;variant:string;name:string;category:string;presentation_available:boolean;owned:Ownership|null}
+export type Workspace = {schema_version:2;runtime_revision?:string;defaults:Record<string,{printing_id:string;variant:string;available:boolean}>;revision:number;deck:{id:string;name:string;format:string;entries:Entry[];has_saved:boolean;dirty:boolean};validation:{state:'EMPTY'|'IN PROGRESS'|'VALID'|'INVALID';total:number;categories:Record<string,number>;reasons:string[];unknown:string[];limitations:string[]};saved:{id:string;name:string;updated_at:string}[]}
+type Command = {action:'quantity'|'remove'|'default_printing'|'rename'|'save'|'new'|'open';printing_id?:string;variant?:string;identity?:string;delta?:number;name?:string;deck_id?:string;discard?:boolean;exact?:boolean}
 type Context = {data:Workspace|null;error:string;pending:number;send:(command:Command)=>void;reload:()=>void;active:boolean}
 const DeckContext=createContext<Context|null>(null)
 export const useDeck=()=>useContext(DeckContext)
@@ -12,10 +13,10 @@ export const useBuilder=()=>{const context=useDeck();return context?.active?cont
 export const detailPath=(id:string,builder:boolean)=>`${builder?'/deck-builder':''}/cards/${encodeURIComponent(id)}`
 
 async function request(command?:Command,revision?:number):Promise<Workspace> {
- const response=await fetch('/api/v1/deck-workspace',command?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...command,revision})}:undefined)
+ const response=await fetch('/api/v1/deck-workspace',command?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...command,schema_version:2,revision})}:undefined)
  const data=await response.json()
  if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:'Unable to store deck changes. Reload the stored draft before continuing.')
- if(data.schema_version!==1||!Number.isInteger(data.revision))throw new Error('Deck API is out of date. Restart the API and reload.')
+ if(data.schema_version!==2||!Number.isInteger(data.revision)||!data.defaults||!data.deck?.entries?.every((e:Entry)=>Array.isArray(e.allocations)))throw new Error('Deck API is out of date. Restart the API and reload.')
  return data
 }
 export function DeckProvider({children}:{children:ReactNode}) {
@@ -52,20 +53,29 @@ export function ReadOnlyOwnership({card,detail=false}:{card:Card;detail?:boolean
   {detail&&<><p>{finishLabel(owned.variant)} — this variation: {owned.quantity}</p><p>Function total: {owned.functional_total}</p></>}
  </div>
 }
-export function DeckControls({card,presentation=false}:{card:Card;presentation?:boolean}) {
+export function DeckControls({card,exact=false,detail=false}:{card:Card;exact?:boolean;detail?:boolean}) {
  const builder=useBuilder()
  if(!builder)return null
  const {data,error,send}=builder,key=card.deck_identity
- const entry=data?.deck.entries.find(e=>e.identity===key),quantity=entry?.quantity||0
- const change=(delta:number)=>send({action:'quantity',printing_id:card.id,variant:card.ownership?.variant,delta})
+ const entry=data?.deck.entries.find(e=>e.identity===key),total=entry?.quantity||0
+ const quantity=exact?(entry?.allocations.find(a=>a.printing_id===card.id&&a.variant===card.ownership?.variant)?.quantity||0):total
+ const change=(delta:number)=>send({action:'quantity',printing_id:card.id,variant:card.ownership?.variant,delta,exact})
  return <div className="deck-card-controls">
-  <span>{presentation?'Add to deck':'In deck'}</span>
+  <span>{detail?'Add to deck':exact?'This printing / finish':'In deck'}</span>
   <div className="deck-stepper"><button disabled={!data||!!error||!quantity||!key} aria-label={`Remove ${card.name} from deck`} onClick={()=>change(-1)}>−</button>
    <output aria-label={`${card.name} deck quantity`}>{quantity}</output>
    <button disabled={!data||!!error||!key} aria-label={`Add ${card.name} to deck`} onClick={()=>change(1)}>+</button></div>
   {!key&&<small>Restart the API to enable deck controls.</small>}
-  {presentation&&entry&&<button disabled={!!error} onClick={()=>send({action:'presentation',identity:key,printing_id:card.id,variant:card.ownership?.variant})}>Use this printing / finish in deck</button>}
+  {exact&&<small>Total in deck: {total}</small>}
  </div>
+}
+
+export function DefaultPrinting({card}:{card:Card}) {
+ const builder=useBuilder()
+ if(!builder)return null
+ const {data,error,send}=builder,key=card.deck_identity,selected=key?data?.defaults[key]:undefined
+ const active=selected?.printing_id===card.id&&selected?.variant===card.ownership?.variant
+ return <button disabled={!data||!!error||!key||active} aria-pressed={active} onClick={()=>send({action:'default_printing',printing_id:card.id,variant:card.ownership?.variant})}>{active?'✓ Default printing':'Set as default printing'}</button>
 }
 
 export function DeckTray() {
@@ -99,7 +109,7 @@ export function DeckTray() {
   <div className="deck-entries">{!data.deck.entries.length&&<p>Choose cards from the Library to begin.</p>}
    {['Pokemon','Trainer','Energy'].map(category=>{const entries=data.deck.entries.filter(e=>e.category===category);return entries.length?<section key={category}><h3>{category==='Pokemon'?'Pokémon':category}</h3>{entries.map(entry=><article key={entry.identity}>
     <Link to={`${detailPath(entry.printing_id,true)}?variant=${encodeURIComponent(entry.variant)}`} state={{library:location.pathname==='/deck-builder'?location.pathname+location.search:location.state?.library||'/deck-builder'}} title={entry.name}>{entry.name}</Link>
-    <small>{entry.printing_id} · {finishLabel(entry.variant)}{!entry.presentation_available?' · Presentation unavailable':''}</small>
+    {entry.allocations.map(a=><small key={`${a.printing_id}:${a.variant}`}><Link to={`${detailPath(a.printing_id,true)}?variant=${encodeURIComponent(a.variant)}`} state={{library:location.state?.library||'/deck-builder'}}>{a.printing_id} · {finishLabel(a.variant)}</Link> ×{a.quantity}{!a.available?' · Presentation unavailable':''}</small>)}
     <div className="deck-stepper"><button disabled={!!error||!entry.presentation_available} aria-label={`Decrease ${entry.name} in tray`} onClick={()=>send({action:'quantity',printing_id:entry.printing_id,variant:entry.variant,delta:-1})}>−</button><output>{entry.quantity}</output><button disabled={!!error||!entry.presentation_available} aria-label={`Increase ${entry.name} in tray`} onClick={()=>send({action:'quantity',printing_id:entry.printing_id,variant:entry.variant,delta:1})}>+</button><button disabled={!!error} aria-label={`Remove all ${entry.name}`} onClick={()=>send({action:'remove',identity:entry.identity})}>Remove</button></div>
     <small>Owned (function): {entry.owned?.functional_total??'unknown'} · Ownership does not limit deck building</small>
    </article>)}</section>:null})}

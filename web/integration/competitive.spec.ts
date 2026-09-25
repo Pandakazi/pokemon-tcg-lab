@@ -15,7 +15,7 @@ test('Library delay, popup crossing, Card Detail research and frozen artwork',as
  await expect(tile).toBeVisible()
  await page.clock.install()
  await page.clock.pauseAt(new Date(Date.now()+1000))
- await tile.locator('.card-art').hover();await page.clock.runFor(999)
+ await tile.locator('.card-art img').hover();await page.clock.runFor(499)
  await expect(page.getByRole('dialog')).toHaveCount(0)
  await page.clock.runFor(1)
  const popup=page.getByRole('dialog',{name:/competitive preview/})
@@ -42,14 +42,14 @@ test('Library delay, popup crossing, Card Detail research and frozen artwork',as
  await expect(page.getByRole('dialog')).toBeVisible()
 })
 
-test('List hover cancels before one second and card link still navigates',async({page})=>{
+test('List hover cancels before half a second and card link still navigates',async({page})=>{
  await page.goto('/?category=Trainer&q=Ultra+Ball')
  await page.getByRole('button',{name:'List',exact:true}).click()
  const row=page.locator('.card-row').first();await expect(row).toBeVisible()
- await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+1000));await row.hover();await page.clock.runFor(900)
+ await page.clock.install();await page.clock.pauseAt(new Date(Date.now()+1000));await row.locator('.card-art img').hover();await page.clock.runFor(400)
  await page.mouse.move(1,1);await page.clock.runFor(500)
  await expect(page.locator('.competitive-popup')).toHaveCount(0)
- await row.hover();await page.clock.runFor(1000);await expect(page.locator('.competitive-popup')).toBeVisible()
+ await row.locator('.card-art img').hover();await page.clock.runFor(500);await expect(page.locator('.competitive-popup')).toBeVisible()
  await page.mouse.move(1,1);await page.clock.runFor(181)
  await row.locator('.card-link').click();await expect(page).toHaveURL(/\/cards\//)
 })

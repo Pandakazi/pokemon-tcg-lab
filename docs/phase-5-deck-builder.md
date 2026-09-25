@@ -25,7 +25,10 @@ position survive detail/research navigation. Builder and ordinary Library have
 separate UI memory. The Agent is available as a collapsible rail, initially
 collapsed in Builder to preserve card-reading space; it has no connected model.
 
-The one-second competitive popup, all metrics/timeframes, source/exclusion states,
+PM QA fix pass #1 uses artwork-only competitive hover with a 500ms delay and the
+existing 180ms crossing grace. Builder popups show the live functional deck count
+in bold; ordinary Library popups have no deck count. Card Detail remains click to
+enlarge with no competitive hover. All metrics/timeframes, source/exclusion states,
 artwork enlargement and existing Variations placement are reused. No new analytics
 calculation, browser, AI feature, export, theme or drag-and-drop was introduced.
 
@@ -39,11 +42,12 @@ Special and ambiguous Energy retain canonical identity. Ambiguous source `Normal
 Energy is adapted to restricted Energy **only in the validation provider**, so it
 cannot obtain the unlimited Basic Energy exemption accidentally.
 
-Entries persist identity + quantity and one optional printing/finish presentation
-reference per functional entry. Presentation must belong to that entry. Changing
-it neither changes the count nor writes ownership or Library preferences.
-There is no per-copy allocation among several printings; presentation is a single
-representative choice. Functional identity is not the same as the rule's name-based
+Entries persist identity + aggregate quantity and exact allocations, each containing
+printing ID, finish and quantity. Positive allocation quantities must sum to the
+functional quantity. Variation controls edit only their exact allocation, with a
+read-only functional total; Gallery/List, primary Detail and tray controls retain
+aggregate behavior. The tray lists allocations beneath the grouped functional card.
+Functional identity is not the same as the rule's name-based
 copy-limit grouping: distinct gameplay entries with the same name still contribute
 to the existing Python validator's name limit.
 
@@ -51,8 +55,16 @@ to the existing Python validator's name limit.
 Standard-legal equivalent can establish legality for historical artwork. It never
 assumes new equivalence beyond certified signatures/curated Basic Energy. Missing
 functional entries remain stored and generate unknown-evidence reasons. Missing
-presentation is labeled unavailable and can be changed from another equivalent
-printing; it is not silently reassigned.
+allocations are labeled unavailable and remain stored; they are not silently reassigned.
+
+User-level Default Printing is stored separately from deck composition and collection
+ownership, keyed by deck identity (Basic Energy type included). Implicit additions
+use an available default; explicit Variation additions always use that variation.
+Changing defaults never rewrites existing active/saved deck allocations, ownership,
+Library preferences or validation. General decrement removes from the default/current
+printing if allocated, otherwise the last remaining allocation; exact decrement never
+steals from another allocation. An unavailable default remains remembered, while an
+implicit add falls back to the available displayed printing/finish.
 
 The authoritative `tcg_lab.service.Lab.validate` is reused. Its new keyword-only
 `require_complete` defaults to true, preserving every legacy caller. An unsaved
@@ -70,17 +82,26 @@ remain outside the inherited validator. These limits are available in the tray.
 
 ## Persistence and concurrency
 
-`GET/POST /api/v1/deck-workspace` returns schema version 1, workspace revision,
-active deck, validation and saved-deck choices. POST supports quantity deltas,
-remove, presentation, rename, save, new and open. Request fields are bounded by
+`GET/POST /api/v1/deck-workspace` returns schema version 2, runtime commit, workspace
+revision, defaults, active deck, validation and saved-deck choices. POST requires
+`schema_version: 2` and supports quantity deltas (optional `exact`), remove,
+default_printing, rename, save, new and open. Request fields are bounded by
 Pydantic. Server-derived identity and transactional mutations are authoritative.
 
 Storage is a separate SQLite database, `deck-workspace.sqlite3`, beside the
 configured collection database, or `POKELAB_DECK_DB_PATH`. It must not equal the
-card, collection or competitive database. Schema version 1 holds one active
-workspace and named saved decks. Every accepted edit durably stores the active
+card, collection or competitive database. Schema version 2 holds one active
+workspace, named saved decks and the user's `default_printings` table. Every accepted edit durably stores the active
 draft. Explicit Save updates the named saved copy and sets `has_saved`; autosaving
 a workspace does not do so. Drafts and named saves both survive API/browser restart.
+
+The atomic version-1 migration archives original active and saved JSON documents in
+`migration_v1_backup`, converts each old representative into one exact allocation
+with the old aggregate quantity, and increments the workspace revision to invalidate
+stale clients. Names, IDs, saved timestamps and dirty/saved flags remain unchanged.
+It does not guess historical mixtures or seed user defaults. A failed migration
+rolls back; unsupported schemas are never recreated. Stop the API and retain a full
+database backup before rollout. This schema is not compatible with the previous API.
 
 `BEGIN IMMEDIATE` plus revision checks prevents cross-window lost updates; stale
 edits receive 409. The UI queues deltas using the last acknowledged revision.
@@ -135,7 +156,9 @@ After any backend change:
 
 Then hard-refresh with **Ctrl+Shift+R**. Verify the checkout's commit with
 `git rev-parse HEAD`, the saved PID/command paths in `.cache/manual-qa/processes.json`,
-and `/api/v1/deck-workspace` returning `schema_version: 1` through port 5175. Do not
+and `/api/v1/deck-workspace` returning `schema_version: 2` and matching
+`runtime_revision` through port 5175. `node scripts/Verify-Phase5-QA.mjs` verifies
+that runtime with a cache-bypassing browser reload and read-only smoke checks. Do not
 reuse another application's 8001 API for this checkout. Startup refuses occupied
 ports and only stops recorded processes whose command lines match this checkout.
 Logs remain in `.cache/manual-qa`. Stop with `-Action Stop`; drafts are retained.
@@ -154,7 +177,10 @@ Logs remain in `.cache/manual-qa`. Stop with `-Action Stop`; drafts are retained
   presentation persistence and grouping validation; curated Basic Energy type IDs.
 - Empty/In Progress/Valid/Invalid and actionable supported-rule/unknown reasons;
   saved incomplete invalid; ownership never blocks construction.
-- Existing one-second competitive hover and full research with source semantics.
+- Artwork-only 500ms competitive hover, 180ms grace, functional Builder deck count,
+  and full research with unchanged source semantics.
+- Exact allocation totals and mixed-printing save/reopen/restart; default persistence
+  and replacement; future implicit vs explicit additions; no retroactive deck changes.
 - Real artwork, click-to-enlarge, missing-image fallback; desktop gallery and
   independently scrolling tray; card names link to inspection; keyboard controls.
 - Agent rail/panel visibility and toggle; no live Agent behavior.
@@ -164,9 +190,8 @@ Logs remain in `.cache/manual-qa`. Stop with `-Action Stop`; drafts are retained
 - Standard only; format is displayed, not a selector for Expanded/Unlimited.
 - Legality is the existing supported Python checks over dated source evidence,
   not comprehensive tournament certification or every card-specific exception.
-- One representative printing/finish per functional entry, not mixed per-copy
-  allocation. Basic Energy detail Variations retain their certified canonical scope;
-  deck grouping alone uses the explicit type adapter.
+- Basic Energy Builder Variations use deck-type scope. Normal Library/Detail keep
+  their certified scope; each energy type and Special Energy remain distinct.
 - Browse UI memory survives navigation in the current application session. Deck
   content survives full restarts; transient scroll/filter-panel/view memory is not
   serialized into the deck database. Query URLs retain their normal refresh behavior.
@@ -187,3 +212,15 @@ Logs remain in `.cache/manual-qa`. Stop with `-Action Stop`; drafts are retained
 - Card artwork enlargement, variation placement and underlying collection migration.
 - Competitive ingestion, calculations, thresholds, windows, source/error semantics.
 - Existing MCP and Qt callers retain complete-deck validation by default.
+
+## Artwork investigation — QA-5.5
+
+The exact multi-card PM incident was not reproduced. Detail loading is keyed by
+printing/finish with abort handling; image URLs are derived from the exact cached
+record without Gallery/List or deck-membership dependencies. A reproducible stale
+failure latch existed in CardImage: after an error, changing its resource did not
+reset the failure state. The image renderer is now keyed by printing ID and URL;
+Detail also guards against displaying the previous route's payload. Eager detail
+images try the same printing's low-resolution asset once if high resolution fails,
+then retain the honest unavailable fallback. No Library refresh/toggle is involved.
+The enlarged modal retains its existing direct high-resolution request.
