@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { CardImage } from './CardTile'
 import type { Card } from './api'
+import { FinishImage } from './FinishImage'
 
 export function Modal({title,onClose,children}:{title:string;onClose:()=>void;children:ReactNode}) {
  const dialog=useRef<HTMLDialogElement>(null)
@@ -19,6 +20,6 @@ export function MagnifiedArt({card,children}:{card:Card;children?:ReactNode}) {
  return <div className="magnifiable artwork-frame">
   <div className="embedded-artwork">{children || <button className="artwork-trigger" disabled={!image} onClick={()=>setOpen(true)} aria-label={`Enlarge ${card.name} ${card.id}`}><CardImage card={card} eager/></button>}</div>
   {!children && <p className="artwork-hint">Click to enlarge</p>}
-  {open && <Modal title={`Artwork ${card.id}`} onClose={()=>setOpen(false)}><img className="enlarged-art" src={image!} alt={`${card.name} — ${card.id}`}/></Modal>}
+  {open && <Modal title={`Artwork ${card.id}`} onClose={()=>setOpen(false)}><FinishImage finish={card.ownership?.variant} fullArt={/illustration rare/i.test(card.rarity||'')} className="enlarged-art" src={image!} alt={`${card.name} — ${card.id}`}/></Modal>}
  </div>
 }
