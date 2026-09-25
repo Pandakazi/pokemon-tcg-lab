@@ -9,7 +9,7 @@ import assert from 'node:assert/strict'
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
 const require=createRequire(path.join(root,'web','package.json'))
 const {chromium}=require('@playwright/test')
-const expected=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim()
+const expected=execFileSync('git',['-c',`safe.directory=${root.replaceAll('\\','/')}`,'rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim()
 const base=process.env.POKELAB_QA_URL||'http://127.0.0.1:5175'
 const read=async route=>{const response=await fetch(base+route);assert(response.ok,route);return response.json()}
 const before=await read('/api/v1/deck-workspace')

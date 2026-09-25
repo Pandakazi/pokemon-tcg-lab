@@ -57,7 +57,9 @@ $env:POKELAB_COMPETITIVE_DB_PATH = Join-Path $SourceRepository 'data\competitive
 $env:POKELAB_USER_DB_PATH = $collectionCopy
 $env:POKELAB_DECK_DB_PATH = Join-Path $qaRoot 'deck-workspace.sqlite3'
 $env:PYTHONPATH = Join-Path $phase5Root 'src'
-$env:POKELAB_BUILD_REVISION = (git -C $phase5Root rev-parse HEAD).Trim()
+$revision = git -c "safe.directory=$($phase5Root.Replace('\','/'))" -C $phase5Root rev-parse HEAD
+if ($LASTEXITCODE -ne 0 -or -not $revision) { throw 'Unable to identify the current QA commit.' }
+$env:POKELAB_BUILD_REVISION = $revision.Trim()
 $env:POKELAB_API_TARGET = "http://127.0.0.1:$ApiPort"
 $apiArgs = @('-m','uvicorn','pokelab.api:app','--app-dir',('"'+(Join-Path $phase5Root 'src')+'"'),'--host','127.0.0.1','--port',"$ApiPort")
 $apiProcess = Start-Process -FilePath $python -ArgumentList $apiArgs -WorkingDirectory $phase5Root -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $qaRoot 'api.out.log') -RedirectStandardError (Join-Path $qaRoot 'api.err.log')
