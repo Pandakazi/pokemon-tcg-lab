@@ -11,10 +11,11 @@ import json
 from pathlib import Path
 import sqlite3
 
-from .collection import identity
+from .collection import identity, representative_printings
 from .engine import functional_signature, normalized_name
 from .limitless_main import SOURCE, PARSER_VERSION
-from .images import TCGdexImages
+
+ARCHETYPE_PREVALENCE_MIN_DECKS = 15
 
 
 def percent(n, d):
@@ -136,7 +137,7 @@ class Competitive:
             status = db.execute('SELECT * FROM competitive_status WHERE source=?',(SOURCE,)).fetchone()
         return events, decks, dict(status) if status else None
 
-    def stats(self, fid, window='30', today=None, include_trend=True):
+    def stats(self, fid, window='30', today=None, include_trend=True, card_catalog=None):
         today = today or datetime.now(timezone.utc).date()
         if window not in ('7','30','90','format'): raise ValueError('Unsupported window')
         available = self.format_start is not None and self.format_start <= today
@@ -158,8 +159,8 @@ class Competitive:
         labels = {d['raw']['archetype_id']:d['raw']['archetype_name'] for d in eligible}
         archetypes = [dict(id=k,name=labels[k],decks=played[k],eligible_decks=field[k],
                            share_percent=percent(played[k],a),
-                           prevalence_percent=percent(played[k],field[k]) if field[k]>=15 and k!='unknown' else None,
-                           status='unclassified' if k=='unknown' else 'observed' if field[k]>=15 else 'insufficient_sample')
+                           prevalence_percent=percent(played[k],field[k]) if field[k]>=ARCHETYPE_PREVALENCE_MIN_DECKS and k!='unknown' else None,
+                           status='unclassified' if k=='unknown' else 'observed' if field[k]>=ARCHETYPE_PREVALENCE_MIN_DECKS else 'insufficient_sample')
                       for k in sorted(field,key=lambda k:(-played[k],k))]
         overall = Counter(k for d in eligible for k in d['cards'])
         together = Counter(k for d in containing for k in d['cards'] if k!=fid)
@@ -176,16 +177,7 @@ class Competitive:
         partners.sort(key=lambda p:(-p['conservative_lift'],-p['lift'],p['functional_id']))
         partners = partners[:20]
         if partners:
-            references = {}
-            wanted = {p['functional_id'] for p in partners}
-            images = TCGdexImages()
-            with closing(self.cards.connect()) as db:
-                for row in db.execute("SELECT raw FROM cards WHERE game='tcg' ORDER BY standard DESC,id DESC"):
-                    c = json.loads(row[0]); key = identity(functional_signature(c))
-                    if key not in wanted: continue
-                    image_url = images.url(c, large=True)
-                    if key not in references or (not references[key]['image_url'] and image_url):
-                        references[key] = dict(name=c['name'],printing_id=c['id'],image_url=image_url)
+            references = representative_printings(self.cards,{p['functional_id'] for p in partners},card_catalog)
             for p in partners:
                 p.update(references.get(p['functional_id'],dict(name='Unmapped card',printing_id=None,image_url=None)))
         trend = []
@@ -204,6 +196,7 @@ class Competitive:
                     values.append(dict(date=day.isoformat(),sample_size=len(ds),included_decks=used,usage_percent=percent(used,len(ds))))
                 trend.append(dict(window=key,available=key!='format' or available,points=values))
         return dict(schema_version=1,source=SOURCE,source_label='Limitless',functional_id=fid,window=window,
+                    archetype_prevalence_min_decks=ARCHETYPE_PREVALENCE_MIN_DECKS,
                     status=state,format_available=available,format_start=self.format_start.isoformat() if self.format_start else None,
                     period_start=start.isoformat() if start else None,period_end=today.isoformat(),sample_size=n,
                     included_decks=a,usage_percent=percent(a,n),average_copies=round(sum(d['cards'][fid] for d in containing)/a,4) if a else None,

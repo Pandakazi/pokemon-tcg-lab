@@ -7,7 +7,7 @@ import { CompetitiveProvider, CompetitiveDashboard, UsageTrend, type Research } 
 import type { Card } from './api'
 
 const card:Card={id:'test-1',name:'Test Card',category:'Trainer',localId:1,set:{id:'test'},legal:{standard:true},legality_provenance:{source:'TCGdex',checked_at:'2026-09-24'},image_url:'/image.webp'}
-const data:Research={schema_version:1,source:'limitless-main',window:'30',status:'observed',format_available:true,format_start:'2026-01-01',period_start:'2026-08-26',period_end:'2026-09-24',usage_percent:20,average_copies:3,included_decks:20,sample_size:100,tournament_count:3,published_decklists:105,excluded_unmapped:5,results_without_lists:10,last_updated:'2026-09-24',source_error:null,
+const data:Research={archetype_prevalence_min_decks:15,schema_version:1,source:'limitless-main',window:'30',status:'observed',format_available:true,format_start:'2026-01-01',period_start:'2026-08-26',period_end:'2026-09-24',usage_percent:20,average_copies:3,included_decks:20,sample_size:100,tournament_count:3,published_decklists:105,excluded_unmapped:5,results_without_lists:10,last_updated:'2026-09-24',source_error:null,
  top_archetypes:Array.from({length:6},(_,i)=>({id:String(i),name:`Archetype ${i}`,decks:3,eligible_decks:14,share_percent:15,prevalence_percent:null,status:'insufficient_sample'})),archetypes:[],copy_distribution:[{copies:'1x',decks:2,percent:10}],associated_cards:[],association_status:'insufficient_sample',parser_version:'main-html-v1',provenance:[],
  trend:(['7','30','90','format'] as const).map(window=>({window,available:true,points:[{date:'2026-09-20',usage_percent:20,sample_size:100,included_decks:20},{date:'2026-09-23',usage_percent:25,sample_size:120,included_decks:30}]}))}
 const advance=async(ms:number)=>{await act(async()=>{vi.advanceTimersByTime(ms)})}
@@ -120,4 +120,22 @@ test('Associated Card name opens only a readable image preview, with no API call
  fireEvent.keyDown(window,{key:'Escape'});expect(screen.queryByRole('tooltip')).toBeNull()
  fireEvent.focus(screen.getByRole('button',{name:'Dragapult ex'}))
  fireEvent.error(screen.getByRole('img',{name:'Dragapult ex card artwork'}));expect(screen.getByText('Image unavailable')).toBeInTheDocument()
+})
+
+test('stale backend contracts cannot masquerade as insufficient samples or missing artwork',async()=>{
+ const legacy={...data,archetype_prevalence_min_decks:undefined}
+ vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>legacy} as Response)
+ render(<CompetitiveDashboard id="test-1"/>);await advance(0)
+ expect(screen.getByRole('alert')).toHaveTextContent('competitive API is out of date')
+ expect(screen.queryByRole('heading',{name:'Archetypes'})).toBeNull()
+})
+
+test('threshold explanation comes from API and genuinely missing artwork uses fallback',async()=>{
+ const associated_cards=[{functional_id:'missing',name:'Missing artwork',image_url:null,printing_id:null,decks:3,cooccurrence_percent:20,field_percent:10,lift:2}]
+ vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,archetype_prevalence_min_decks:27,associated_cards})} as Response)
+ render(<CompetitiveDashboard id="test-1"/>);await advance(0)
+ expect(screen.getByText(/at least 27 eligible archetype decklists/)).toBeInTheDocument()
+ fireEvent.pointerEnter(screen.getByRole('button',{name:'Missing artwork'}))
+ expect(screen.getByRole('tooltip')).toHaveTextContent('Image unavailable')
+ expect(screen.queryByRole('img',{name:'Missing artwork card artwork'})).toBeNull()
 })

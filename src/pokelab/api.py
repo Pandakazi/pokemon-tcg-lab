@@ -14,7 +14,7 @@ from .collection import Collection, identity
 from .competitive import Competitive
 from .competitive_models import CompetitiveResearch
 from .images import TCGdexImages
-from .library_identity import library_signature, basic_image_priority
+from .library_identity import library_signature, basic_image_priority, REPRESENTATIVE_ORDER_SQL
 from .web_models import LibraryQuery, CardPage, CardDetail, Status, Ownership, QuantityWrite, Preference, VariationPage, Category
 
 
@@ -70,9 +70,7 @@ class ReadOnlyCards(SQLiteCards):
             ranked AS (
                 SELECT c.raw,c.game,c.id,ROW_NUMBER() OVER (
                     PARTITION BY functional_identity(c.raw)
-                    ORDER BY basic_image_priority(c.raw) DESC,
-                             COALESCE(json_extract(s.raw,'$.releaseDate'),'') DESC,
-                             COALESCE(c.regulation,'') DESC,c.id DESC) representative
+                    ORDER BY {REPRESENTATIVE_ORDER_SQL}) representative
                 FROM eligible c LEFT JOIN sets s ON s.id=c.set_id)
             """
         total = db.execute(representatives + 'SELECT count(*) FROM ranked WHERE representative=1', params).fetchone()[0]
@@ -97,10 +95,11 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
         # Resolve exact printing to the existing canonical functional identity.
         # Catalogue-only access: no collection initialization or upstream calls.
         try:
-            records, _, _ = collection.catalog()
+            catalog = collection.catalog()
+            records = catalog[0]
             if printing_id not in records:
                 raise HTTPException(404, detail='Exact printing not found')
-            return competitive.stats(records[printing_id]['functional_id'],window,include_trend=trend)
+            return competitive.stats(records[printing_id]['functional_id'],window,include_trend=trend,card_catalog=catalog)
         except (sqlite3.Error, OSError, ValueError):
             raise HTTPException(503, detail={'code':'competitive_unavailable','message':'Competitive mapping or evidence storage is unavailable.'}) from None
 

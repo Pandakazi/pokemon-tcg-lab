@@ -7,7 +7,7 @@ type Window = '7'|'30'|'90'|'format'
 type Archetype = {id:string;name:string;decks:number;eligible_decks:number;share_percent:number|null;prevalence_percent:number|null;status:string}
 type Point = {date:string;usage_percent:number|null;sample_size:number;included_decks:number}
 export type Research = {
- schema_version:1;source:'limitless-main';window:Window;status:string;format_available:boolean;format_start:string|null
+ schema_version:1;source:'limitless-main';window:Window;status:string;archetype_prevalence_min_decks:number;format_available:boolean;format_start:string|null
  period_start:string|null;period_end:string;usage_percent:number|null;average_copies:number|null;included_decks:number;sample_size:number
  tournament_count:number;published_decklists:number;excluded_unmapped:number;results_without_lists:number;last_updated:string|null;source_error:string|null
  top_archetypes:Archetype[];archetypes:Archetype[];copy_distribution:{copies:string;decks:number;percent:number|null}[]
@@ -31,7 +31,7 @@ function useResearch(id:string,enabled=true,trend=true) {
   setData(null);setError('');if(!enabled)return
   const controller=new AbortController()
   fetch(`/api/v1/competitive/cards/${encodeURIComponent(id)}?window=${window}&source=limitless-main&trend=${trend}`,{signal:controller.signal})
-   .then(async response=>{if(!response.ok)throw new Error('Competitive source or mapping unavailable.');const result=await response.json();if(result.schema_version!==1||result.source!=='limitless-main')throw new Error('Unexpected competitive source response.');return result as Research})
+   .then(async response=>{if(!response.ok)throw new Error('Competitive source or mapping unavailable.');const result=await response.json();if(result.schema_version!==1||result.source!=='limitless-main')throw new Error('Unexpected competitive source response.');if(!Number.isInteger(result.archetype_prevalence_min_decks)||result.archetype_prevalence_min_decks<1||!Array.isArray(result.associated_cards)||result.associated_cards.some((p:object)=>!('image_url' in p)||!('printing_id' in p)))throw new Error('The competitive API is out of date. Restart the PokéLab API, then reload this page.');return result as Research})
    .then(result=>{if(!controller.signal.aborted)setData(result)})
    .catch(reason=>{if(!controller.signal.aborted)setError(reason.message)})
   return ()=>controller.abort()
@@ -100,7 +100,7 @@ export function CompetitiveDashboard({id}:{id:string}) {
   <section><h3>Competitive Overview</h3><dl><dt>Usage</dt><dd>{pct(data.usage_percent)}</dd><dt>Average copies in decks using card</dt><dd>{decimal(data.average_copies)}</dd><dt>Decks using card</dt><dd>{data.included_decks}</dd><dt>Eligible sample</dt><dd>{data.sample_size}</dd></dl></section>
   <section><h3>Copy Distribution</h3><p>Among decks using this functional card.</p><ul className="copy-distribution">{data.copy_distribution.map(d=><li key={d.copies}><strong>{d.copies}</strong> {pct(d.percent)} · {d.decks} decks</li>)}</ul></section>
   <section><h3>Usage Trend</h3><UsageTrend series={data.trend} start={data.trend_start} end={data.trend_end}/></section>
-  <section><h3>Archetypes</h3><p>Where played: share of decks containing this card. Prevalence: share within the archetype; at least 15 eligible archetype decklists required.</p>
+  <section><h3>Archetypes</h3><p>Where played: share of decks containing this card. Prevalence: share within the archetype; at least {data.archetype_prevalence_min_decks} eligible archetype decklists required.</p>
    {!data.archetypes.length?<p>No archetype observations.</p>:<div className="research-table"><table><thead><tr><th>Archetype</th><th>Where played</th><th>Prevalence within archetype</th><th>Eligible decks</th></tr></thead><tbody>{data.archetypes.map(a=><tr key={a.id}><th>{a.name}</th><td>{pct(a.share_percent)}</td><td>{a.status==='insufficient_sample'?`Insufficient sample — ${decklists(a.eligible_decks)}`:a.status==='unclassified'?'Unclassified':pct(a.prevalence_percent)}</td><td>{a.eligible_decks}</td></tr>)}</tbody></table></div>}</section>
 
   <section><h3>Associated Cards</h3><p>Co-occurrence is the percentage of decks using this card that also use the associated card. Lift compares that frequency with the overall eligible field. It does not establish causation.</p>

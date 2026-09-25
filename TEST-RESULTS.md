@@ -1,5 +1,39 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Phase 4 Manual QA Fix Pass #2
+
+- Root cause reproduced at both port 8001 and the port-5173 frontend proxy: the
+  Uvicorn process had started at 20:58:34, before Fix Pass #1. It still used the
+  original 100-deck threshold and returned Associated Card rows without
+  `printing_id`/`image_url`. The frontend had hot-reloaded; Python had not.
+  No precomputed statistics path was found: aggregates are computed locally from
+  normalized evidence, with only card-catalog metadata cached.
+- One authoritative `ARCHETYPE_PREVALENCE_MIN_DECKS=15` is now exposed in the API
+  as `archetype_prevalence_min_decks`; frontend explanatory text consumes it.
+  Missing current contract fields produce a clear stale-API restart error rather
+  than rendering misleading insufficient-sample or missing-artwork results.
+- Preview resolution uses the existing canonical identity/catalog and shared
+  Library representative ordering (release date, regulation, ID and Basic Energy
+  image priority), selecting an eligible Standard printing with usable image
+  metadata. Curated Basic Energy can reuse its existing Library presentation
+  group for artwork without merging canonical identities or changing quantities.
+- Full Python suite: **172 passed**, including **37 competitive tests**; two
+  unchanged upstream test-client deprecation warnings. Frontend: **45 passed**.
+  TypeScript/production build passed. Browser regression: **11 passed**.
+- Explicit API coverage: 14 decks insufficient; 15 decks with zero or nonzero
+  appearances; more than 15 decks with zero or nonzero appearances. Representative
+  tests cover release-date ordering, eligible prints, missing images, Basic Energy
+  presentation, unchanged exact-printing quantities, and no card/state writes.
+- Fresh-process sanity check against the original 734-list Budew evidence:
+  Dragapult Dusknoir 55/55=100%, Dragapult Blaziken 46/46=100%, N's Zoroark
+  16/60=26.6667%, Slowking 9/56=16.0714%, Crustle 1/36=2.7778%, Mega Excadrill
+  1/29=3.4483%; Festival Lead 0/17, Basic Box 0/65 and Dhelmise 0/22 all report
+  observed 0%. Below-15 groups remain insufficient. Common associated cards return
+  valid allowlisted high-resolution image URLs.
+
+Restart the local API after Python changes; frontend hot reload alone is not a
+backend deployment. Phase 4 remains **uncertified** pending Mike's manual QA.
+
 ## September 24, 2026 — Phase 4 Manual QA Fix Pass #1
 
 - Python regression suite: **166 passed**, including **31 competitive tests**;

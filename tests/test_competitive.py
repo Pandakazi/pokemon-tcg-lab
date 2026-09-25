@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from pokelab.api import ReadOnlyCards, create_app
 from pokelab.competitive import Competitive
 from pokelab.collection import identity
+from pokelab.collection import Collection, representative_printings
 from pokelab.engine import functional_signature
 from pokelab.limitless_main import parse_index, parse_results, parse_decklists, SourceLayoutError, SOURCE
 from pokelab.ingest_competitive import refresh
@@ -105,13 +106,28 @@ def test_denominators_and_distribution(store):
     assert partner['cooccurrence_percent']==100 and partner['field_percent']==100 and partner['lift']==1
 
 
-@pytest.mark.parametrize('n,status,pct',[(14,'insufficient_sample',None),(15,'observed',20)])
-def test_archetype_threshold(store,n,status,pct):
-    seed(store,n=n,a=3)
+@pytest.mark.parametrize('n,appearances,status,pct',[(14,0,'insufficient_sample',None),(14,3,'insufficient_sample',None),
+    (15,0,'observed',0),(15,3,'observed',20),(17,0,'observed',0),(55,11,'observed',20)])
+def test_archetype_threshold(store,n,appearances,status,pct):
+    seed(store,n=n,a=appearances)
     r=store.stats('A',today=date(2026,9,24))
     assert r['archetypes'][0]['status']==status
     assert r['archetypes'][0]['prevalence_percent']==pct
     assert r['usage_percent'] is not None
+    assert r['archetype_prevalence_min_decks']==15
+    # Exercise the actual API, including the zero-appearance branch.
+    fid=identity(functional_signature(card_with_name()))
+    with closing(store.connect(True)) as db,db:
+        for row in db.execute('SELECT rank,cards FROM competitive_decks').fetchall():
+            cards=json.loads(row['cards'])
+            if 'A' in cards: cards[fid]=cards.pop('A')
+            db.execute('UPDATE competitive_decks SET cards=? WHERE rank=?',(json.dumps(cards),row['rank']))
+    response=TestClient(create_app(store.cards.path,competitive_database=store.path)).get('/api/v1/competitive/cards/sm2-0')
+    assert response.status_code==200
+    api=response.json()
+    assert api['archetype_prevalence_min_decks']==15
+    assert api['archetypes'][0]['prevalence_percent']==pct
+    assert api['archetypes'][0]['status']==status
 
 
 def test_rare_card_is_observed_not_sample_gated(store):
@@ -199,6 +215,52 @@ def test_associated_card_preview_uses_existing_functional_identity_and_safe_imag
     assert partner['lift']==1 and partner['decks']==20
     raw=card_with_name();raw['image']='https://evil.invalid/image';SQLiteCards(store.cards.path).put(raw)
     assert store.stats('A',today=date(2026,9,24))['associated_cards'][0]['image_url'] is None
+
+
+def test_representative_uses_library_order_and_preserves_exact_collection(store):
+    writable=SQLiteCards(store.cards.path)
+    writable.put_set({**set_record('a-new'),'releaseDate':'2026-09-01'})
+    writable.put_set({**set_record('z-old'),'releaseDate':'2020-01-01'})
+    for set_id in ('a-new','z-old'):
+        raw=card_with_name();raw.update(id=set_id+'-1',localId='1',set={'id':set_id},variants={'normal':True,'reverse':True})
+        raw['image']=f'https://assets.tcgdex.net/en/sm/{set_id}/1'
+        writable.put(raw)
+    user_path=store.path.with_name('qa2-user.sqlite3')
+    collection=Collection(store.cards,user_path)
+    collection.update('z-old-1','normal',quantity=7)
+    state_before=user_path.read_bytes();cards_before=store.cards.path.read_bytes()
+    fid=identity(functional_signature(card_with_name()))
+    reference=representative_printings(store.cards,{fid},collection.catalog())[fid]
+    assert reference['printing_id']=='a-new-1'  # Release date wins over ID.
+    assert reference['image_url'].endswith('/a-new/1/high.webp')
+    library=TestClient(create_app(store.cards.path,user_path)).get('/api/v1/cards?q=Card%200').json()
+    assert library['cards'][0]['id']==reference['printing_id']
+    assert collection.snapshot().ownership('z-old-1','normal')['quantity']==7
+    assert collection.snapshot().ownership('a-new-1','normal')['quantity']==0
+    assert user_path.read_bytes()==state_before and store.cards.path.read_bytes()==cards_before
+    # Skip a newer printing with no usable image; do not select an ineligible one.
+    raw=card_with_name();raw.update(id='a-new-1',localId='1',set={'id':'a-new'});raw.pop('image')
+    writable.put(raw)
+    assert representative_printings(store.cards,{fid})[fid]['printing_id']=='z-old-1'
+    raw.update(id='a-new-2',localId='2',image='https://assets.tcgdex.net/en/sm/a-new/2',legal={'standard':False})
+    writable.put(raw)
+    assert representative_printings(store.cards,{fid})[fid]['printing_id']=='z-old-1'
+
+
+def test_basic_energy_preview_reuses_library_presentation_without_merging_functions(store):
+    writable=SQLiteCards(store.cards.path)
+    basic=dict(id='sm2-10',localId='10',set={'id':'sm2'},name='Fire Energy',category='Energy',energyType='Normal',legal={'standard':True})
+    alternate={**basic,'id':'sm2-11','localId':'11','name':'Basic Fire Energy','image':'https://assets.tcgdex.net/en/sm/sm2/11'}
+    writable.put(basic);writable.put(alternate)
+    collection=Collection(store.cards,store.path.with_name('energy-user.sqlite3'))
+    records,_,_=collection.catalog()
+    anchor=records['sm2-10']['functional_id']
+    assert anchor!=records['sm2-11']['functional_id']
+    assert records['sm2-10']['library_id']==records['sm2-11']['library_id']
+    before=store.cards.path.read_bytes()
+    result=representative_printings(store.cards,{anchor},collection.catalog())
+    assert result[anchor]['printing_id']=='sm2-11' and result[anchor]['image_url'].endswith('/11/high.webp')
+    assert not collection.path.exists() and store.cards.path.read_bytes()==before
 
 
 def test_top_five_and_deterministic_ties(store):

@@ -137,6 +137,12 @@ windows return 422; missing printings return 404; damaged storage returns 503.
 Pydantic response models and `schema_version=1` define the snapshot-independent
 contract. GET requests do not initialize storage, scrape or call AI.
 
+The backend's single `ARCHETYPE_PREVALENCE_MIN_DECKS` constant is exposed as
+`archetype_prevalence_min_decks`; the frontend does not maintain its own cutoff.
+Restart the API after Python code changes. Vite hot reload updates only the
+frontend. A response missing the current threshold/artwork fields now produces
+an explicit stale-API message rather than misleading analytics/fallbacks.
+
 Library Gallery/List alone opt into the popup: 1,000 ms intentional pointer delay,
 cancel on early exit, 180 ms exit grace, and pointer transfer into the popup keeps
 it open. Scrolling/resizing dismisses it. Collection and variation tiles do not
@@ -153,7 +159,10 @@ Usage Trend, Archetypes, Associated Cards, Evidence/Dataset.
 
 Associated Card names expose a separate reading preview on hover or keyboard
 focus. The API supplies a deterministic representative printing and allowlisted
-TCGdex high-resolution image URL from the same functional identity. The image
+TCGdex high-resolution image URL using the existing canonical identity/catalog
+and shared Library representative ordering. Image eligibility is applied before
+selection. Curated Basic Energy may reuse its existing Library presentation group
+for artwork; this does not change canonical identities or ownership. The image
 loads only when the preview opens. No additional statistics request or navigation
 occurs. Missing/failed artwork displays an unavailable message. The primary Card
 Detail artwork component and Library analytics hover behavior are unchanged.

@@ -11,12 +11,48 @@ import sqlite3
 from threading import RLock
 
 from .engine import functional_signature
-from .library_identity import library_signature
+from .library_identity import library_signature, basic_image_priority, REPRESENTATIVE_ORDER_SQL
+from .images import TCGdexImages
 from .quantities import COLLECTION_SCHEMA, read_quantity, write_quantity, variant_names
 
 
 def identity(signature):
     return hashlib.sha256(signature.encode()).hexdigest()[:32]
+
+
+def representative_printings(cards, functional_ids, catalog=None):
+    """Read-only artwork resolution using canonical IDs and Library ranking.
+
+    Image eligibility is applied before representative choice. Curated Basic
+    Energy may use its existing Library presentation group; no IDs, quantities,
+    finish preferences or collection rows are changed.
+    """
+    wanted = set(functional_ids)
+    if not wanted: return {}
+    records = catalog[0] if catalog else None
+    references, basic_groups, basic_images = {}, {}, {}
+    images = TCGdexImages()
+    with closing(cards.connect()) as db:
+        db.create_function('basic_image_priority',1,lambda raw:basic_image_priority(json.loads(raw)),deterministic=True)
+        rows = db.execute(f'''SELECT c.id,c.raw FROM cards c LEFT JOIN sets s ON s.id=c.set_id
+            WHERE c.game='tcg' AND c.standard=1 ORDER BY {REPRESENTATIVE_ORDER_SQL}''')
+        for row in rows:
+            record = records.get(row['id']) if records else None
+            raw = record['card'] if record else json.loads(row['raw'])
+            fid = record['functional_id'] if record else identity(functional_signature(raw))
+            library_key = library_signature(raw)
+            image_url = images.url(raw,large=True)
+            reference = dict(name=raw['name'],printing_id=raw['id'],image_url=image_url)
+            basic = library_key.startswith('library-basic-energy:')
+            if basic and image_url: basic_images.setdefault(library_key,reference)
+            if fid not in wanted: continue
+            if basic: basic_groups[fid] = library_key
+            if fid not in references or (not references[fid]['image_url'] and image_url):
+                references[fid] = reference
+    for fid,key in basic_groups.items():
+        if not references[fid]['image_url'] and key in basic_images:
+            references[fid] = basic_images[key]
+    return references
 
 
 class Collection:

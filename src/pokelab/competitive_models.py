@@ -63,6 +63,7 @@ class CompetitiveResearch(BaseModel):
     functional_id: str
     window: Window
     status: Literal['observed','format_unavailable','mapping_failure','source_failure','no_data']
+    archetype_prevalence_min_decks: int
     format_available: bool
     format_start: str | None
     period_start: str | None

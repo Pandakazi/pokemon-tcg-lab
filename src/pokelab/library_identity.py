@@ -2,6 +2,12 @@
 from .engine import functional_signature, normalized_name
 from .images import TCGdexImages
 
+# Shared by Library representatives and read-only competitive artwork previews.
+# c/s are the cards/sets aliases. Keep Library's certified ordering unchanged.
+REPRESENTATIVE_ORDER_SQL = """basic_image_priority(c.raw) DESC,
+    COALESCE(json_extract(s.raw,'$.releaseDate'),'') DESC,
+    COALESCE(c.regulation,'') DESC,c.id DESC"""
+
 BASIC_TYPES = ('Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Fairy')
 BASIC_NAMES = {normalized_name(prefix + kind + ' Energy'): kind
                for kind in BASIC_TYPES for prefix in ('', 'Basic ')}
