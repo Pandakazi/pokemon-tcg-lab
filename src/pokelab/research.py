@@ -12,6 +12,7 @@ from .collection import representative_printings
 from .competitive import ARCHETYPE_PREVALENCE_MIN_DECKS
 from .decks import DeckProvider, deck_identity
 from .limitless_main import SOURCE
+from .images import TCGdexImages
 from .research_identity import archetype_key, evidence_key
 
 
@@ -53,7 +54,7 @@ class Research:
             format_available=available,format_start=configured.isoformat() if configured else None,
             period_start=start.isoformat() if start else None,period_end=today.isoformat(),
             evidence_start=min((e['date'] for e in provenance),default=None),evidence_end=max((e['date'] for e in provenance),default=None),
-            status='format_unavailable' if window=='format' and not available else 'observed' if n>=15 else 'limited_evidence' if n else 'mapping_failure' if decks else 'no_data',
+            status='format_unavailable' if window=='format' and not available else 'observed' if n>=ARCHETYPE_PREVALENCE_MIN_DECKS else 'limited_evidence' if n else 'mapping_failure' if decks else 'no_data',
             eligible_decks=n,published_decks=len(decks),excluded_unmapped=len(decks)-n,tournament_count=len(provenance),
             results_without_lists=sum(e['results']-e['published'] for e in events),
             results_without_lists_scope='All cached tournaments in this timeframe; archetype of results without lists is not stored.',
@@ -70,7 +71,7 @@ class Research:
             # Historical mappings with no current Standard representative remain inspectable.
             if not ref and fid in catalog[1]:
                 printing = sorted(catalog[1][fid])[0]
-                ref = dict(printing_id=printing,image_url=None)
+                ref = dict(printing_id=printing,image_url=TCGdexImages().url(catalog[0][printing]['card'],large=True))
             card = None
             if ref:
                 record = catalog[0][ref['printing_id']]

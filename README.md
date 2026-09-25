@@ -190,10 +190,13 @@ Certified roadmap:
 - Phase 4 — Competitive Analytics: certified.
 - Phase 5 — Deck Builder: certified September 25, 2026.
 
-Next: **Phase 6 — Archetypes & Decklist Research**, to be started separately.
+Next milestone: **Phase 6 — Archetypes & Decklist Research** is implemented on
+
+`phase6-archetype-research` for PM QA, **not merged or certified**. See
+[Phase 6 architecture, composite algorithm, runtime and QA scope](docs/phase-6-research.md).
 Later work includes authentication before hosted private/paid use, Agent with metering,
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
-No Phase 6 implementation is included in this closeout.
+The Phase 5 certification tag remains unchanged. Phase 6 uses the same stored main-Limitless evidence; no new ingestion or Agent work is included.
 
 Non-blocking polish backlog:
 

@@ -2,7 +2,8 @@ param(
     [ValidateSet('Start','Stop','Restart')][string]$Action = 'Start',
     [string]$SourceRepository = 'C:\Users\Mike\Documents\pokemon-tcg-lab',
     [int]$ApiPort = 8003,
-    [int]$WebPort = 5175
+    [int]$WebPort = 5175,
+    [string]$PhaseLabel = 'Phase 5'
 )
 $ErrorActionPreference = 'Stop'
 $phase5Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -25,13 +26,13 @@ if (Test-Path -LiteralPath $processFile) {
         }
     }
     if ($Action -eq 'Start' -and $running.Count -eq 2) {
-        Write-Output "Phase 5 QA is already running: http://127.0.0.1:$($recorded.webPort)/deck-builder"
+        Write-Output "$PhaseLabel QA is already running: http://127.0.0.1:$($recorded.webPort)/deck-builder"
         return
     }
     foreach ($process in $running) { Stop-Process -Id $process.ProcessId }
     Remove-Item -LiteralPath $processFile
 }
-if ($Action -eq 'Stop') { Write-Output 'Phase 5 QA stopped. Stored QA decks are preserved.'; return }
+if ($Action -eq 'Stop') { Write-Output "$PhaseLabel QA stopped. Stored QA decks are preserved."; return }
 foreach ($port in @($ApiPort,$WebPort)) {
     if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {
         throw "Port $port is already in use. Choose another port; no unrelated server was stopped."
@@ -67,6 +68,6 @@ try {
     $webProcess = Start-Process -FilePath (Get-Command node.exe).Source -ArgumentList @(('"'+$vite+'"'),'--host','127.0.0.1','--port',"$WebPort",'--strictPort') -WorkingDirectory (Join-Path $phase5Root 'web') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $qaRoot 'web.out.log') -RedirectStandardError (Join-Path $qaRoot 'web.err.log')
     @{apiPid=$apiProcess.Id;webPid=$webProcess.Id;apiPort=$ApiPort;webPort=$WebPort;root=$phase5Root} | ConvertTo-Json | Set-Content -LiteralPath $processFile
 } catch { Stop-Process -Id $apiProcess.Id -ErrorAction SilentlyContinue; throw }
-Write-Output "Phase 5 QA: http://127.0.0.1:$WebPort/deck-builder"
+Write-Output "$PhaseLabel QA: http://127.0.0.1:$WebPort/deck-builder"
 Write-Output "Uses an isolated collection snapshot and persistent QA decks in $qaRoot"
 Write-Output 'After Restart, hard-refresh the browser with Ctrl+Shift+R.'
