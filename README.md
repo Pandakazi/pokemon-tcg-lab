@@ -2,7 +2,10 @@
 
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
-Phases 1–5 are PM-certified. Phase 5 Deck Builder was certified September 25, 2026,
+Phases 1–6 are PM-certified. Phase 6 — Archetypes & Decklist Research was certified
+by Mike on September 25, 2026 after manual PM QA passed. See
+[certified Phase 6 capabilities and methodology](docs/phase-6-research.md).
+Phase 5 Deck Builder was certified September 25, 2026,
 including the accepted Variation Family correction and current finish visualization
 with persistent shimmer. `phase-5-certified-2026-09-25` preserves this milestone;
 cosmetic refinement remains non-blocking. See [scope, architecture and QA startup](docs/phase-5-deck-builder.md).
@@ -190,9 +193,9 @@ Certified roadmap:
 - Phase 4 — Competitive Analytics: certified.
 - Phase 5 — Deck Builder: certified September 25, 2026.
 
-Next milestone: **Phase 6 — Archetypes & Decklist Research** is implemented on
+- Phase 6 — Archetypes & Decklist Research: ✅ **CERTIFIED** September 25, 2026.
 
-`phase6-archetype-research` for PM QA, **not merged or certified**. See
+`phase-6-certified-2026-09-25` preserves the certified Phase 6 milestone. See
 [Phase 6 architecture, composite algorithm, runtime and QA scope](docs/phase-6-research.md).
 Later work includes authentication before hosted private/paid use, Agent with metering,
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.

@@ -1,9 +1,24 @@
 # Phase 6 — Archetypes & Decklist Research
 
-Implementation for Mike's PM QA, **not certified or merged**. Dedicated branch:
-`phase6-archetype-research`, based on certified Phase 5 commit
+**Phase 6 — Archetypes & Decklist Research ✅ CERTIFIED** by Mike on September 25,
+2026. PM manual QA: **PASS**. Accepted implementation:
+`203f9cab0e2470ce82b97598113b3f3c2a47834a` on `phase6-archetype-research`.
+Certification tag: `phase-6-certified-2026-09-25` (includes documentation closeout).
+Based on certified Phase 5 commit
 `82df55414e0b92d02b3a85ba566f69a4c42c35c1` / `phase-5-certified-2026-09-25`.
 No Phase 6.5, Agent integration, new source ingestion, or rules-engine expansion.
+
+Certified capabilities: internal Card → Archetype research; small-sample deck
+discovery with the unchanged 15-deck prevalence confidence threshold; internal
+Tournament Deck Research; deterministic Archetype Composite; the internal
+Card → Archetype → Tournament Deck → Card research loop; main-Limitless evidence
+provenance; and preservation of the Phase 5 active deck during research.
+Copy to Deck Builder remains intentionally deferred.
+
+Final pre-certification verification: 239 backend tests, 70 frontend tests and
+32 browser tests passed; TypeScript and production build passed. Fresh runtime
+verified schema 2 / revision 118. These are the accepted implementation results,
+not expensive suites rerun during the Git/documentation-only certification closeout.
 
 ## Shared architecture and delivery slices
 

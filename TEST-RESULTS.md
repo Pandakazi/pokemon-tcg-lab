@@ -1,9 +1,13 @@
 # Release verification — 0.1.1
 
-## September 25, 2026 — Phase 6 implementation candidate
+## September 25, 2026 — Phase 6 PM certification closeout
 
-Status: **READY FOR PHASE 6 PM QA**, not merged or certified. Branch
-`phase6-archetype-research` begins at certified Phase 5 `82df554`.
+Status: **Phase 6 — Archetypes & Decklist Research ✅ CERTIFIED** by Mike.
+PM manual QA: **PASS**. Accepted implementation commit:
+`203f9cab0e2470ce82b97598113b3f3c2a47834a` on `phase6-archetype-research`,
+based on certified Phase 5 `82df554`. Tag: `phase-6-certified-2026-09-25`.
+This closeout changes documentation only; results below are the final accepted
+pre-certification runs, not newly rerun suites.
 
 - Full backend regression: **239 passed**, two existing upstream dependency warnings.
 - Full frontend component regression: **70 passed** across six files.
@@ -11,6 +15,8 @@ Status: **READY FOR PHASE 6 PM QA**, not merged or certified. Branch
   Tournament Deck → Card → back research loop, URL/reload/context preservation,
   sparse evidence, unavailable Format, and an unmapped source fixture.
 - TypeScript checking and production Vite build: **passed**.
+- Fresh runtime: **schema 2 / revision 118 verified**, preserved active/saved decks,
+  collection and source data; PM manually accepted the research experience.
 - Real cached Dragapult evidence: 159 mapped entrants across three events, 67 core
   functional cards; deterministic validated 60-card composite (19 Pokémon,
   33 Trainers, 8 Energy). No ingestion or AI calls.
