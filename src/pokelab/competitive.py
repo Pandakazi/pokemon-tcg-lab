@@ -14,6 +14,7 @@ import sqlite3
 from .collection import identity, representative_printings
 from .engine import functional_signature, normalized_name
 from .limitless_main import SOURCE, PARSER_VERSION
+from .research_identity import archetype_key
 
 ARCHETYPE_PREVALENCE_MIN_DECKS = 15
 
@@ -157,7 +158,7 @@ class Competitive:
         field = Counter(d['raw']['archetype_id'] for d in eligible)
         played = Counter(d['raw']['archetype_id'] for d in containing)
         labels = {d['raw']['archetype_id']:d['raw']['archetype_name'] for d in eligible}
-        archetypes = [dict(id=k,name=labels[k],decks=played[k],eligible_decks=field[k],
+        archetypes = [dict(id=k,research_id=archetype_key(k),name=labels[k],decks=played[k],eligible_decks=field[k],
                            share_percent=percent(played[k],a),
                            prevalence_percent=percent(played[k],field[k]) if field[k]>=ARCHETYPE_PREVALENCE_MIN_DECKS and k!='unknown' else None,
                            status='unclassified' if k=='unknown' else 'observed' if field[k]>=ARCHETYPE_PREVALENCE_MIN_DECKS else 'insufficient_sample')

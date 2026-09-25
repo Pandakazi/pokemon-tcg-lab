@@ -13,6 +13,8 @@ from tcg_lab.cards import CardLookupError, check_id, public_card, summary
 from .collection import Collection, identity
 from .competitive import Competitive
 from .competitive_models import CompetitiveResearch
+from .research import Research
+from .research_models import ResearchSummary, CardStatistics, EvidencePage, TournamentDeck, Composite
 from .decks import Decks, DeckCommand, DeckConflict, deck_identity
 from .images import TCGdexImages
 from .library_identity import library_signature, basic_image_priority, REPRESENTATIVE_ORDER_SQL
@@ -93,6 +95,35 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
     decks = Decks(collection, deck_database or os.getenv('POKELAB_DECK_DB_PATH') or collection.path.with_name('deck-workspace.sqlite3'))
     if decks.path == competitive.path:
         raise ValueError('Deck storage must be separate from competitive storage')
+    research = Research(competitive,collection)
+
+    def research_read(operation):
+        try:
+            return operation()
+        except KeyError as error:
+            raise HTTPException(404,detail=str(error)) from None
+        except (sqlite3.Error,OSError,ValueError):
+            raise HTTPException(503,detail='Local research evidence or card mapping is unavailable. Stored evidence is preserved.') from None
+
+    @app.get('/api/v1/research/archetypes/{key}',response_model=ResearchSummary)
+    def archetype_research(key:str,window:Literal['7','30','90','format']='30'):
+        return research_read(lambda:research.selected(key,window)[0])
+
+    @app.get('/api/v1/research/archetypes/{key}/cards',response_model=CardStatistics)
+    def archetype_cards(key:str,window:Literal['7','30','90','format']='30'):
+        return research_read(lambda:research.statistics(key,window))
+
+    @app.get('/api/v1/research/archetypes/{key}/decks',response_model=EvidencePage)
+    def archetype_decks(key:str,window:Literal['7','30','90','format']='30',page:int=Query(1,ge=1,le=10000),page_size:int=Query(20,ge=1,le=50),include_excluded:bool=False):
+        return research_read(lambda:research.evidence_page(key,window,page,page_size,include_excluded))
+
+    @app.get('/api/v1/research/archetypes/{key}/composite',response_model=Composite)
+    def archetype_composite(key:str,window:Literal['7','30','90','format']='30'):
+        return research_read(lambda:research.composite(key,window))
+
+    @app.get('/api/v1/research/tournament-decks/{key}',response_model=TournamentDeck)
+    def tournament_deck(key:str):
+        return research_read(lambda:research.tournament_deck(key))
 
     @app.get('/api/v1/deck-workspace')
     def deck_workspace():

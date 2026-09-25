@@ -7,6 +7,7 @@ Window = Literal['7','30','90','format']
 
 class Archetype(BaseModel):
     id: str
+    research_id: str
     name: str
     decks: int
     eligible_decks: int
