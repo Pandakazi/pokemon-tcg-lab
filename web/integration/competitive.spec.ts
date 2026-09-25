@@ -33,7 +33,7 @@ test('Library delay, popup crossing, Card Detail research and frozen artwork',as
  await page.locator('.usage-trend').screenshot({path:testInfo.outputPath('trend.png')})
  await page.getByRole('heading',{name:'Evidence / Dataset'}).scrollIntoViewIfNeeded()
  await expect(page.getByRole('heading',{name:'Evidence / Dataset'})).toBeInViewport()
- await expect(page.getByText('Insufficient sample — 14 decklists')).toHaveCount(5)
+ await expect(page.getByText('Insufficient sample for prevalence — 14 decklists')).toHaveCount(5)
  await page.getByRole('group',{name:'Competitive timeframe'}).getByRole('button',{name:'7D',exact:true}).click()
  await expect(page.locator('[data-series]')).toHaveCount(4)
  await page.locator('.detail-art').hover();await page.clock.runFor(1500)

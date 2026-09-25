@@ -42,8 +42,8 @@ test('non-Library tiles never request competitive hover',async()=>{
 })
 test('dashboard is continuous, threshold state and all trend series persist across window switch',async()=>{
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,archetypes:data.top_archetypes})} as Response)
- const view=render(<CompetitiveProvider><CompetitiveDashboard id="test-1"/></CompetitiveProvider>);await advance(0)
- expect(screen.getAllByText('Insufficient sample — 14 decklists')).toHaveLength(6)
+ const view=render(<MemoryRouter><CompetitiveProvider><CompetitiveDashboard id="test-1"/></CompetitiveProvider></MemoryRouter>);await advance(0)
+ expect(screen.getAllByText('Insufficient sample for prevalence — 14 decklists')).toHaveLength(6)
  expect(view.container.querySelectorAll('[data-series]')).toHaveLength(4)
  expect(screen.queryByRole('tab')).toBeNull()
  fireEvent.click(screen.getAllByRole('button',{name:'7D'})[0]);await advance(0)
@@ -54,7 +54,7 @@ test('dashboard is continuous, threshold state and all trend series persist acro
 })
 test('unavailable Format is disabled and observed zero is displayed',async()=>{
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,format_available:false,usage_percent:0})} as Response)
- render(<CompetitiveProvider><CompetitiveDashboard id="test-1"/></CompetitiveProvider>);await advance(0)
+ render(<MemoryRouter><CompetitiveProvider><CompetitiveDashboard id="test-1"/></CompetitiveProvider></MemoryRouter>);await advance(0)
  expect(screen.getAllByRole('button',{name:'Format'})[0]).toBeDisabled()
  expect(screen.getByText('0%',{selector:'dd'})).toBeInTheDocument()
 })
@@ -80,9 +80,9 @@ test('Card Detail artwork has no competitive hover and still enlarges on click',
 test('archetype insufficient sample uses singular and plural; 15 reports prevalence',async()=>{
  const archetypes=[1,14,15].map(n=>({...data.top_archetypes[0],id:String(n),name:`Group ${n}`,eligible_decks:n,status:n<15?'insufficient_sample':'observed',prevalence_percent:n<15?null:20}))
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,archetypes})} as Response)
- const view=render(<CompetitiveDashboard id="test-1"/>);await advance(0)
- expect(screen.getByText('Insufficient sample — 1 decklist')).toBeInTheDocument()
- expect(screen.getByText('Insufficient sample — 14 decklists')).toBeInTheDocument()
+ const view=render(<MemoryRouter><CompetitiveDashboard id="test-1"/></MemoryRouter>);await advance(0)
+ expect(screen.getByText('Insufficient sample for prevalence — 1 decklist')).toBeInTheDocument()
+ expect(screen.getByText('Insufficient sample for prevalence — 14 decklists')).toBeInTheDocument()
  expect(view.container.querySelectorAll('tbody tr')[2]).toHaveTextContent('Group 1515%20%15')
 })
 
@@ -92,7 +92,7 @@ test('average copies and percentages are presentation-rounded in popup, dashboar
  const view=mount();fireEvent.pointerEnter(view.container.querySelector('img')!);await advance(500)
  expect(screen.getByText('1.56')).toBeInTheDocument();expect(screen.getByText('43.46%')).toBeInTheDocument()
  view.unmount()
- render(<CompetitiveDashboard id="test-1"/>);await advance(0)
+ render(<MemoryRouter><CompetitiveDashboard id="test-1"/></MemoryRouter>);await advance(0)
  expect(screen.getByText('1.56')).toBeInTheDocument();expect(screen.getByText('43.46%')).toBeInTheDocument()
  const point=screen.getByLabelText('7D 2026-09-20: 43.47% of 100 eligible decklists')
  expect(point.querySelector('title')).toHaveTextContent('43.47%');fireEvent.focus(point)
@@ -110,7 +110,7 @@ test('trend axis uses explicit Format range without adding observations',()=>{
 test('Associated Card name opens only a readable image preview, with no API call',async()=>{
  const associated_cards=[{functional_id:'dragapult',name:'Dragapult ex',image_url:'https://assets.tcgdex.net/en/sv/sv06/130/high.webp',printing_id:'sv06-130',decks:10,cooccurrence_percent:50,field_percent:20,lift:2.5}]
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,associated_cards})} as Response)
- render(<CompetitiveDashboard id="test-1"/>);await advance(0)
+ render(<MemoryRouter><CompetitiveDashboard id="test-1"/></MemoryRouter>);await advance(0)
  const calls=vi.mocked(fetch).mock.calls.length
  expect(screen.queryByRole('img',{name:'Dragapult ex card artwork'})).toBeNull()
  fireEvent.pointerEnter(screen.getByRole('button',{name:'Dragapult ex'}))
@@ -125,7 +125,7 @@ test('Associated Card name opens only a readable image preview, with no API call
 test('stale backend contracts cannot masquerade as insufficient samples or missing artwork',async()=>{
  const legacy={...data,archetype_prevalence_min_decks:undefined}
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>legacy} as Response)
- render(<CompetitiveDashboard id="test-1"/>);await advance(0)
+ render(<MemoryRouter><CompetitiveDashboard id="test-1"/></MemoryRouter>);await advance(0)
  expect(screen.getByRole('alert')).toHaveTextContent('competitive API is out of date')
  expect(screen.queryByRole('heading',{name:'Archetypes'})).toBeNull()
 })
@@ -133,9 +133,20 @@ test('stale backend contracts cannot masquerade as insufficient samples or missi
 test('threshold explanation comes from API and genuinely missing artwork uses fallback',async()=>{
  const associated_cards=[{functional_id:'missing',name:'Missing artwork',image_url:null,printing_id:null,decks:3,cooccurrence_percent:20,field_percent:10,lift:2}]
  vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,archetype_prevalence_min_decks:27,associated_cards})} as Response)
- render(<CompetitiveDashboard id="test-1"/>);await advance(0)
+ render(<MemoryRouter><CompetitiveDashboard id="test-1"/></MemoryRouter>);await advance(0)
  expect(screen.getByText(/at least 27 eligible archetype decklists/)).toBeInTheDocument()
  fireEvent.pointerEnter(screen.getByRole('button',{name:'Missing artwork'}))
  expect(screen.getByRole('tooltip')).toHaveTextContent('Image unavailable')
  expect(screen.queryByRole('img',{name:'Missing artwork card artwork'})).toBeNull()
+})
+
+test.each([0,4,14,15])('Phase 6 explores %s eligible decks without weakening prevalence threshold',async n=>{
+ const archetype={id:'/decks/284',research_id:'stable-key',name:'Fixture Archetype',decks:1,eligible_decks:n,share_percent:100,prevalence_percent:n>=15?20:null,status:n>=15?'observed':'insufficient_sample'}
+ vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...data,archetypes:[archetype]})} as Response)
+ render(<MemoryRouter initialEntries={['/cards/test-1?window=90']}><CompetitiveProvider><CompetitiveDashboard id="test-1"/></CompetitiveProvider></MemoryRouter>);await advance(0)
+ expect(screen.getByRole('link',{name:'Fixture Archetype'})).toHaveAttribute('href','/archetypes/stable-key?window=90')
+ if(n){expect(screen.getByRole('link',{name:`Explore ${n} decks →`})).toHaveAttribute('href','/archetypes/stable-key?window=90#tournament-evidence')}
+ else expect(screen.queryByRole('link',{name:/Explore/})).toBeNull()
+ if(n<15)expect(screen.getByText(`Insufficient sample for prevalence — ${n} decklists`)).toBeInTheDocument()
+ else expect(screen.queryByText(/Insufficient sample for prevalence/)).toBeNull()
 })

@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 import { useBuilder, detailPath } from './DeckBuilder'
 import { AssociatedCardPreview } from './AssociatedCardPreview'
 
 type Window = '7'|'30'|'90'|'format'
-type Archetype = {id:string;name:string;decks:number;eligible_decks:number;share_percent:number|null;prevalence_percent:number|null;status:string}
+type Archetype = {id:string;research_id?:string;name:string;decks:number;eligible_decks:number;share_percent:number|null;prevalence_percent:number|null;status:string}
 type Point = {date:string;usage_percent:number|null;sample_size:number;included_decks:number}
 export type Research = {
  schema_version:1;source:'limitless-main';window:Window;status:string;archetype_prevalence_min_decks:number;format_available:boolean;format_start:string|null
@@ -18,8 +18,15 @@ export type Research = {
 }
 const Windows = createContext<{window:Window;setWindow:(value:Window)=>void}>({window:'30',setWindow:()=>{}})
 export function CompetitiveProvider({children}:{children:ReactNode}) {
- const [window,setWindow]=useState<Window>('30')
+ const [remembered,setRemembered]=useState<Window>('30'),[params,setParams]=useSearchParams(),location=useLocation()
+ const requested=params.get('window'),window=(['7','30','90','format'].includes(requested||'')?requested:remembered) as Window
+ const setWindow=(value:Window)=>{setRemembered(value);if(location.pathname!=='/'&&location.pathname!=='/deck-builder'&&location.pathname!=='/collection'){const next=new URLSearchParams(params);next.set('window',value);next.delete('page');setParams(next,{state:location.state})}}
  return <Windows.Provider value={{window,setWindow}}>{children}</Windows.Provider>
+}
+export const useCompetitiveTimeframe=()=>useContext(Windows)
+export function ArchetypeLink({archetype,children}:{archetype:Archetype;children?:ReactNode}) {
+ const builder=useBuilder(),location=useLocation(),{window}=useContext(Windows)
+ return archetype.research_id?<Link to={`${builder?'/deck-builder':''}/archetypes/${archetype.research_id}?window=${window}${children?'#tournament-evidence':''}`} state={{researchFrom:location.pathname+location.search,researchFromState:location.state}}>{children||archetype.name}</Link>:<>{children||archetype.name}</>
 }
 const label=(w:Window)=>w==='format'?'Format':`${w}D`
 const decimal=(n:number|null)=>n===null?'Unavailable':String(Number(n.toFixed(2)))
@@ -74,7 +81,7 @@ export function CompetitivePopup({id,name,deckIdentity,hover}:{id:string;name:st
  return createPortal(<aside role="dialog" aria-label={`${name} competitive preview`} className="competitive-popup" style={hover.position} onPointerEnter={hover.keep} onPointerLeave={hover.leave} onFocus={hover.keep} onBlur={hover.leave} onKeyDown={e=>{if(e.key==='Escape')hover.close()}}>
   <strong>{name}</strong>{builder?.data&&deckIdentity&&<p><strong>{(()=>{const n=builder.data.deck.entries.find(e=>e.identity===deckIdentity)?.quantity||0;return `${n} ${n===1?'Card':'Cards'} in deck`})()}</strong></p>}<p>Competitive • {window==='format'?'Current Format':`Last ${window} Days`}</p><State data={data} error={error}/>
   {data&&<><dl><dt>Usage</dt><dd>{pct(data.usage_percent)}</dd><dt>Average copies</dt><dd>{decimal(data.average_copies)}</dd></dl>
-   <h3>Top five archetypes</h3><ol>{data.top_archetypes.slice(0,5).map(a=><li key={a.id}>{a.name} <span>{pct(a.share_percent)}</span></li>)}</ol>{!data.top_archetypes.length&&<p>No archetype observations.</p>}<Sample data={data}/></>}
+   <h3>Top five archetypes</h3><ol>{data.top_archetypes.slice(0,5).map(a=><li key={a.id}><ArchetypeLink archetype={a}/> <span>{pct(a.share_percent)}</span></li>)}</ol>{!data.top_archetypes.length&&<p>No archetype observations.</p>}<Sample data={data}/></>}
   <p>Source: Limitless</p><Link to={detailPath(id,!!builder)} state={{library:location.pathname+location.search}} onClick={hover.close}>Click for full research →</Link>
  </aside>,document.body)
 }
@@ -103,7 +110,7 @@ export function CompetitiveDashboard({id}:{id:string}) {
   <section><h3>Copy Distribution</h3><p>Among decks using this functional card.</p><ul className="copy-distribution">{data.copy_distribution.map(d=><li key={d.copies}><strong>{d.copies}</strong> {pct(d.percent)} · {d.decks} decks</li>)}</ul></section>
   <section><h3>Usage Trend</h3><UsageTrend series={data.trend} start={data.trend_start} end={data.trend_end}/></section>
   <section><h3>Archetypes</h3><p>Where played: share of decks containing this card. Prevalence: share within the archetype; at least {data.archetype_prevalence_min_decks} eligible archetype decklists required.</p>
-   {!data.archetypes.length?<p>No archetype observations.</p>:<div className="research-table"><table><thead><tr><th>Archetype</th><th>Where played</th><th>Prevalence within archetype</th><th>Eligible decks</th></tr></thead><tbody>{data.archetypes.map(a=><tr key={a.id}><th>{a.name}</th><td>{pct(a.share_percent)}</td><td>{a.status==='insufficient_sample'?`Insufficient sample — ${decklists(a.eligible_decks)}`:a.status==='unclassified'?'Unclassified':pct(a.prevalence_percent)}</td><td>{a.eligible_decks}</td></tr>)}</tbody></table></div>}</section>
+   {!data.archetypes.length?<p>No archetype observations.</p>:<div className="research-table"><table><thead><tr><th>Archetype</th><th>Where played</th><th>Prevalence within archetype</th><th>Eligible decks</th></tr></thead><tbody>{data.archetypes.map(a=><tr key={a.id}><th><ArchetypeLink archetype={a}/></th><td>{pct(a.share_percent)}</td><td>{a.status==='insufficient_sample'?`Insufficient sample for prevalence — ${decklists(a.eligible_decks)}`:a.status==='unclassified'?'Unclassified':pct(a.prevalence_percent)}</td><td>{a.eligible_decks}{a.eligible_decks>0&&a.research_id&&<p><ArchetypeLink archetype={a}>Explore {a.eligible_decks} decks →</ArchetypeLink></p>}</td></tr>)}</tbody></table></div>}</section>
 
   <section><h3>Associated Cards</h3><p>Co-occurrence is the percentage of decks using this card that also use the associated card. Lift compares that frequency with the overall eligible field. It does not establish causation.</p>
    {data.associated_cards.length?<div className="research-table"><table><thead><tr><th>Card</th><th>Co-occurrence</th><th>Field usage</th><th>Association / lift</th><th>Joint decks</th></tr></thead><tbody>{data.associated_cards.map(p=><tr key={p.functional_id}><th><AssociatedCardPreview name={p.name} imageUrl={p.image_url}/></th><td>{pct(p.cooccurrence_percent)}</td><td>{pct(p.field_percent)}</td><td>{p.lift.toFixed(2)}×</td><td>{p.decks}</td></tr>)}</tbody></table></div>:<p>{data.association_status==='insufficient_sample'?`Insufficient sample — ${data.included_decks} decks using this card`:'No pairs meet the sample safeguards.'}</p>}

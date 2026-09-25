@@ -8,6 +8,7 @@ import { CardDetail } from './CardDetail'
 import { CollectionPage } from './CollectionPage'
 import { CompetitiveProvider, CompetitiveWindows } from './Competitive'
 import { DeckProvider, DeckTray, useBuilder } from './DeckBuilder'
+import { ArchetypeResearch, TournamentDeckResearch } from './ResearchPages'
 
 type CategoryMemory = {current:Record<string,string>;filterOpen?:boolean;scroll?:Record<string,number>}
 function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
@@ -109,6 +110,10 @@ function ApplicationWorkspace() {
    <Route path="/collection" element={<CollectionPage/>}/>
    <Route path="/deck-builder" element={<Library key="builder" view={builderView} setView={setBuilderView} memory={builderMemory}/>}/>
    <Route path="/deck-builder/cards/:printingId" element={<CardDetail/>}/>
+   <Route path="/archetypes/:key" element={<ArchetypeResearch/>}/>
+   <Route path="/tournament-decks/:key" element={<TournamentDeckResearch/>}/>
+   <Route path="/deck-builder/archetypes/:key" element={<ArchetypeResearch/>}/>
+   <Route path="/deck-builder/tournament-decks/:key" element={<TournamentDeckResearch/>}/>
    <Route path="*" element={<main className="gallery-scroll"><h1>Page not found</h1><Link to="/">Open library</Link></main>}/>
   </Routes>
   <DeckTray/>

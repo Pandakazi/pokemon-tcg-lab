@@ -25,7 +25,7 @@ export function CardDetail() {
  const card=data?.card.id===printingId?data.card:undefined
  function changed(id:string,owned:Ownership) {setData(old=>old?{...old,card:withOwnership(old.card,id,owned)}:old)}
  return <main className="detail-page">
-  <Link to={location.state?.library || (builder?'/deck-builder':'/')}>← Back to {builder?'Deck Builder':'library'}</Link>
+  <Link to={location.state?.library || (builder?'/deck-builder':'/')} state={location.state?.libraryState}>← Back to {/\/(archetypes|tournament-decks)\//.test(location.state?.library||'')?'research':builder?'Deck Builder':'library'}</Link>
   {!card && !error && <p role="status">Loading card…</p>}
   {error && <div role="alert"><h1>Card could not be loaded</h1><p>{error}</p><button onClick={()=>setAttempt(v=>v+1)}>Retry</button></div>}
   {card && data && <>
