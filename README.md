@@ -165,14 +165,14 @@ On macOS use `.venv/bin/python`, `npm`, and `npx` equivalents.
 If Windows pytest cannot access its default temp folder, supply `--basetemp` with a
 new disposable directory (pytest owns and may clear that directory).
 
-Validated on September 24, 2026: **135 Python tests, 31 frontend tests, 8 real-data
+Validated on September 24, 2026: **164 Python tests, 39 frontend tests, 10
 Chromium integration tests; TypeScript and production build passed**. Two upstream
 Python test-client deprecation warnings remain. See [test results](TEST-RESULTS.md).
 
 ## Roadmap and history
 
-Next, after PM review: competitive analytics,
-archetype evidence, authentication before hosted private/paid use, Agent with metering,
+Next, after Phase 4 PM review: full archetype/decklist browsing,
+authentication before hosted private/paid use, Agent with metering,
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
 No later slice is activated by this milestone.
 
