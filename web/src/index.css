@@ -186,7 +186,14 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .finish-surface[data-lit] .finish-light::before{opacity:.40}
 .finish-surface[data-lit] .finish-light::after{opacity:.50}
 .card-dialog>.finish-surface{height:auto}
+/* A broad moving light under the pointer reflection; alternate cycles avoid a reset. */
+.finish-shimmer{position:absolute;inset:-60%;pointer-events:none;mix-blend-mode:screen;background:linear-gradient(115deg,transparent 32%,#7ac9d540 40%,#d0b7e080 46%,#fff 50%,#e5d3a580 54%,#91cdb840 60%,transparent 68%);opacity:.25;animation:foil-holo-drift 6s ease-in-out infinite alternate;transition:opacity .35s ease-out}
+.finish-surface[data-finish="reverse"] .finish-shimmer{background:linear-gradient(65deg,transparent 30%,#91cdb860 40%,#e5d3a590 47%,#fff 50%,#b6b5e090 53%,#7ac9d560 60%,transparent 70%);opacity:.28;animation-name:foil-reverse-drift;animation-duration:8s}
+.finish-surface[data-lit] .finish-shimmer{opacity:.10}
+@keyframes foil-holo-drift{from{transform:translate(-22%,-8%)}to{transform:translate(22%,8%)}}
+@keyframes foil-reverse-drift{from{transform:translate(18%,-16%)}to{transform:translate(-18%,16%)}}
 @media (prefers-reduced-motion:reduce){
+ .finish-surface[data-finish] .finish-shimmer{animation:none;display:none}
  .finish-surface,.finish-surface[data-lit],.finish-light::before,.finish-light::after{transition:none}
  .finish-light{--foil-x:50%;--foil-y:40%}
  .finish-surface[data-lit] .finish-light::before{opacity:.28}

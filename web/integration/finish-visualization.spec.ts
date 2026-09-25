@@ -23,22 +23,36 @@ test('real Gumshoos finishes, pointer light, settled frames, reduced motion and 
  }
  expect(await reverse.locator('.finish-light').evaluate(e=>getComputedStyle(e).clipPath)).not.toBe(await holo.locator('.finish-light').evaluate(e=>getComputedStyle(e).clipPath))
  await page.mouse.move(1,1);await grid.screenshot({path:info.outputPath('gumshoos-rest.png')})
+ for(const [tile,duration,name] of [[holo,'6s','foil-holo-drift'],[reverse,'8s','foil-reverse-drift']] as const){
+  const shimmer=tile.locator('.finish-shimmer')
+  await expect(shimmer).toHaveCSS('animation-duration',duration)
+  await expect(shimmer).toHaveCSS('animation-name',name)
+  const start=await shimmer.evaluate(e=>getComputedStyle(e).transform)
+  await expect.poll(()=>shimmer.evaluate(e=>getComputedStyle(e).transform)).not.toBe(start)
+ }
+ expect(await holo.locator('.finish-shimmer').getAttribute('style')).not.toBe(await reverse.locator('.finish-shimmer').getAttribute('style'))
+ await page.waitForTimeout(2000);await grid.screenshot({path:info.outputPath('gumshoos-rest-later.png')})
  for(const [tile,label] of [[holo,'holo'],[reverse,'reverse']] as const){
   const box=(await tile.locator('img').boundingBox())!,surface=tile.locator('.finish-surface')
   await page.mouse.move(box.x+box.width*.2,box.y+box.height*.3)
   await expect(surface).toHaveAttribute('data-lit','true')
+  await expect(tile.locator('.finish-shimmer')).toHaveCSS('opacity','0.1')
   expect(await surface.evaluate(e=>parseFloat((e as HTMLElement).style.getPropertyValue('--foil-x')))).toBeCloseTo(20,0)
   await page.mouse.move(box.x+box.width*.8,box.y+box.height*.2,{steps:12})
   expect(await surface.evaluate(e=>parseFloat((e as HTMLElement).style.getPropertyValue('--foil-x')))).toBeCloseTo(80,0)
   await page.waitForTimeout(200);await grid.screenshot({path:info.outputPath(`gumshoos-${label}-pointer.png`)})
   await page.mouse.move(1,1);await expect(surface).not.toHaveAttribute('data-lit')
   await expect.poll(()=>surface.evaluate(e=>getComputedStyle(e).getPropertyValue('--foil-x').trim())).toBe('50%')
+  await expect(tile.locator('.finish-shimmer')).toHaveCSS('opacity',label==='holo'?'0.25':'0.28')
+  await expect(tile.locator('.finish-shimmer')).toHaveCSS('animation-play-state','running')
  }
  await reverse.hover({position:{x:3,y:3}});await page.waitForTimeout(600)
  await expect(page.locator('.competitive-popup')).toHaveCount(0);await expect(reverse.locator('.finish-surface')).not.toHaveAttribute('data-lit')
  await page.emulateMedia({reducedMotion:'reduce'})
  await reverse.locator('img').hover();await expect(reverse.locator('.finish-surface')).not.toHaveAttribute('data-lit')
  await expect(reverse.locator('.finish-surface')).toHaveCSS('transition-duration','0s')
+ await expect(grid.locator('.finish-shimmer').first()).toHaveCSS('animation-name','none')
+ expect(await grid.evaluate(e=>e.getAnimations({subtree:true}).length)).toBe(0)
  await grid.screenshot({path:info.outputPath('gumshoos-reduced-motion.png')})
  await page.emulateMedia({reducedMotion:'no-preference'})
  await reverse.getByRole('link').click();await expect(page).toHaveURL(/me01-110\?variant=reverse/)
@@ -51,7 +65,7 @@ test('real Gumshoos finishes, pointer light, settled frames, reduced motion and 
  const after=await (await request.get('/api/v1/deck-workspace')).json();expect(after).toEqual(before)
 })
 
-test('foil remains static on touch and aligns after resizing with many visible cards',async({page},info)=>{
+test('autonomous foil aligns after resizing with many visible cards',async({page},info)=>{
  await page.goto('/deck-builder/cards/me01-114?variant=reverse')
  await page.getByRole('button',{name:'Variations',exact:true}).click()
  const grid=page.locator('.deck-variation-grid');await grid.scrollIntoViewIfNeeded()
@@ -66,7 +80,17 @@ test('foil remains static on touch and aligns after resizing with many visible c
  const image=grid.locator('img').first()
  await image.dispatchEvent('pointermove',{pointerType:'touch',clientX:100,clientY:200})
  await expect(grid.locator('[data-lit]')).toHaveCount(0)
- expect(await page.evaluate(()=>document.getAnimations().length)).toBe(0)
+ const motions=await grid.evaluate(e=>e.getAnimations({subtree:true}).map(a=>({state:a.playState,duration:a.effect?.getTiming().duration})))
+ expect(motions.length).toBeGreaterThan(5)
+ expect(motions.every(a=>a.state==='running'&&(a.duration===6000||a.duration===8000))).toBe(true)
+ // One short measurement for QA, not an application animation loop.
+ const frameTiming=await page.evaluate(()=>new Promise<{frames:number;averageMs:number;maxMs:number}>(resolve=>{
+  const deltas:number[]=[];let previous=performance.now(),start=previous
+  function sample(now:number){deltas.push(now-previous);previous=now;if(now-start<1000)requestAnimationFrame(sample);else resolve({frames:deltas.length,averageMs:deltas.reduce((a,b)=>a+b,0)/deltas.length,maxMs:Math.max(...deltas)})}
+  requestAnimationFrame(sample)
+ }))
+ await info.attach('multi-card-frame-timing',{body:JSON.stringify(frameTiming),contentType:'application/json'})
+ console.log('Multi-card shimmer frame timing:',JSON.stringify(frameTiming))
  await grid.screenshot({path:info.outputPath('many-finishes-responsive.png')})
 })
 
@@ -79,7 +103,7 @@ test('dark and bright artwork stays readable through Holo and Reverse lighting',
  }
 })
 
-test('a touch device retains static finish distinctions without gestures',async({browser},info)=>{
+test('a touch device autonomously shimmers without gestures and respects reduced motion',async({browser},info)=>{
  const context=await browser.newContext({baseURL:'http://127.0.0.1:5174',hasTouch:true,isMobile:true,viewport:{width:1100,height:1000}})
  try{
   const page=await context.newPage()
@@ -91,7 +115,12 @@ test('a touch device retains static finish distinctions without gestures',async(
    const surface=grid.locator(`[data-finish="${finish}"]`)
    await loaded(surface.locator('img'));await surface.locator('img').dispatchEvent('pointermove',{pointerType:'touch',clientX:100,clientY:100})
    await expect(surface).not.toHaveAttribute('data-lit');await expect(surface.locator('.finish-light')).toHaveCSS('visibility','visible')
+   const shimmer=surface.locator('.finish-shimmer'),start=await shimmer.evaluate(e=>getComputedStyle(e).transform)
+   await expect.poll(()=>shimmer.evaluate(e=>getComputedStyle(e).transform)).not.toBe(start)
   }
   await grid.screenshot({path:info.outputPath('gumshoos-touch.png')})
+  await page.emulateMedia({reducedMotion:'reduce'})
+  await expect(grid.locator('.finish-shimmer').first()).toHaveCSS('display','none')
+  expect(await grid.evaluate(e=>e.getAnimations({subtree:true}).length)).toBe(0)
  }finally{await context.close()}
 })

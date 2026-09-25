@@ -28,10 +28,12 @@ export function FinishImage({finish,fullArt=false,onPointerEnter,onPointerLeave,
   root.dataset.lit='true'
  }
  if(!treatment)return <img {...image} onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave} onPointerMove={onPointerMove}/>
+ // Stable phase per printing/finish; no timers or animation state in React.
+ const phase=`${image.src?.replace(/\/(high|low)\.webp$/,'')}:${treatment}`.split('').reduce((hash,char)=>(hash*31+char.charCodeAt(0))>>>0,0)%1200/100
  return <span ref={surface} className="finish-surface" data-finish={treatment} data-full-art={fullArt||undefined}>
   <img {...image} ref={art} onPointerEnter={e=>{move(e);onPointerEnter?.(e)}} onPointerMove={e=>{move(e);onPointerMove?.(e)}} onPointerLeave={e=>{
    const root=surface.current!;delete root.dataset.lit;root.style.removeProperty('--foil-x');root.style.removeProperty('--foil-y');onPointerLeave?.(e)
   }}/>
-  <span ref={foil} className="finish-light" aria-hidden="true"/>
+  <span ref={foil} className="finish-light" aria-hidden="true"><span className="finish-shimmer" style={{animationDelay:`-${phase}s`}}/></span>
  </span>
 }

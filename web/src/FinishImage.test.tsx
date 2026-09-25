@@ -28,6 +28,13 @@ test('reduced motion does not activate pointer-driven lighting',()=>{
  expect(container.querySelector('.finish-surface')).not.toHaveAttribute('data-lit')
  expect(container.querySelector('.finish-light')).not.toBeNull()
 })
+test('autonomous phases are reproducible and distinguish exact finishes',()=>{
+ const {container,rerender}=render(<FinishImage finish="holo" src="/card/low.webp" alt="Card"/>)
+ const delay=()=>container.querySelector<HTMLElement>('.finish-shimmer')!.style.animationDelay
+ const original=delay()
+ rerender(<FinishImage finish="holo" src="/card/high.webp" alt="Card"/>);expect(delay()).toBe(original)
+ rerender(<FinishImage finish="reverse" src="/card/high.webp" alt="Card"/>);expect(delay()).not.toBe(original)
+})
 test('exact Collection gets its known finish; functional gallery remains neutral',()=>{
  const {container,rerender}=render(<MemoryRouter><CardTile card={card} exact/></MemoryRouter>)
  expect(container.querySelector('[data-finish="holo"]')).not.toBeNull()
