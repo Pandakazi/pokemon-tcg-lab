@@ -22,8 +22,12 @@ and interaction direction. We reuse its generated source, not a screenshot recre
 - Card Detail variations, quantity controls and artwork magnification; an exact
   owned-printing Collection workspace.
 
-Competitive analytics, Agent and authentication remain
-disabled/unconnected in this slice. PWA installation,
+- Main-Limitless tournament analytics: Library preview and continuous Card Detail
+  research with usage, copies, archetypes, four-window trends and association/lift.
+  See [Phase 4 setup, definitions and manual QA](docs/phase-4-competitive.md).
+
+Phase 4 awaits Mike's manual certification. Agent and authentication remain
+disabled/unconnected. PWA installation,
 offline service workers, hosting and billing are not implemented.
 
 ## Architecture

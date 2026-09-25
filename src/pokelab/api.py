@@ -11,6 +11,8 @@ from fastapi import FastAPI, HTTPException, Query
 from tcg_lab.card_db import SQLiteCards
 from tcg_lab.cards import CardLookupError, check_id, public_card, summary
 from .collection import Collection, identity
+from .competitive import Competitive
+from .competitive_models import CompetitiveResearch
 from .images import TCGdexImages
 from .library_identity import library_signature, basic_image_priority
 from .web_models import LibraryQuery, CardPage, CardDetail, Status, Ownership, QuantityWrite, Preference, VariationPage, Category
@@ -79,11 +81,28 @@ class ReadOnlyCards(SQLiteCards):
         return total, rows
 
 
-def create_app(database=None, state_database=None):
+def create_app(database=None, state_database=None, competitive_database=None, format_start=None):
     app = FastAPI(title='PokéLab API', version='0.1.0')
     cards = ReadOnlyCards(database or os.getenv('TCG_CARDS_DB_PATH', 'data/cards.sqlite3'))
     images = TCGdexImages()
     collection = Collection(cards, state_database or os.getenv('POKELAB_USER_DB_PATH') or cards.path.with_name('user-state.sqlite3'))
+    competitive = Competitive(cards, competitive_database or os.getenv('POKELAB_COMPETITIVE_DB_PATH') or cards.path.with_name('competitive.sqlite3'),
+                              format_start or os.getenv('POKELAB_FORMAT_START'))
+    if competitive.path == collection.path:
+        raise ValueError('Competitive storage must be separate from collection storage')
+
+    @app.get('/api/v1/competitive/cards/{printing_id}', response_model=CompetitiveResearch)
+    def competitive_card(printing_id: str, window: Literal['7','30','90','format']='30',
+                         source: Literal['limitless-main']='limitless-main', trend: bool=True):
+        # Resolve exact printing to the existing canonical functional identity.
+        # Catalogue-only access: no collection initialization or upstream calls.
+        try:
+            records, _, _ = collection.catalog()
+            if printing_id not in records:
+                raise HTTPException(404, detail='Exact printing not found')
+            return competitive.stats(records[printing_id]['functional_id'],window,include_trend=trend)
+        except (sqlite3.Error, OSError, ValueError):
+            raise HTTPException(503, detail={'code':'competitive_unavailable','message':'Competitive mapping or evidence storage is unavailable.'}) from None
 
     def state():
         try:

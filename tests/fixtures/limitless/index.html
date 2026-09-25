@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournaments – Limitless</title>
+    <meta name="description" content="Results and decklists from all major Pokémon TCG tournaments around the world.">
+
+            <meta property="og:title" content="Tournaments – Limitless">
+        <meta property="og:description" content="Results and decklists from all major Pokémon TCG tournaments around the world.">
+        <meta property="og:image" content="https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/social-preview.png">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Limitless TCG">
+    
+            <meta name="twitter:card" content="summary">
+        <meta name="twitter:site" content="@LimitlessTCG">
+        <meta name="twitter:title" content="Tournaments – Limitless">
+        <meta name="twitter:description" content="Results and decklists from all major Pokémon TCG tournaments around the world.">
+        <meta name="twitter:image" content="https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/social-preview.png">
+    
+    <link rel="manifest" href="/app.webmanifest">
+
+            <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102651668-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102651668-1', { 'anonymize_ip': true });
+</script>    
+            <script data-cfasync="false">
+        window.ramp = window.ramp || {};
+        window.ramp.que = window.ramp.que || [];
+    </script>
+
+<style>
+#pw-oop-bottom_rail, .bh-div-wrapper, .celtra-banner {
+    z-index: 10 !important;
+    box-sizing: content-box;
+}
+
+@media print {
+    #pw-oop-bottom_rail, .bh-div-wrapper, .celtra-banner,
+    #pw-oop-left_rail {
+        display: none !important;
+    }
+}
+</style>    
+    <link rel="preload" as="style" href="https://limitlesstcg.com/build/assets/main-e01e825c.css" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/main-e12b7c15.js" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/dom-7f7df130.js" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/limitless-38d3eac6.js" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/fetch-a833fccf.js" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/tables-bcf04db3.js" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/ws-search-e6ffb889.js" /><link rel="modulepreload" href="https://limitlesstcg.com/build/assets/suggest-4ff36e79.js" /><link rel="stylesheet" href="https://limitlesstcg.com/build/assets/main-e01e825c.css" /><script type="module" src="https://limitlesstcg.com/build/assets/main-e12b7c15.js"></script>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400..700&family=Open+Sans+Condensed:wght@700&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400..700&family=Open+Sans+Condensed:wght@700&display=swap">
+        <link rel="stylesheet" href="/inc/fontawesome/css/all.min.css?v=5.11.2">
+    
+        
+    <script>var LS_SEARCH_RESULTS = '~ search results', LS_NO_SEARCH_RESULTS = 'no search results found';</script>
+    <script>var LMT_RNT = false;</script>
+</head>
+
+<body>
+    <header>
+    <div class="header-top" data-mini-bar>
+        <div class="container top">
+            <div class="flex gap-4 items-center">
+                
+                <div class="site-news"> Latest Updates:
+                                            <a href="/tournaments/577">Baltimore</a>  •                                             <a href="/tournaments/606">Indonesia PBL</a>                                      </div>
+            </div>
+
+            <div class="site-settings">
+                <select class="language-switch" data-site-language>
+                    <option value="en_US"  selected >English</option>
+                    <option value="jp_JP" >日本語</option>
+                    <option value="de_DE" >Deutsch</option>
+                    <option value="fr_FR" >Français</option>
+                    <option value="es_ES" >Español</option>
+                    <option value="it_IT" >Italiano</option>
+                    <option value="pt_BR" >Português</option>
+                </select>
+
+                <button class="darkmode-toggle" aria-label="darkmode toggle" data-site-theme data-tooltip="Toggle Darkmode">
+                    <i class="fas fa-lg fa-moon" data-icon></i>
+                </button>
+
+                <div class="user-menu">
+
+                    <button data-user-button>
+                        <i class="fas fa-lg fa-user"></i>
+                    </button>
+
+                    <div class="user-menu-dd" data-user-menu>
+                                                    <div class="username italic">not logged in</div>
+                            <div class="user-options">
+                                <a href="https://account.limitlesstcg.com/login?redirect=https%3A%2F%2Flimitlesstcg.com">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    Log In
+                                </a>
+                                <a href="https://account.limitlesstcg.com/signup">
+                                    <i class="fas fa-user-plus"></i>
+                                    Create Account
+                                </a>
+                            </div>
+                                            </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container header">
+        <a class="site-logo" href="/">
+            <img src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/limitless/logo.png" alt="Limitless">
+        </a>
+
+                <form class="site-search" method="get" action="/" data-lang="en">
+            <div class="category-label">
+                <span class="selected-category">Tournaments</span>
+                <i class="fas fa-sm fa-caret-down"></i>
+            </div>
+
+            <select name="type" class="category-select">
+                
+                <option value="cards" >Cards</option>
+                <option value="tournaments"  selected >Tournaments</option>
+                <option value="decks" >Decks</option>
+                <option value="players" >Players</option>
+            </select>
+
+            <input type="text" name="q" placeholder="Search database" autocomplete="off" autocapitalize="off"
+                autocorrect="off" >
+
+            <button type="submit" aria-label="submit search">
+                <i class="fas fa-lg fa-search"></i>
+            </button>
+
+            <div class="search-suggestions" data-suggestions>
+                <span class="suggestions-message" data-message></span>
+                <div class="suggestions-list" data-options>
+                </div>
+            </div>
+        </form>
+
+        <nav class="site-nav resp-nav" data-site-nav>
+            <button class="nav-toggle">
+                <i data-open class="fas fa-lg fa-bars"></i>
+                <i data-close class="fas fa-lg fa-times" style="display: none"></i>
+            </button>
+
+            <ul class="links">
+                
+                <li><a href="/tournaments">Tournaments</a></li>
+                <li><a href="/decks">Decks</a></li>
+                <li class="sub-category">
+                    <a href="/cards">Cards</a>
+                    <ul class="sub-menu">
+                        <li><a href="/cards/advanced">Advanced Search</a></li>
+                        <li><a href="/cards/syntax">Search Syntax</a></li>
+                        <li><a href="/translations">Translations</a></li>
+                    </ul>
+                </li>
+                <li class="sub-category">
+                    <a href="/tools">Tools</a>
+                    <ul class="sub-menu shift">
+                        <li><a href="/tools/proxies">Proxy Printer</a></li>
+                        <li><a href="/tools/swisscalc">Swiss Calculator</a></li>
+                        <li><a href="/tools/imggen">Image Generator</a></li>
+                        <li><a href="/tools/drawcalc">DrawCalc</a></li>
+                        <li><a href="/tools/tabletop">Tabletop</a></li>
+                        <li><a href="https://my.limitlesstcg.com/builder">Deck Builder (Beta)</a></li>
+                        <li><a href="https://labs.limitlesstcg.com">Labs</a></li>
+                        <li><a href="/tools/mfy">Metafy Hub</a></li>
+                    </ul>
+                </li>
+                <li class="sub-category more">
+                    <a class="expand">More</a>
+                    <ul class="sub-menu shift">
+                        <li><a href="/players">Rankings</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                        <li><a href="https://play.limitlesstcg.com">Play</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>
+    <div class="before-content">
+<div class="container secondary-menu">
+    <ul class="nav">
+        <li class="active"><a href="/tournaments">Completed</a></li>
+        <li class=""><a href="/tournaments/upcoming">Upcoming</a></li>
+        <li><a href="/tournaments/jp">City Leagues</a></li>
+        <li><a class="external" href="https://play.limitlesstcg.com/tournaments?game=PTCG">Online</a></li>
+    </ul>
+</div>
+
+</div>
+
+            <div id="top_lb_placeholder" class="container dont-print top-banner">
+            <div class="patreon-note">
+                <a href="https://www.patreon.com/limitlesstcg/membership" target="_blank">
+                    <img src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/web/patreon.png" alt="Patreon" class="invert">
+                    You can support us on Patreon to remove ads.
+                </a>
+            </div>
+        </div>
+    
+    <main>
+        <div class="container content">    
+<div class="tournament-filter">
+
+    <div class="filter-visible">
+        
+        <button class="toggle regular small" data-toggle>Edit tournament filter</button>
+    </div>
+
+    <div class="filter-selection" data-options>
+
+        <div class="options-group">
+            <div class="options-row">
+                <label for="time-select">Time</label>
+                <select id="time-select" name="time">
+                    <option selected disabled>Select Options</option>
+                    <option value="modern">Modern era</option>
+                    <option value="legacy">Legacy era</option>
+                    <option value="1months">Past month</option>
+                    <option value="3months">Past 3 months</option>
+                    <option value="6months">Past 6 months</option>
+                    <option value="12months">Past 12 months</option>
+                    <optgroup label="Modern era">
+                        <option value="2526">2025–2026</option>
+                        <option value="2425">2024–2025</option>
+                        <option value="2324">2023–2024</option>
+                        <option value="2223">2022–2023</option>
+                        <option value="2122">2021–2022</option>
+                        <option value="2021">2020–2021</option>
+                        <option value="1920">2019–2020</option>
+                        <option value="1819">2018–2019</option>
+                        <option value="1718">2017–2018</option>
+                        <option value="1617">2016–2017</option>
+                    </optgroup>
+                    <optgroup label="Legacy era">
+                        <option value="1516">2015–2016</option>
+                        <option value="1415">2014–2015</option>
+                        <option value="1314">2013–2014</option>
+                        <option value="1213">2012–2013</option>
+                        <option value="1112">2011–2012</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="options-row">
+                <label for="type-select">Type</label>
+                <select id="type-select" name="type">
+                    <option selected disabled>Select Options</option>
+                                            <option value="regional">Regional</option>
+                                            <option value="international">International</option>
+                                            <option value="worlds">Worlds</option>
+                                            <option value="special">Special Event</option>
+                                            <option value="national">National</option>
+                                            <option value="cl">Champions League</option>
+                                            <option value="rl">Regional League</option>
+                                            <option value="pbl">Premier Ball League</option>
+                                            <option value="mbl">Master Ball League</option>
+                                            <option value="online">Online Event</option>
+                                            <option value="players_cup">Players Cup</option>
+                                            <option value="invitational">Invitational</option>
+                                    </select>
+            </div>
+
+            <div class="options-row">
+                <label for="format-select">Format</label>
+                <select id="format-select" name="format">
+                    <option selected disabled>Select Options</option>
+                                            <option value="standard">Standard</option>
+                                            <option value="expanded">Expanded</option>
+                                            <option value="standard-jp">Standard (JP)</option>
+                                            <option value="expanded-jp">Expanded (JP)</option>
+                                    </select>
+            </div>
+
+            <div class="options-row">
+                <label for="region-select">Region</label>
+                <select id="region-select" name="region">
+                    <option selected disabled>Select Options</option>
+                                            <option value="eu">Europe</option>
+                                            <option value="na">North America</option>
+                                            <option value="la">Latin America</option>
+                                            <option value="oc">Oceania</option>
+                                            <option value="asia">Asia</option>
+                                            <option value="other">Other</option>
+                                    </select>
+            </div>
+
+                    </div>
+
+        <ul class="selection multi-selection" data-selection>
+                    </ul>
+
+        <button class="regular small" data-apply>Apply Selection</button>
+
+    </div>
+</div>
+
+<table class="data-table striped completed-tournaments">
+    <tr>
+        <th class="sort" data-sort="date">Date</th>
+        <th class="sort" data-sort="country">Country</th>
+        <th class="sort" data-sort="name">Name</th>
+        <th class="sort" data-sort="format"></th>
+        <th class="sort landscape-only" data-sort="players" data-type="number">Players</th>
+        <th class="sort landscape-only" data-sort="winner">Winner</th>
+    </tr>
+                    <tr data-date="2026-09-20" data-country="JP"
+            data-name="Champions League Yokohama" data-format="standard-jp"
+            data-players="10000" data-winner="JP-Keiyo Watanabe">
+
+            <td>20 Sep 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan"></td>
+            <td><a href="/tournaments/569">Champions League Yokohama</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard-jp.png" alt="standard-jp" data-tooltip="Standard (JP)"></td>
+            <td class="landscape-only">
+                                    <span class="apc" data-tooltip="Approximate player count, the exact number is not available.">10000</span>
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/15369">Keiyo Watanabe</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-09-19" data-country="US"
+            data-name="Regional Baltimore, MD" data-format="standard"
+            data-players="3122" data-winner="US-Dylan Kasturi">
+
+            <td>19 Sep 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/577">Regional Baltimore, MD</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    3122
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States">
+                <a class="inline" href="/players/8258">Dylan Kasturi</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-09-19" data-country="ID"
+            data-name="Indonesia Premier Ball League" data-format="standard"
+            data-players="1384" data-winner="ID-Jonas Xavier Dionisio">
+
+            <td>19 Sep 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/ID.png" alt="ID" data-tooltip="Indonesia"></td>
+            <td><a href="/tournaments/606">Indonesia Premier Ball League</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1384
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/ID.png" alt="ID" data-tooltip="Indonesia">
+                <a class="inline" href="/players/1266">Jonas Xavier Dionisio</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-08-28" data-country="US"
+            data-name="World Championships 2026" data-format="standard"
+            data-players="797" data-winner="US-Andrew Hedrick">
+
+            <td>28 Aug 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/515">World Championships 2026</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    797
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States">
+                <a class="inline" href="/players/2875">Andrew Hedrick</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-06-10" data-country="US"
+            data-name="NAIC 2026, New Orleans" data-format="standard"
+            data-players="3752" data-winner="US-James Kowalski">
+
+            <td>10 Jun 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/518">NAIC 2026, New Orleans</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    3752
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States">
+                <a class="inline" href="/players/5992">James Kowalski</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-06-06" data-country="JP"
+            data-name="Japan Championships 2026" data-format="standard-jp"
+            data-players="2700" data-winner="JP-Toshiyuki Otake">
+
+            <td>06 Jun 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan"></td>
+            <td><a href="/tournaments/568">Japan Championships 2026</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard-jp.png" alt="standard-jp" data-tooltip="Standard (JP)"></td>
+            <td class="landscape-only">
+                                    <span class="apc" data-tooltip="Approximate player count, the exact number is not available.">2700</span>
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/8934">Toshiyuki Otake</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-06-06" data-country="IT"
+            data-name="Special Event Turin" data-format="standard"
+            data-players="2033" data-winner="ES-Jose López">
+
+            <td>06 Jun 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/IT.png" alt="IT" data-tooltip="Italy"></td>
+            <td><a href="/tournaments/540">Special Event Turin</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    2033
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/ES.png" alt="ES" data-tooltip="Spain">
+                <a class="inline" href="/players/9314">Jose López</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-30" data-country="US"
+            data-name="Regional Indianapolis, IN" data-format="standard"
+            data-players="1974" data-winner="US-Cerys Jones">
+
+            <td>30 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/559">Regional Indianapolis, IN</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1974
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States">
+                <a class="inline" href="/players/6821">Cerys Jones</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-24" data-country="KR"
+            data-name="Korean League Final Season" data-format="standard-jp"
+            data-players="645" data-winner="KR-Jooho Koh">
+
+            <td>24 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/KR.png" alt="KR" data-tooltip="Korea"></td>
+            <td><a href="/tournaments/567">Korean League Final Season</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard-jp.png" alt="standard-jp" data-tooltip="Standard (JP)"></td>
+            <td class="landscape-only">
+                                    645
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/KR.png" alt="KR" data-tooltip="Korea">
+                <a class="inline" href="/players/7427">Jooho Koh</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-23" data-country="AU"
+            data-name="Regional Melbourne" data-format="standard"
+            data-players="959" data-winner="JP-Hiromu Sasaki">
+
+            <td>23 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/AU.png" alt="AU" data-tooltip="Australia"></td>
+            <td><a href="/tournaments/550">Regional Melbourne</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    959
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/3704">Hiromu Sasaki</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-23" data-country="PE"
+            data-name="Special Event Lima" data-format="standard"
+            data-players="499" data-winner="PE-Diego Varea Barrera">
+
+            <td>23 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/PE.png" alt="PE" data-tooltip="Peru"></td>
+            <td><a href="/tournaments/536">Special Event Lima</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    499
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/PE.png" alt="PE" data-tooltip="Peru">
+                <a class="inline" href="/players/3695">Diego Varea Barrera</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-16" data-country="BR"
+            data-name="Regional Campinas" data-format="standard"
+            data-players="1725" data-winner="AR-Matias Matricardi">
+
+            <td>16 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/BR.png" alt="BR" data-tooltip="Brazil"></td>
+            <td><a href="/tournaments/544">Regional Campinas</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1725
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/AR.png" alt="AR" data-tooltip="Argentina">
+                <a class="inline" href="/players/1198">Matias Matricardi</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-16" data-country="NL"
+            data-name="Regional Utrecht" data-format="standard"
+            data-players="2150" data-winner="CZ-Miloslav Posledni">
+
+            <td>16 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/NL.png" alt="NL" data-tooltip="Netherlands"></td>
+            <td><a href="/tournaments/535">Regional Utrecht</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    2150
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/CZ.png" alt="CZ" data-tooltip="Czech Republic">
+                <a class="inline" href="/players/1188">Miloslav Posledni</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-10" data-country="JP"
+            data-name="CL Aichi Open League" data-format="expanded-jp"
+            data-players="926" data-winner="JP-Yasunori Kato">
+
+            <td>10 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan"></td>
+            <td><a href="/tournaments/566">CL Aichi Open League</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/expanded-jp.png" alt="expanded-jp" data-tooltip="Expanded (JP)"></td>
+            <td class="landscape-only">
+                                    926
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/2498">Yasunori Kato</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-09" data-country="JP"
+            data-name="Champions League Aichi" data-format="standard-jp"
+            data-players="8000" data-winner="JP-Seinosuke Shiokawa">
+
+            <td>09 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan"></td>
+            <td><a href="/tournaments/549">Champions League Aichi</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard-jp.png" alt="standard-jp" data-tooltip="Standard (JP)"></td>
+            <td class="landscape-only">
+                                    <span class="apc" data-tooltip="Approximate player count, the exact number is not available.">8000</span>
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/6705">Seinosuke Shiokawa</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-05-09" data-country="US"
+            data-name="Regional Los Angeles, CA" data-format="standard"
+            data-players="1849" data-winner="US-Andrew Hedrick">
+
+            <td>09 May 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/558">Regional Los Angeles, CA</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1849
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States">
+                <a class="inline" href="/players/2875">Andrew Hedrick</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-04-25" data-country="CZ"
+            data-name="Regional Prague" data-format="standard"
+            data-players="1370" data-winner="PL-Mateusz Łaszkiewicz">
+
+            <td>25 Apr 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/CZ.png" alt="CZ" data-tooltip="Czech Republic"></td>
+            <td><a href="/tournaments/539">Regional Prague</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1370
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/PL.png" alt="PL" data-tooltip="Poland">
+                <a class="inline" href="/players/3643">Mateusz Łaszkiewicz</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-04-25" data-country="KR"
+            data-name="Korean League Season 4" data-format="standard"
+            data-players="397" data-winner="TW-Pin Yuan Lin">
+
+            <td>25 Apr 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/KR.png" alt="KR" data-tooltip="Korea"></td>
+            <td><a href="/tournaments/565">Korean League Season 4</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    397
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/TW.png" alt="TW" data-tooltip="Taiwan">
+                <a class="inline" href="/players/12728">Pin Yuan Lin</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-04-04" data-country="MX"
+            data-name="Regional Querétaro" data-format="standard"
+            data-players="1446" data-winner="JP-Akira Kurasaki">
+
+            <td>04 Apr 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/MX.png" alt="MX" data-tooltip="Mexico"></td>
+            <td><a href="/tournaments/534">Regional Querétaro</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1446
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/6222">Akira Kurasaki</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-04-04" data-country="US"
+            data-name="Regional Orlando, FL" data-format="standard"
+            data-players="2745" data-winner="US-Noah Sakadjian">
+
+            <td>04 Apr 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/552">Regional Orlando, FL</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    2745
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States">
+                <a class="inline" href="/players/2626">Noah Sakadjian</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-03-28" data-country="ZA"
+            data-name="Special Event Cape Town" data-format="standard"
+            data-players="88" data-winner="ZA-Simon Otter">
+
+            <td>28 Mar 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/ZA.png" alt="ZA" data-tooltip="South Africa"></td>
+            <td><a href="/tournaments/563">Special Event Cape Town</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    88
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/ZA.png" alt="ZA" data-tooltip="South Africa">
+                <a class="inline" href="/players/9372">Simon Otter</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-03-28" data-country="ES"
+            data-name="Special Event Sevilla" data-format="standard"
+            data-players="1337" data-winner="GB-Ted Tobyn">
+
+            <td>28 Mar 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/ES.png" alt="ES" data-tooltip="Spain"></td>
+            <td><a href="/tournaments/533">Special Event Sevilla</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1337
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/GB.png" alt="GB" data-tooltip="Great Britain">
+                <a class="inline" href="/players/11177">Ted Tobyn</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-03-28" data-country="JP"
+            data-name="Champions League Osaka" data-format="standard-jp"
+            data-players="7500" data-winner="JP-Tatsuki Akagi">
+
+            <td>28 Mar 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan"></td>
+            <td><a href="/tournaments/548">Champions League Osaka</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard-jp.png" alt="standard-jp" data-tooltip="Standard (JP)"></td>
+            <td class="landscape-only">
+                                    <span class="apc" data-tooltip="Approximate player count, the exact number is not available.">7500</span>
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/13474">Tatsuki Akagi</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-03-21" data-country="US"
+            data-name="Regional Houston, TX" data-format="standard"
+            data-players="2635" data-winner="JP-Yoshiyuki Yamaguchi">
+
+            <td>21 Mar 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/US.png" alt="US" data-tooltip="United States"></td>
+            <td><a href="/tournaments/551">Regional Houston, TX</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    2635
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/JP.png" alt="JP" data-tooltip="Japan">
+                <a class="inline" href="/players/1790">Yoshiyuki Yamaguchi</a>
+            </td>
+
+        </tr>
+                    <tr data-date="2026-03-14" data-country="BR"
+            data-name="Regional Curitiba" data-format="standard"
+            data-players="1449" data-winner="AR-Matias Matricardi">
+
+            <td>14 Mar 26</td>
+            <td><img class="flag" src="https://r2.limitlesstcg.net/flags/BR.png" alt="BR" data-tooltip="Brazil"></td>
+            <td><a href="/tournaments/543">Regional Curitiba</a></td>
+            <td><img class="format" src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/formats/standard.png" alt="standard" data-tooltip="Standard"></td>
+            <td class="landscape-only">
+                                    1449
+                            </td>
+            <td class="winner landscape-only">
+                <img class="flag" src="https://r2.limitlesstcg.net/flags/AR.png" alt="AR" data-tooltip="Argentina">
+                <a class="inline" href="/players/1198">Matias Matricardi</a>
+            </td>
+
+        </tr>
+    </table>
+
+    <div class="page-options">
+
+    <ul class="pagination" data-current="1" data-max="22">
+        <li  class="disabled"
+            >&laquo;</li>
+                                        <li  class="active"
+                >1</li>
+                                            <li  data-target="2"
+                >2</li>
+                                            <li  data-target="3"
+                >3</li>
+                                 <li class="seperator">...</li>             <li  data-target="22"
+                >22</li>
+                            <li  data-target="2"
+            >&raquo;</li>
+    </ul>
+
+    <div class="labeled-select">
+        <label>Entries per page</label>
+        <select name="show" data-reload>
+                        <option value="25"  selected >25</option>
+            <option value="50" >50</option>
+            <option value="100" >100</option>
+        </select>
+    </div>
+
+</div>
+</div>
+    </main>
+
+    
+            <div id="bottom_ad_placeholder" class="container dont-print"></div>
+    
+    <div class="after-content"></div>
+
+    <footer>
+    <div class="container footer">
+        <div class="menus">
+            <div class="column">
+                <h2><a href="https://limitlesstcg.com">Limitless TCG</a></h2>
+                <ul>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                    <li><a href="/legal">Site Notice</a></li>
+                </ul>
+            </div>
+            <div class="column">
+                <h2>Our Other Sites</h2>
+                <ul>
+                    <li><a href="https://my.limitlesstcg.com">Deck Builder</a></li>
+                    <li><a href="https://play.limitlesstcg.com">Tournament Platform</a></li>
+                    <li><a href="https://onepiece.limitlesstcg.com">One Piece Database</a></li>
+                    <li><a href="https://pocket.limitlesstcg.com">Pocket Database</a></li>
+                    <li><a href="https://limitlessvgc.com">Limitless VGC</a></li>
+                </ul>
+            </div>
+            <div class="column">
+                <h2>Follow</h2>
+                <ul>
+                    <li><a href="https://twitter.com/limitlesstcg"><i class="fab fa-twitter"></i> Twitter</a></li>
+                    <li><a href="https://facebook.com/LimitlessTCG/"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="https://twitch.tv/limitless_tcg"><i class="fab fa-twitch"></i> Twitch</a></li>
+                    <li><a href="https://www.patreon.com/limitlesstcg"><i class="fab fa-patreon"></i> Patreon</a></li>
+                </ul>
+            </div>
+            <div class="column full">
+                                                    <h2>TCGplayer</h2>
+                    <a class="promo" href="https://partner.tcgplayer.com/LIMITLESS?u=https%3A%2F%2Fwww.tcgplayer.com%2Fsearch%2Fpokemon%2Fproduct" target="_blank">
+                        <img src="https://limitless3.nyc3.cdn.digitaloceanspaces.com/markets/promo/tcgplayer.png" alt="TCGplayer logo" />
+                        <p>You can support us by using our Affiliate Link when buying on TCGplayer!</p>
+                    </a>
+                            </div>
+
+                            <span class="cookie-link" onclick="window.ramp.showCmpModal();">Manage Cookies</span>
+                    </div>
+
+        <div class="disclaimer">The literal and graphical information presented on this website about the Pokémon Trading Card Game, including card images and text, is copyright The Pokémon Company (Pokémon), Nintendo, Game Freak and/or Creatures. This website is not produced by, endorsed by, supported by, or affiliated with Pokémon, Nintendo, Game Freak or Creatures.</div>
+    </div>
+</footer>
+
+    <div id="jsg">
+        <div class="overlay"></div>
+    </div>
+
+            <script data-cfasync="false" async src="//cdn.intergient.com/1025537/78560/ramp.js"></script>
+    </body>
+
+</html>

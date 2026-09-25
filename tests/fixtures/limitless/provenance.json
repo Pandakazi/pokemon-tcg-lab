@@ -1,0 +1,21 @@
+{
+  "pages": [
+    {
+      "url": "https://limitlesstcg.com/tournaments",
+      "file": "index.html",
+      "sha256": "8dc99e88430595ba230d3efd350584d7970232212c2c9444631f9c909d9fb0b6"
+    },
+    {
+      "url": "https://limitlesstcg.com/tournaments/441",
+      "file": "results.html",
+      "sha256": "68c1e68ff4736c2371b109b494e541f5a6da9408ff43de3adc9ac0efebcd9303"
+    },
+    {
+      "url": "https://limitlesstcg.com/tournaments/441/decklists",
+      "file": "decklists.html",
+      "sha256": "0722658c376812cade6b5c368f6a546f014c14f1af1536bd95a1ce7a5827dabd"
+    }
+  ],
+  "parser": "main-html-v1",
+  "inspected_on": "2026-09-24"
+}

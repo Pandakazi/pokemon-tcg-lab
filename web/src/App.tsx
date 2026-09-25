@@ -6,6 +6,7 @@ import { CardTile } from './CardTile'
 import { Filters, filterFamilies, abilityValues } from './Filters'
 import { CardDetail } from './CardDetail'
 import { CollectionPage } from './CollectionPage'
+import { CompetitiveProvider, CompetitiveWindows } from './Competitive'
 
 type CategoryMemory = {current:Record<string,string>}
 function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
@@ -68,13 +69,14 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
    <div className="source-note">TCGdex · local SQLite · Standard {category==='Pokemon'?'Pokémon':category}
     {data && <span> · Sync: {data.sync.status}{data.sync.finished_at?` · ${data.sync.finished_at.slice(0,10)}`:''}</span>}
    </div>
+   <CompetitiveWindows/>
    <section className="gallery-scroll" aria-label="Card library results" aria-busy={loading}>
     {loading && <p role="status">Loading cards…</p>}
     {error && resolvedQuery===query && <div role="alert"><h2>Cards could not be loaded</h2><p>{error}</p><button onClick={()=>setAttempt(v=>v+1)}>Retry</button> <Link to="/">Reset library query</Link></div>}
     {data && !data.cards.length && <p role="status">No cards match this query.</p>}
     {data && <div className={view==='gallery'?'card-grid':'card-list'}>
      {view==='list' && <div className="list-heading" aria-hidden="true"><span>Card</span><span>Name</span><span>Set · Number</span><span>Printing ID</span><span>Classification</span><span>Legality</span></div>}
-     {data.cards.map(card=><CardTile key={card.id} card={card} list={view==='list'} onChange={changed} onPreference={()=>setAttempt(v=>v+1)}/>)}</div>}
+     {data.cards.map(card=><CardTile key={card.id} card={card} competitive list={view==='list'} onChange={changed} onPreference={()=>setAttempt(v=>v+1)}/>)}</div>}
    </section>
    <nav className="pagination" aria-label="Pagination">
     <button disabled={loading || page<=1} onClick={()=>{const next=new URLSearchParams(params);next.set('page',String(page-1));setParams(next)}}>Previous</button>
@@ -105,4 +107,4 @@ export function Application() {
  </div>
 }
 // Query controls must update synchronously with the URL, not in a delayed transition.
-export default function App() {return <BrowserRouter useTransitions={false}><Application/></BrowserRouter>}
+export default function App() {return <BrowserRouter useTransitions={false}><CompetitiveProvider><Application/></CompetitiveProvider></BrowserRouter>}

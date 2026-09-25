@@ -4,6 +4,7 @@ import { loadDetail, classification, withOwnership, type Detail, type Ownership 
 import { MagnifiedArt } from './MagnifiedArt'
 import { QuantityControls } from './QuantityControls'
 import { Variations } from './Variations'
+import { CompetitiveDashboard } from './Competitive'
 
 export function CardDetail() {
  const {printingId=''}=useParams()
@@ -57,6 +58,7 @@ export function CardDetail() {
     </section></div>
    {card.ownership && <section className="variations-section"><button aria-expanded={variationsOpen} onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>
     {variationsOpen && <Variations key={printingId} id={printingId} revision={revision} onChange={changed}/>}</section>}
+   <CompetitiveDashboard key={printingId} id={printingId}/>
   </>}
  </main>
 }

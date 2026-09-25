@@ -1,5 +1,38 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Phase 4 Competitive Analytics
+
+Implemented on `phase-4-competitive`, based on Phase 3 commit `411b78d`.
+**Awaiting Mike's manual certification.**
+
+- Full Python regression suite: **164 passed**, two existing Starlette/httpx/anyio
+  deprecation warnings. Includes 29 Phase 4 parser, source separation, deterministic
+  metric, threshold, normalization, provenance and API tests.
+- Frontend: **39 passed**, including eight Phase 4 cases covering exact 1,000 ms
+  delay, cancellation/180 ms grace, popup crossing, top five, window changes,
+  four-series rendering, missing Format, zero usage and frozen artwork behavior.
+- TypeScript validation and production build: **passed**.
+- Full Chromium browser suite: **10 passed**, including all eight Phase 1–3
+  regressions and two new Phase 4 tests. Backend external sockets are blocked;
+  new browser assertions use deterministic intercepted analytics responses and
+  test the local API source/default contract. Collection state is temporary.
+- Real bounded main-Limitless ingestion: Baltimore **559/559**, Indonesia PBL
+  **32/32**, Worlds 2026 **143/143** published lists mapped, **734 total**. No Play!
+  Limitless evidence is used. All initial unresolved cards were newer basic Energy
+  artwork; verified same-set basic Energy mapping resolved them without changing
+  canonical identities. Live evidence is an ignored local database, not a test
+  dependency or committed dataset.
+- Visual QA inspected the chart rendering. Browser coverage confirms all six
+  research sections remain reachable in the continuous detail scroll.
+- Parser fixtures retain source URLs and byte hashes. Structural failures preserve
+  event cache; source errors are visible. Shared list URLs retain distinct entrants.
+- Implementation definitions, limitations, configuration, ingestion command and
+  green/yellow/white/frozen manual QA checklist: `docs/phase-4-competitive.md`.
+
+Limitations: local dynamic aggregation, bounded cached published-list population,
+manual ingestion/remapping, explicit Format boundary required; no production
+materialization or additional sources. No certification or mobile/macOS QA claim.
+
 ## September 24, 2026 — Phase 3 final PM QA cleanup
 
 Phase 3 functionality passed PM QA; these final presentation changes await PM visual confirmation.

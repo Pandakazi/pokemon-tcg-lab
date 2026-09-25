@@ -4,3 +4,5 @@
 *.command text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=crlf
+# Preserve captured source bytes and fixture provenance hashes across platforms.
+tests/fixtures/limitless/*.html -text -whitespace
