@@ -58,6 +58,30 @@ test('real variation allocations, defaults, aggregate tooltip and reload persist
  await expect(first.getByRole('status')).toHaveText('1');await expect(second.getByRole('status')).toHaveText('2')
  await expect(first.getByRole('button',{name:'✓ Default printing',exact:true})).toBeVisible()
  await first.scrollIntoViewIfNeeded();await page.screenshot({path:info.outputPath('mixed-printing-allocations.png')})
+ for(const width of [1440,1280,1100]){
+  await page.setViewportSize({width,height:1000})
+  await first.scrollIntoViewIfNeeded()
+  const geometry=await page.locator('.deck-variation-grid>.variation-card').evaluateAll(cards=>cards.slice(0,4).map(card=>{
+   const frame=card.getBoundingClientRect(),art=card.querySelector('.artwork-frame')!.getBoundingClientRect()
+   const buttons=card.querySelectorAll('.deck-stepper button'),left=buttons[0].getBoundingClientRect(),right=buttons[1].getBoundingClientRect()
+   const preference=card.querySelector(':scope>button')!.getBoundingClientRect()
+   return {x:frame.x,y:frame.y,width:frame.width,height:frame.height,border:getComputedStyle(card).borderTopWidth,center:frame.x+frame.width/2,artCenter:art.x+art.width/2,controlCenter:(left.x+right.right)/2,contained:preference.left>=frame.left&&preference.right<=frame.right&&preference.bottom<frame.bottom}
+  }))
+  for(const card of geometry){
+   expect(card.border).toBe('1px');expect(card.contained).toBeTruthy()
+   expect(Math.abs(card.center-card.artCenter)).toBeLessThan(1)
+   expect(Math.abs(card.center-card.controlCenter)).toBeLessThan(1)
+   expect(Math.abs(card.width-geometry[0].width)).toBeLessThan(1)
+   if(Math.abs(card.y-geometry[0].y)<1)expect(Math.abs(card.height-geometry[0].height)).toBeLessThan(1)
+  }
+  expect(await page.locator('.deck-variation-grid').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBeTruthy()
+  await expect(first.getByRole('status')).toHaveText('1');await expect(second.getByRole('status')).toHaveText('2')
+  await expect(page.locator('.variation-card').nth(2).getByRole('status')).toHaveText('0')
+  await expect(first).toContainText('Total in deck: 3')
+  await first.hover({position:{x:3,y:3}});await page.waitForTimeout(600)
+  await expect(page.locator('.competitive-popup')).toHaveCount(0)
+  await page.screenshot({path:info.outputPath(`framed-variations-${width}.png`)})
+ }
  await page.goto('/deck-builder?category=Trainer&q=Ultra+Ball')
  const tile=page.locator(`[data-printing-id="${card.id}"]`)
  await tile.locator('.card-art img').hover()

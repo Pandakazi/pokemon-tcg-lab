@@ -27,7 +27,7 @@ export function Variations({id,library=false,onSelected,onChange,revision=0}:{id
   <p>{library?'Choose the printing and finish shown in your Library. This does not change ownership.':'All artwork stays full color. Inspecting a variation does not change Library artwork.'}</p>
   {error && <p role="alert">{error}</p>}
   {!data && !error && <p role="status">Loading variations…</p>}
-  <div className="variation-grid">
+  <div className={`variation-grid${builder&&!library?' deck-variation-grid':''}`}>
    {data?.cards.map(card=><article className="variation-card" key={`${card.id}:${card.ownership!.variant}`} data-variation={`${card.id}:${card.ownership!.variant}`}>
     {library?<button disabled={busy} onClick={()=>choose(card)} aria-label={`Use ${card.id} ${finishLabel(card.ownership!.variant)} in Library`}><CardImage card={card}/></button>:
      <MagnifiedArt card={card}><Link to={`${detailPath(card.id,!!builder)}?variant=${encodeURIComponent(card.ownership!.variant)}`} state={{library:location.state?.library||(builder?'/deck-builder':'/')}} aria-label={`Inspect ${card.id} ${finishLabel(card.ownership!.variant)}`}><CardImage card={card}/></Link></MagnifiedArt>}
