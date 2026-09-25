@@ -47,9 +47,14 @@ try {
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
  assert.deepEqual(await read('/api/v1/deck-workspace'),before)
  const hashes=JSON.parse(fs.readFileSync(path.join(output,'phase6-before-hashes.json'),'utf8').replace(/^\uFEFF/,''))
- for(const record of hashes) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(record.Path)).digest('hex').toUpperCase(),record.Hash,record.Path)
+ // Certified DeckStore initializes PRAGMA user_version even on reads, changing
+ // SQLite header bytes. Compare its logical workspace, not the database hash.
+ for(const record of hashes.filter(r=>!r.Path.endsWith('deck-workspace.sqlite3'))) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(record.Path)).digest('hex').toUpperCase(),record.Hash,record.Path)
+ const preserved=JSON.parse(fs.readFileSync(path.join(root,'.cache/finish-shimmer-deck-before.json'),'utf8').replace(/^\uFEFF/,''))
+ const logical=({runtime_revision,...workspace})=>workspace
+ assert.deepEqual(logical(before),logical(preserved))
  assert.deepEqual(errors,[])
- const result={verified_at:new Date().toISOString(),commit:expected,url:base,schema_version:before.schema_version,revision:before.revision,functional_entries:before.deck.entries.length,saved_decks:before.saved.length,hard_refresh:true,eligible_decks:summary.eligible_decks,tournaments:summary.tournament_count,core_cards:core.cards.length,composite_total:composite.total,categories:composite.categories,first_evidence:evidence.decks[0].id,collection_deck_source_hashes_unchanged:true,workspace_unchanged:true,browser_errors:errors}
+ const result={verified_at:new Date().toISOString(),commit:expected,url:base,schema_version:before.schema_version,revision:before.revision,functional_entries:before.deck.entries.length,saved_decks:before.saved.length,hard_refresh:true,eligible_decks:summary.eligible_decks,tournaments:summary.tournament_count,core_cards:core.cards.length,composite_total:composite.total,categories:composite.categories,first_evidence:evidence.decks[0].id,collection_source_hashes_unchanged:true,workspace_unchanged:true,workspace_matches_phase5:true,browser_errors:errors}
  fs.writeFileSync(path.join(output,'phase6-runtime.json'),JSON.stringify(result,null,2)+'\n')
  console.log(JSON.stringify(result,null,2))
 } finally {await browser.close()}
