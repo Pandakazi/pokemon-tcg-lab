@@ -1,0 +1,1829 @@
+{
+  "source": "Local synchronized TCGdex cache; captured 2026-09-25. Pricing omitted; gameplay, IDs, finishes, legality and relationship metadata unchanged. Set catalogue listings/images omitted; identity, series and release metadata retained.",
+  "records": [
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "A1-035",
+        "illustrator": "takuyoa",
+        "image": "https://assets.tcgdex.net/en/tcgp/A1/035",
+        "localId": "035",
+        "name": "Charizard",
+        "rarity": "Three Diamond",
+        "set": {
+          "cardCount": {
+            "official": 226,
+            "total": 286
+          },
+          "id": "A1",
+          "logo": "https://assets.tcgdex.net/en/tcgp/A1/logo",
+          "name": "Genetic Apex",
+          "symbol": "https://assets.tcgdex.net/univ/tcgp/A1/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": false,
+          "normal": true,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "size": "standard",
+            "variantId": "generated"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 150,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "description": "It spits fire that is hot enough to melt boulders. It may cause forest fires by blowing flames.",
+        "stage": "Stage2",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire",
+              "Colorless",
+              "Colorless"
+            ],
+            "name": "Fire Spin",
+            "effect": "Discard 2 {R} Energy from this Pokémon.",
+            "damage": "150"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "+20"
+          }
+        ],
+        "retreat": 2,
+        "legal": {
+          "standard": false,
+          "expanded": false
+        },
+        "boosters": [
+          {
+            "id": "boo_A1-charizard",
+            "name": "Charizard"
+          }
+        ],
+        "updated": "2026-08-17T21:05:22Z"
+      },
+      "game": "pocket",
+      "checked_at": "2026-09-23T02:35:53.793423+00:00"
+    },
+    {
+      "card": {
+        "category": "Energy",
+        "id": "base1-101",
+        "illustrator": "Keiji Kinebuchi",
+        "image": "https://assets.tcgdex.net/en/base/base1/101",
+        "localId": "101",
+        "name": "Psychic Energy",
+        "rarity": "Common",
+        "set": {
+          "cardCount": {
+            "official": 102,
+            "total": 102
+          },
+          "id": "base1",
+          "logo": "https://assets.tcgdex.net/en/base/base1/logo",
+          "name": "Base Set"
+        },
+        "variants": {
+          "firstEdition": true,
+          "holo": false,
+          "normal": true,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "subtype": "unlimited",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 273796,
+              "tcgplayer": 42349
+            },
+            "variantId": "3a83wf50tz7q114spsx7dw6v5"
+          },
+          {
+            "type": "normal",
+            "subtype": "shadowless",
+            "size": "standard",
+            "stamp": [
+              "1st-edition"
+            ],
+            "thirdParty": {
+              "tcgplayer": 107096,
+              "cardmarket": 660098
+            },
+            "variantId": "gx8bq2hefwadd3utcibq3oc56sjf4jqdz709e"
+          },
+          {
+            "type": "normal",
+            "subtype": "shadowless",
+            "size": "standard",
+            "thirdParty": {
+              "tcgplayer": 107096,
+              "cardmarket": 660098
+            },
+            "variantId": "2tszcx1bpt4e79y5us0p570b9n"
+          },
+          {
+            "type": "normal",
+            "subtype": "1999-2000-copyright",
+            "size": "standard",
+            "variantId": "qi4g3e7tzbkcyhfflvx7zmvunxwjcq3pvp"
+          }
+        ],
+        "stage": "Basic",
+        "energyType": "Normal",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-08-20T08:25:49+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:37:50.426484+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "base1-4",
+        "illustrator": "Mitsuhiro Arita",
+        "image": "https://assets.tcgdex.net/en/base/base1/4",
+        "localId": "4",
+        "name": "Charizard",
+        "rarity": "Rare",
+        "set": {
+          "cardCount": {
+            "official": 102,
+            "total": 102
+          },
+          "id": "base1",
+          "logo": "https://assets.tcgdex.net/en/base/base1/logo",
+          "name": "Base Set"
+        },
+        "variants": {
+          "firstEdition": true,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "subtype": "unlimited",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 273699,
+              "tcgplayer": 42382
+            },
+            "variantId": "4ffrmhcfiaejakhepqdkx7o"
+          },
+          {
+            "type": "holo",
+            "subtype": "shadowless",
+            "size": "standard",
+            "stamp": [
+              "1st-edition"
+            ],
+            "thirdParty": {
+              "tcgplayer": 106999,
+              "cardmarket": 660224
+            },
+            "variantId": "mtltux8qtgdu4exu903oasum21juxbvx6lx"
+          },
+          {
+            "type": "holo",
+            "subtype": "shadowless",
+            "size": "standard",
+            "thirdParty": {
+              "tcgplayer": 106999,
+              "cardmarket": 660224
+            },
+            "variantId": "3takscxpcqoqcfnxk1ivs2y6"
+          },
+          {
+            "type": "holo",
+            "subtype": "1999-2000-copyright",
+            "size": "standard",
+            "variantId": "zqq5g2u9n0st0gren5bssktmac2ywqaw"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 120,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "description": "Spits fire that is hot enough to melt boulders. Known to unintentionally cause forest fires.",
+        "stage": "Stage2",
+        "abilities": [
+          {
+            "type": "Pokemon Power",
+            "name": "Energy Burn",
+            "effect": "As often as you like during your turn (before your attack), you may turn all Energy attached to Charizard into Fire Energy for the rest of the turn. This power can't be used if Charizard is Asleep, Confused, or Paralyzed."
+          }
+        ],
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire",
+              "Fire",
+              "Fire"
+            ],
+            "name": "Fire Spin",
+            "effect": "Discard 2 Energy cards attached to Charizard in order to use this attack.",
+            "damage": 100
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "×2"
+          }
+        ],
+        "resistances": [
+          {
+            "type": "Fighting",
+            "value": "-30"
+          }
+        ],
+        "retreat": 3,
+        "legal": {
+          "standard": false,
+          "expanded": false
+        },
+        "updated": "2026-09-04T23:45:25+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:34:46.066628+00:00"
+    },
+    {
+      "card": {
+        "category": "Energy",
+        "id": "base1-98",
+        "illustrator": "Keiji Kinebuchi",
+        "image": "https://assets.tcgdex.net/en/base/base1/98",
+        "localId": "98",
+        "name": "Fire Energy",
+        "rarity": "Common",
+        "set": {
+          "cardCount": {
+            "official": 102,
+            "total": 102
+          },
+          "id": "base1",
+          "logo": "https://assets.tcgdex.net/en/base/base1/logo",
+          "name": "Base Set"
+        },
+        "variants": {
+          "firstEdition": true,
+          "holo": false,
+          "normal": true,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "subtype": "unlimited",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 273793,
+              "tcgplayer": 42442
+            },
+            "variantId": "3a83wf50tz7q114spsx7dw6v5"
+          },
+          {
+            "type": "normal",
+            "subtype": "shadowless",
+            "size": "standard",
+            "stamp": [
+              "1st-edition"
+            ],
+            "thirdParty": {
+              "tcgplayer": 107094,
+              "cardmarket": 660103
+            },
+            "variantId": "gx8bq2hefwadd3utcibq3oc56sjf4jqdz709e"
+          },
+          {
+            "type": "normal",
+            "subtype": "shadowless",
+            "size": "standard",
+            "thirdParty": {
+              "tcgplayer": 107094,
+              "cardmarket": 660103
+            },
+            "variantId": "2tszcx1bpt4e79y5us0p570b9n"
+          },
+          {
+            "type": "normal",
+            "subtype": "1999-2000-copyright",
+            "size": "standard",
+            "variantId": "qi4g3e7tzbkcyhfflvx7zmvunxwjcq3pvp"
+          }
+        ],
+        "stage": "Basic",
+        "energyType": "Normal",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-08-20T08:25:49+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:37:45.958868+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "me01-114",
+        "illustrator": "NC Empire",
+        "image": "https://assets.tcgdex.net/en/me/me01/114",
+        "localId": "114",
+        "name": "Boss's Orders",
+        "rarity": "Uncommon",
+        "set": {
+          "cardCount": {
+            "official": 132,
+            "total": 188
+          },
+          "id": "me01",
+          "logo": "https://assets.tcgdex.net/en/me/me01/logo",
+          "name": "Mega Evolution",
+          "symbol": "https://assets.tcgdex.net/univ/me/me01/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": false,
+          "normal": true,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 851185,
+              "tcgplayer": 654453
+            },
+            "variantId": "endfynwn4n10gzq"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 851185,
+              "tcgplayer": 654453
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          }
+        ],
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+        "trainerType": "Supporter",
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-08-16T13:05:22+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:06.091306+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "me02-013",
+        "illustrator": "takuyoa",
+        "image": "https://assets.tcgdex.net/en/me/me02/013",
+        "localId": "013",
+        "name": "Mega Charizard X ex",
+        "rarity": "Double rare",
+        "set": {
+          "cardCount": {
+            "official": 94,
+            "total": 130
+          },
+          "id": "me02",
+          "logo": "https://assets.tcgdex.net/en/me/me02/logo",
+          "name": "Phantasmal Flames"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 857588,
+              "tcgplayer": 662182,
+              "cardtrader": 353122
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 360,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "stage": "Stage2",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Inferno X",
+            "effect": "Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+            "damage": "90×"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "×2"
+          }
+        ],
+        "retreat": 2,
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-07-24T18:21:48+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:35:06.999164+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "me02-109",
+        "illustrator": "takuyoa",
+        "image": "https://assets.tcgdex.net/en/me/me02/109",
+        "localId": "109",
+        "name": "Mega Charizard X ex",
+        "rarity": "Ultra Rare",
+        "set": {
+          "cardCount": {
+            "official": 94,
+            "total": 130
+          },
+          "id": "me02",
+          "logo": "https://assets.tcgdex.net/en/me/me02/logo",
+          "name": "Phantasmal Flames"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 857684,
+              "tcgplayer": 662183,
+              "cardtrader": 356895
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "cameoDexIds": [
+          6
+        ],
+        "hp": 360,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "stage": "Stage2",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Inferno X",
+            "effect": "Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+            "damage": "90×"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "×2"
+          }
+        ],
+        "retreat": 2,
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-09-06T11:00:03+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:37:59.963526+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "me02-125",
+        "illustrator": "danciao",
+        "image": "https://assets.tcgdex.net/en/me/me02/125",
+        "localId": "125",
+        "name": "Mega Charizard X ex",
+        "rarity": "Special illustration rare",
+        "set": {
+          "cardCount": {
+            "official": 94,
+            "total": 130
+          },
+          "id": "me02",
+          "logo": "https://assets.tcgdex.net/en/me/me02/logo",
+          "name": "Phantasmal Flames"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 857700,
+              "tcgplayer": 662184,
+              "cardtrader": 356911
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "cameoDexIds": [
+          4,
+          5,
+          6
+        ],
+        "hp": 360,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "stage": "Stage2",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Inferno X",
+            "effect": "Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+            "damage": "90×"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "×2"
+          }
+        ],
+        "retreat": 2,
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-09-06T11:00:03+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:17.105580+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "me02-130",
+        "illustrator": "Takuyoa",
+        "image": "https://assets.tcgdex.net/en/me/me02/130",
+        "localId": "130",
+        "name": "Mega Charizard X ex",
+        "rarity": "Mega Hyper Rare",
+        "set": {
+          "cardCount": {
+            "official": 94,
+            "total": 130
+          },
+          "id": "me02",
+          "logo": "https://assets.tcgdex.net/en/me/me02/logo",
+          "name": "Phantasmal Flames"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "foil": "gold",
+            "thirdParty": {
+              "cardmarket": 857705,
+              "tcgplayer": 662185
+            },
+            "variantId": "8ebbnojbbdlcw08zyl"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 360,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "stage": "Stage2",
+        "suffix": "ex",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Inferno X",
+            "effect": "Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+            "damage": "90×"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "x2"
+          }
+        ],
+        "retreat": 2,
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-07-24T18:21:48+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:21.482918+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "me02.5-183",
+        "illustrator": "akagi",
+        "image": "https://assets.tcgdex.net/en/me/me02.5/183",
+        "localId": "183",
+        "name": "Boss's Orders",
+        "rarity": "Uncommon",
+        "set": {
+          "cardCount": {
+            "official": 217,
+            "total": 295
+          },
+          "id": "me02.5",
+          "logo": "https://assets.tcgdex.net/en/me/me02.5/logo",
+          "name": "Ascended Heroes",
+          "symbol": "https://assets.tcgdex.net/univ/me/me02.5/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": true,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 869794,
+              "tcgplayer": 675995
+            },
+            "variantId": "endfynwn4n10gzq"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 869794,
+              "tcgplayer": 675995
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          },
+          {
+            "type": "normal",
+            "size": "standard",
+            "stamp": [
+              "player-rewards-program"
+            ],
+            "thirdParty": {
+              "cardmarket": 894199,
+              "tcgplayer": 704398
+            },
+            "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311"
+          },
+          {
+            "type": "holo",
+            "size": "standard",
+            "stamp": [
+              "player-rewards-program"
+            ],
+            "foil": "cosmos",
+            "thirdParty": {
+              "cardmarket": 894200,
+              "tcgplayer": 704399
+            },
+            "variantId": "6x9wic2vzb5bfzn0gz10e76xy60nqt2vwbzzupgwp6"
+          }
+        ],
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+        "trainerType": "Supporter",
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-09-14T22:04:49+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:55.325617+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "me02.5-256",
+        "illustrator": "akagi",
+        "image": "https://assets.tcgdex.net/en/me/me02.5/256",
+        "localId": "256",
+        "name": "Boss's Orders",
+        "rarity": "Ultra Rare",
+        "set": {
+          "cardCount": {
+            "official": 217,
+            "total": 295
+          },
+          "id": "me02.5",
+          "logo": "https://assets.tcgdex.net/en/me/me02.5/logo",
+          "name": "Ascended Heroes",
+          "symbol": "https://assets.tcgdex.net/univ/me/me02.5/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 869866,
+              "tcgplayer": 676068
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+        "trainerType": "Supporter",
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-08-20T08:34:26+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:15.952153+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "mep-023",
+        "illustrator": "Saboteri",
+        "localId": "023",
+        "name": "Mega Charizard X ex",
+        "rarity": "Promo",
+        "set": {
+          "cardCount": {
+            "official": 0,
+            "total": 89
+          },
+          "id": "mep",
+          "name": "MEP Black Star Promos"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 859033,
+              "tcgplayer": 659612
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 360,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "stage": "Stage2",
+        "suffix": "ex",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Inferno X",
+            "effect": "Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+            "damage": "90×"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "x2"
+          }
+        ],
+        "retreat": 2,
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-08-04T19:51:08+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:35:29.186813+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "mep-029",
+        "illustrator": "takuyoa",
+        "localId": "029",
+        "name": "Mega Charizard X ex",
+        "rarity": "Promo",
+        "set": {
+          "cardCount": {
+            "official": 0,
+            "total": 89
+          },
+          "id": "mep",
+          "name": "MEP Black Star Promos"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 873692,
+              "tcgplayer": 680639
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 360,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "stage": "Stage2",
+        "suffix": "ex",
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Inferno X",
+            "effect": "Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+            "damage": "90×"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "x2"
+          }
+        ],
+        "retreat": 2,
+        "regulationMark": "I",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-06-17T19:26:30+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:35:42.880830+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "sv02-172",
+        "illustrator": "NC Empire",
+        "image": "https://assets.tcgdex.net/en/sv/sv02/172",
+        "localId": "172",
+        "name": "Boss's Orders",
+        "rarity": "Rare",
+        "set": {
+          "cardCount": {
+            "official": 193,
+            "total": 279
+          },
+          "id": "sv02",
+          "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+          "name": "Paldea Evolved",
+          "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 715647,
+              "tcgplayer": 497544,
+              "cardtrader": 248813
+            },
+            "variantId": "jr7oetx1mqug9"
+          },
+          {
+            "type": "holo",
+            "size": "standard",
+            "stamp": [
+              "asia-promo"
+            ],
+            "thirdParty": {
+              "cardmarket": 872163
+            },
+            "variantId": "3takscxpcoigvo2yqjgyj4u3"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 715647,
+              "tcgplayer": 497544,
+              "cardtrader": 248813
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          }
+        ],
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+        "trainerType": "Supporter",
+        "regulationMark": "G",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T17:20:10+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:49.701937+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "sv02-248",
+        "illustrator": "Hideki Ishikawa",
+        "image": "https://assets.tcgdex.net/en/sv/sv02/248",
+        "localId": "248",
+        "name": "Boss's Orders",
+        "rarity": "Ultra Rare",
+        "set": {
+          "cardCount": {
+            "official": 193,
+            "total": 279
+          },
+          "id": "sv02",
+          "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+          "name": "Paldea Evolved",
+          "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 715723,
+              "tcgplayer": 497663,
+              "cardtrader": 248890
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+        "trainerType": "Supporter",
+        "regulationMark": "G",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T17:20:10+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:15.113507+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "sv02-265",
+        "illustrator": "hncl",
+        "image": "https://assets.tcgdex.net/en/sv/sv02/265",
+        "localId": "265",
+        "name": "Boss's Orders",
+        "rarity": "Special illustration rare",
+        "set": {
+          "cardCount": {
+            "official": 193,
+            "total": 279
+          },
+          "id": "sv02",
+          "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+          "name": "Paldea Evolved",
+          "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 715740,
+              "tcgplayer": 497685,
+              "cardtrader": 248919
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "effect": "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+        "trainerType": "Supporter",
+        "regulationMark": "G",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T17:20:10+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:16.849380+00:00"
+    },
+    {
+      "card": {
+        "category": "Energy",
+        "id": "sv03.5-207",
+        "image": "https://assets.tcgdex.net/en/sv/sv03.5/207",
+        "localId": "207",
+        "name": "Basic Psychic Energy",
+        "rarity": "Hyper rare",
+        "set": {
+          "cardCount": {
+            "official": 165,
+            "total": 207
+          },
+          "id": "sv03.5",
+          "logo": "https://assets.tcgdex.net/en/sv/sv03.5/logo",
+          "name": "151",
+          "symbol": "https://assets.tcgdex.net/univ/sv/sv03.5/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 733802,
+              "tcgplayer": 517053,
+              "cardtrader": 261385
+            },
+            "variantId": "jr7oetx1mqug9"
+          },
+          {
+            "type": "holo",
+            "size": "standard",
+            "foil": "gold",
+            "thirdParty": {
+              "cardmarket": 733802
+            },
+            "variantId": "8ebbnojbbdlcw08zyl"
+          }
+        ],
+        "types": [
+          "Psychic"
+        ],
+        "energyType": "Normal",
+        "legal": {
+          "standard": true,
+          "expanded": true
+        },
+        "updated": "2026-05-13T16:42:54+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:05.094365+00:00"
+    },
+    {
+      "card": {
+        "category": "Energy",
+        "id": "swsh10-216",
+        "image": "https://assets.tcgdex.net/en/swsh/swsh10/216",
+        "localId": "216",
+        "name": "Double Turbo Energy",
+        "rarity": "Secret Rare",
+        "set": {
+          "cardCount": {
+            "official": 189,
+            "total": 216
+          },
+          "id": "swsh10",
+          "logo": "https://assets.tcgdex.net/en/swsh/swsh10/logo",
+          "name": "Astral Radiance",
+          "symbol": "https://assets.tcgdex.net/univ/swsh/swsh10/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "foil": "gold",
+            "thirdParty": {
+              "cardmarket": 658877,
+              "tcgplayer": 272471
+            },
+            "variantId": "8ebbnojbbdlcw08zyl"
+          }
+        ],
+        "effect": "As long as this card is attached to a Pokémon, it provides ColorlessColorless Energy.\nThe attacks of the Pokémon this card is attached to do 20 less damage to your opponent's Pokémon (before applying Weakness and Resistance).",
+        "energyType": "Special",
+        "regulationMark": "F",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T01:40:29+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:07.522303+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "swsh10.5-010",
+        "illustrator": "N-DESIGN Inc.",
+        "image": "https://assets.tcgdex.net/en/swsh/swsh10.5/010",
+        "localId": "010",
+        "name": "Charizard",
+        "rarity": "Holo Rare",
+        "set": {
+          "cardCount": {
+            "official": 78,
+            "total": 88
+          },
+          "id": "swsh10.5",
+          "logo": "https://assets.tcgdex.net/en/swsh/swsh10.5/logo",
+          "name": "Pokémon GO",
+          "symbol": "https://assets.tcgdex.net/univ/swsh/swsh10.5/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 665244,
+              "tcgplayer": 274439
+            },
+            "variantId": "jr7oetx1mqug9"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 665244,
+              "tcgplayer": 274439
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 170,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "description": "It spits fire that is hot enough to melt boulders. It may cause forest fires by blowing flames.",
+        "stage": "Stage2",
+        "abilities": [
+          {
+            "type": "Ability",
+            "name": "Burn Brightly",
+            "effect": "Each basic Fire Energy attached to your Pokémon provides FireFire Energy. You can't apply more than 1 Burn Brightly Ability at a time."
+          }
+        ],
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire",
+              "Colorless",
+              "Colorless"
+            ],
+            "name": "Flare Blitz",
+            "effect": "Discard all Fire Energy from this Pokémon.",
+            "damage": 170
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "×2"
+          }
+        ],
+        "retreat": 3,
+        "regulationMark": "F",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T01:41:10+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:35:00.458234+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "swsh11tg-TG24",
+        "illustrator": "NC Empire",
+        "localId": "TG24",
+        "name": "Boss's Orders",
+        "rarity": "Ultra Rare",
+        "set": {
+          "cardCount": {
+            "official": 30,
+            "total": 30
+          },
+          "id": "swsh11tg",
+          "name": "Lost Origin Trainer Gallery"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 674241,
+              "tcgplayer": 284297
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "effect": "Switch 1 of your opponent's Benched Pokémon with their Active Pokémon.",
+        "trainerType": "Supporter",
+        "regulationMark": "D",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T01:42:04+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:35.805868+00:00"
+    },
+    {
+      "card": {
+        "category": "Pokemon",
+        "id": "swsh4-25",
+        "illustrator": "Ryuta Fuse",
+        "image": "https://assets.tcgdex.net/en/swsh/swsh4/25",
+        "localId": "25",
+        "name": "Charizard",
+        "rarity": "Rare",
+        "set": {
+          "cardCount": {
+            "official": 185,
+            "total": 203
+          },
+          "id": "swsh4",
+          "logo": "https://assets.tcgdex.net/en/swsh/swsh4/logo",
+          "name": "Vivid Voltage",
+          "symbol": "https://assets.tcgdex.net/univ/swsh/swsh4/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": true,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 511545,
+              "tcgplayer": 226395
+            },
+            "variantId": "endfynwn4n10gzq"
+          },
+          {
+            "type": "holo",
+            "size": "standard",
+            "foil": "cracked-ice",
+            "thirdParty": {
+              "cardmarket": 547881
+            },
+            "variantId": "2u8sopmue8qbejpv32t9ow7ic"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 511545,
+              "tcgplayer": 226395
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          }
+        ],
+        "dexId": [
+          6
+        ],
+        "hp": 170,
+        "types": [
+          "Fire"
+        ],
+        "evolveFrom": "Charmeleon",
+        "description": "It spits fire that is hot enough to melt boulders. It may cause forest fires by blowing flames.",
+        "stage": "Stage2",
+        "abilities": [
+          {
+            "type": "Ability",
+            "name": "Battle Sense",
+            "effect": "Once during your turn, you may look at the top 3 cards of your deck and put 1 of them into your hand. Discard the other cards."
+          }
+        ],
+        "attacks": [
+          {
+            "cost": [
+              "Fire",
+              "Fire"
+            ],
+            "name": "Royal Blaze",
+            "effect": "This attack does 50 more damage for each Leon card in your discard pile.",
+            "damage": "100+"
+          }
+        ],
+        "weaknesses": [
+          {
+            "type": "Water",
+            "value": "×2"
+          }
+        ],
+        "retreat": 3,
+        "regulationMark": "D",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-07-01T21:23:03+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:35:34.021778+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "swsh9-132",
+        "illustrator": "GIDORA",
+        "image": "https://assets.tcgdex.net/en/swsh/swsh9/132",
+        "localId": "132",
+        "name": "Boss's Orders",
+        "rarity": "Holo Rare",
+        "set": {
+          "cardCount": {
+            "official": 172,
+            "total": 186
+          },
+          "id": "swsh9",
+          "logo": "https://assets.tcgdex.net/en/swsh/swsh9/logo",
+          "name": "Brilliant Stars",
+          "symbol": "https://assets.tcgdex.net/univ/swsh/swsh9/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 608678,
+              "tcgplayer": 263855
+            },
+            "variantId": "jr7oetx1mqug9"
+          },
+          {
+            "type": "holo",
+            "size": "standard",
+            "stamp": [
+              "regional-championships"
+            ],
+            "thirdParty": {
+              "cardmarket": 660946
+            },
+            "variantId": "mtltux8qurzlrotzhqpgdavrnc718yuy6dj"
+          },
+          {
+            "type": "holo",
+            "size": "standard",
+            "foil": "cosmos",
+            "thirdParty": {
+              "cardmarket": 716227
+            },
+            "variantId": "5zs5af49g93yryvw1ftj"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 608678,
+              "tcgplayer": 263855
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          }
+        ],
+        "effect": "Switch 1 of your opponent's Benched Pokémon with their Active Pokémon.",
+        "trainerType": "Supporter",
+        "regulationMark": "D",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T01:39:37+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:23.351378+00:00"
+    },
+    {
+      "card": {
+        "category": "Energy",
+        "id": "swsh9-151",
+        "image": "https://assets.tcgdex.net/en/swsh/swsh9/151",
+        "localId": "151",
+        "name": "Double Turbo Energy",
+        "rarity": "Uncommon",
+        "set": {
+          "cardCount": {
+            "official": 172,
+            "total": 186
+          },
+          "id": "swsh9",
+          "logo": "https://assets.tcgdex.net/en/swsh/swsh9/logo",
+          "name": "Brilliant Stars",
+          "symbol": "https://assets.tcgdex.net/univ/swsh/swsh9/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": false,
+          "normal": true,
+          "reverse": true,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "normal",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 608697,
+              "tcgplayer": 257307
+            },
+            "variantId": "endfynwn4n10gzq"
+          },
+          {
+            "type": "reverse",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 608697,
+              "tcgplayer": 257307
+            },
+            "variantId": "cm4kqul3x1bwlz1f"
+          }
+        ],
+        "effect": "As long as this card is attached to a Pokémon, it provides ColorlessColorless Energy.\nThe attacks of the Pokémon this card is attached to do 20 less damage to your opponent's Pokémon (before applying Weakness and Resistance).",
+        "energyType": "Special",
+        "regulationMark": "F",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-08-20T01:39:37+01:00"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:38:36.866327+00:00"
+    },
+    {
+      "card": {
+        "category": "Trainer",
+        "id": "swshp-SWSH251",
+        "illustrator": "Mitsuhiro Arita",
+        "localId": "SWSH251",
+        "name": "Boss's Orders",
+        "rarity": "Promo",
+        "set": {
+          "cardCount": {
+            "official": 307,
+            "total": 307
+          },
+          "id": "swshp",
+          "logo": "https://assets.tcgdex.net/en/swsh/swshp/logo",
+          "name": "SWSH Black Star Promos",
+          "symbol": "https://assets.tcgdex.net/univ/swsh/swshp/symbol"
+        },
+        "variants": {
+          "firstEdition": false,
+          "holo": true,
+          "normal": false,
+          "reverse": false,
+          "wPromo": false
+        },
+        "variants_detailed": [
+          {
+            "type": "holo",
+            "size": "standard",
+            "thirdParty": {
+              "cardmarket": 691252,
+              "tcgplayer": 489944
+            },
+            "variantId": "jr7oetx1mqug9"
+          }
+        ],
+        "effect": "Switch 1 of your opponent's Benched Pokémon with their Active Pokémon.",
+        "trainerType": "Supporter",
+        "regulationMark": "F",
+        "legal": {
+          "standard": false,
+          "expanded": true
+        },
+        "updated": "2026-09-03T15:19:07Z"
+      },
+      "game": "tcg",
+      "checked_at": "2026-09-23T02:39:33.504330+00:00"
+    }
+  ],
+  "sets": [
+    {
+      "id": "A1",
+      "name": "Genetic Apex",
+      "serie": {
+        "id": "tcgp",
+        "name": "Pokémon TCG Pocket"
+      },
+      "releaseDate": "2024-10-30"
+    },
+    {
+      "id": "base1",
+      "name": "Base Set",
+      "serie": {
+        "id": "base",
+        "name": "Base"
+      },
+      "releaseDate": "1999-01-09",
+      "tcgOnline": "BS"
+    },
+    {
+      "id": "me01",
+      "name": "Mega Evolution",
+      "serie": {
+        "id": "me",
+        "name": "Mega Evolution"
+      },
+      "releaseDate": "2025-09-26"
+    },
+    {
+      "id": "me02",
+      "name": "Phantasmal Flames",
+      "serie": {
+        "id": "me",
+        "name": "Mega Evolution"
+      },
+      "releaseDate": "2025-11-14"
+    },
+    {
+      "id": "me02.5",
+      "name": "Ascended Heroes",
+      "serie": {
+        "id": "me",
+        "name": "Mega Evolution"
+      },
+      "releaseDate": "2026-01-30"
+    },
+    {
+      "id": "mep",
+      "name": "MEP Black Star Promos",
+      "serie": {
+        "id": "me",
+        "name": "Mega Evolution"
+      },
+      "releaseDate": "2025-09-26"
+    },
+    {
+      "id": "sv02",
+      "name": "Paldea Evolved",
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      },
+      "releaseDate": "2023-06-09"
+    },
+    {
+      "id": "sv03.5",
+      "name": "151",
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      },
+      "releaseDate": "2023-09-22"
+    },
+    {
+      "id": "swsh10",
+      "name": "Astral Radiance",
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      },
+      "releaseDate": "2022-05-27",
+      "tcgOnline": "ASR"
+    },
+    {
+      "id": "swsh10.5",
+      "name": "Pokémon GO",
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      },
+      "releaseDate": "2022-07-01",
+      "tcgOnline": "PGO"
+    },
+    {
+      "id": "swsh11tg",
+      "name": "Lost Origin Trainer Gallery",
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      },
+      "releaseDate": "2022-09-09",
+      "tcgOnline": "LOR"
+    },
+    {
+      "id": "swsh4",
+      "name": "Vivid Voltage",
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      },
+      "releaseDate": "2020-11-13",
+      "tcgOnline": "VIV"
+    },
+    {
+      "id": "swsh9",
+      "name": "Brilliant Stars",
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      },
+      "releaseDate": "2022-02-25",
+      "tcgOnline": "BRS"
+    },
+    {
+      "id": "swshp",
+      "name": "SWSH Black Star Promos",
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      },
+      "releaseDate": "2019-11-15"
+    }
+  ]
+}

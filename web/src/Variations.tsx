@@ -12,7 +12,7 @@ export function Variations({id,library=false,onSelected,onChange,revision=0}:{id
  const [data,setData]=useState<VariationPage|null>(null),[page,setPage]=useState(1),[error,setError]=useState(''),[busy,setBusy]=useState(false)
  useEffect(()=>{
   const controller=new AbortController();setData(null);setError('')
-  loadVariations(id,library?'library':builder?'deck':'functional',page,controller.signal).then(r=>{if(!controller.signal.aborted)setData(r)})
+  loadVariations(id,library?'library':'family',page,controller.signal).then(r=>{if(!controller.signal.aborted)setData(r)})
    .catch(e=>{if(!controller.signal.aborted)setError(e.message)})
   return ()=>controller.abort()
  },[id,library,!!builder,page,revision])

@@ -16,6 +16,7 @@ from .competitive_models import CompetitiveResearch
 from .decks import Decks, DeckCommand, DeckConflict, deck_identity
 from .images import TCGdexImages
 from .library_identity import library_signature, basic_image_priority, REPRESENTATIVE_ORDER_SQL
+from .variation_families import variation_members
 from .web_models import LibraryQuery, CardPage, CardDetail, Status, Ownership, QuantityWrite, Preference, VariationPage, Category
 
 
@@ -190,7 +191,7 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
             raise HTTPException(503, detail='Unable to save Library preference.') from None
 
     @app.get('/api/v1/cards/{printing_id}/variations', response_model=VariationPage, response_model_exclude_unset=True)
-    def variations(printing_id: str, scope: Literal['functional','library','deck']='functional',
+    def variations(printing_id: str, scope: Literal['functional','library','deck','family']='functional',
                    page: int=Query(1,ge=1,le=10000), page_size: int=Query(24,ge=1,le=50)):
         snapshot = state(); require_printing(printing_id, snapshot)
         record = snapshot.records[printing_id]
@@ -198,6 +199,8 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
         if scope == 'deck':
             key = deck_identity(record)
             ids = [id for id in ids if deck_identity(snapshot.records[id]) == key]
+        elif scope == 'family':
+            ids = variation_members(snapshot, printing_id)
         pairs = [(id,v) for id in sorted(ids) for v in snapshot.presentation_variants(id)]
         result = variation_page(snapshot, pairs, page, page_size)
         page_ids = dict.fromkeys(id for id,_ in pairs[(page-1)*page_size:page*page_size])

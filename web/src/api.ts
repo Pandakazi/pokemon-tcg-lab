@@ -51,7 +51,7 @@ export async function loadDetail(id: string, signal: AbortSignal, variant?:strin
   if (!data.card || data.card.id !== id) throw new Error('The card API returned an unexpected printing.')
   return data
 }
-export async function loadVariations(id:string,scope:'functional'|'library'|'deck',page:number,signal:AbortSignal):Promise<VariationPage> {
+export async function loadVariations(id:string,scope:'functional'|'library'|'deck'|'family',page:number,signal:AbortSignal):Promise<VariationPage> {
  return read(`/api/v1/cards/${encodeURIComponent(id)}/variations?scope=${scope}&page=${page}&page_size=24`,signal)
 }
 export async function loadCollection(params:URLSearchParams,signal:AbortSignal):Promise<VariationPage> {
