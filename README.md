@@ -2,9 +2,10 @@
 
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
-The roadmap describes future capabilities. Phases 1–4 are certified at the
-`phase-4-certified-2026-09-24` baseline. This branch adds Phase 5 Deck Builder for
-PM QA; Phase 5 is not certified. See [scope, architecture and QA startup](docs/phase-5-deck-builder.md).
+Phases 1–5 are PM-certified. Phase 5 Deck Builder was certified September 25, 2026,
+including the accepted Variation Family correction and current finish visualization
+with persistent shimmer. `phase-5-certified-2026-09-25` preserves this milestone;
+cosmetic refinement remains non-blocking. See [scope, architecture and QA startup](docs/phase-5-deck-builder.md).
 
 The approved PokéLab Web Prototype v0.1 Figma Make frontend supplies the visual
 and interaction direction. We reuse its generated source, not a screenshot recreation.
@@ -30,7 +31,12 @@ and interaction direction. We reuse its generated source, not a screenshot recre
 - Persistent Deck Builder with shared Library/detail/research, functional counts,
   read-only ownership context, saved drafts, and Python-backed validation.
 
-Phase 5 awaits Mike's manual certification. Agent and authentication remain
+Variation Family discovery includes supported equivalent and historical printings
+without merging cards by name alone or changing deck/collection identity. Exact
+Holo and Reverse Holo visualization uses distinct masks and slow staggered shimmer;
+touch receives autonomous light, while reduced motion retains a static treatment.
+
+Agent and authentication remain
 disabled/unconnected. PWA installation,
 offline service workers, hosting and billing are not implemented.
 
@@ -52,9 +58,10 @@ Back up the user-state file with the API stopped. See the
 
 Existing collection, filtering, functional/printing identities, competitive analytics
 and provider-independent Agent groundwork remain in the Python engine. Analytics
-currently represents cached **Play! Limitless** submitted lists, with unresolved
-mappings excluded and coverage explicitly limited; it is not a full paper metagame
-census. The Agent remains read-only and provider-independent; only its Anthropic
+uses source-isolated cached main-Limitless research for the web UI; legacy Play!
+Limitless evidence remains separate. Unresolved mappings are excluded and coverage
+is explicitly limited; it is not a full paper metagame census. The Agent remains
+read-only and provider-independent; only its Anthropic
 adapter exists today, with live-provider QA deferred.
 
 MCP remains an optional adapter. Qt is preserved as an earlier reference prototype,
@@ -175,10 +182,27 @@ Python test-client deprecation warnings remain. See [test results](TEST-RESULTS.
 
 ## Roadmap and history
 
-Next, after Phase 4 PM review: full archetype/decklist browsing,
-authentication before hosted private/paid use, Agent with metering,
+Certified roadmap:
+
+- Phase 1 — Real Cards / Web Foundation: certified.
+- Phase 2 — Library & Browsing: certified.
+- Phase 3 — Collection & Variations: certified.
+- Phase 4 — Competitive Analytics: certified.
+- Phase 5 — Deck Builder: certified September 25, 2026.
+
+Next: **Phase 6 — Archetypes & Decklist Research**, to be started separately.
+Later work includes authentication before hosted private/paid use, Agent with metering,
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
-No later slice is activated by this milestone.
+No Phase 6 implementation is included in this closeout.
+
+Non-blocking polish backlog:
+
+- Main Deck Builder Gallery +/- control alignment/centering.
+- Further finish distinction, intensity, realism, masking, or artistic refinement;
+  the current Holo/Reverse visualization and persistent shimmer are accepted.
+- Other minor visual inconsistencies found during normal use.
+
+These are future polish items, not Phase 5 certification defects.
 
 See [Phase 2 behavior, API contracts, PM walkthrough and QA scope matrix](docs/phase-2-library.md).
 For current controls, use the [Phase 3 QA scope matrix](docs/phase-3-collection.md#mandatory-qa-scope-matrix).
@@ -195,7 +219,8 @@ queries last for the mounted client session; the active URL survives refresh.
 
 The annotated `pre-web-pivot-2026-09-24` tag preserves Python/Qt/MCP history.
 The `web-pivot` development line contains the Figma import and web implementation.
-Phase 2 is preserved on `phase-2-library`; current collection work is on
-`phase-3-collection` and awaits PM QA.
+Phase 2 is preserved on `phase-2-library`; Phase 3 on `phase-3-collection`;
+Phase 4 on `phase-4-competitive` and its unchanged certification tag.
+The complete accepted Phase 5 history is retained on `phase5-deck-builder` and main.
 SQLite files, credentials, personal profiles, generated executables and dependencies
 are excluded from Git. Never put provider keys in browser configuration.

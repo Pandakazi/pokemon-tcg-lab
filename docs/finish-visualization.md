@@ -1,6 +1,9 @@
 # Finish visualization — PM QA handoff
 
-Status: READY FOR PM FINISH-VISUALIZATION QA — PERSISTENT SHIMMER PASS. This pass is not merged or certified.
+Status: **accepted by PM for the current milestone**, including persistent shimmer,
+and included in the September 25, 2026 Phase 5 certification closeout. Further
+finish refinement is explicitly non-blocking polish; this does not claim every
+future cosmetic improvement is complete.
 
 ## Presentation
 
@@ -28,4 +31,4 @@ The shared API image field and TCGdex provider supply one flat low/high WebP per
 
 ## PM check
 
-Open the QA runtime at `/deck-builder/cards/me01-110?variant=normal`, then **Variations**. Compare the three settled Gumshoos tiles, move across Holo and Reverse, then leave the image. Inspect finish intensity and readability at your usual display settings. Mike decides whether the visual treatment is acceptable for certification.
+Open the QA runtime at `/deck-builder/cards/me01-110?variant=normal`, then **Variations**. Compare the three settled Gumshoos tiles, move across Holo and Reverse, then leave the image. This remains a useful reference for future non-blocking polish; PM has accepted the current milestone treatment.

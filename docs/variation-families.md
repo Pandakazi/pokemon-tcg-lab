@@ -1,6 +1,7 @@
 # Post-Phase-5 correction: Variation Family discovery
 
-Phase 5 is PM certified. This separate correction changes collectible discovery,
+Phase 5 is PM certified. This correction **passed PM QA** and is accepted in the
+September 25, 2026 certification closeout. It changes collectible discovery,
 not its certified deck architecture, legality, allocations or collection identities.
 No schema migration, source synchronization, deck rewrite, UI redesign or AI matching.
 
@@ -143,7 +144,8 @@ keys. Changing that certified identity boundary requires a separate explicit tas
   declared equivalent. Boss's Orders is the sole curated wording alias.
 - Supported Normal/Holo/Reverse and existing finish keys remain distinct. Foil,
   stamps and detailed source variant IDs do not invent new allocation/ownership
-  dimensions or render foil effects.
+  dimensions. Presentation of known finishes is handled separately by the accepted
+  [finish renderer](finish-visualization.md).
 
 ## Files and verification
 
@@ -162,4 +164,5 @@ keys. Changing that certified identity boundary requires a separate explicit tas
 Targeted first: 25 new Python cases passed. Affected API/collection/deck boundary
 run: 104 passed. Frontend deck component checks: 6 passed. TypeScript and production
 build passed. Browser results and runtime commit are recorded in the QA handoff.
-No unrelated full-suite run, Phase 6 work, merge or correction certification.
+Those were focused implementation checks, not a new full-suite run. PM subsequently
+accepted this correction; it is preserved with Phase 5. No Phase 6 work is included.

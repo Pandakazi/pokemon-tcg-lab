@@ -1,6 +1,42 @@
 # Release verification — 0.1.1
 
-## September 25, 2026 — Phase 5 Deck Builder
+## September 25, 2026 — Phase 5 PM certification closeout
+
+Mike explicitly certified Phase 5 Deck Builder, passed the Variation Family
+correction, and accepted current finish visualization/persistent shimmer for this
+milestone. Phases 1–5 are certified; Phase 6 — Archetypes & Decklist Research is next
+and has not begun. Cosmetic polish remains non-blocking in the README backlog.
+
+Accepted implementation history, in order:
+
+- `165bce81801df7361d5f3ba9be5351dea48dceb1`: initial persistent Deck Builder.
+- `69c39cacccfc20bc653e64944e22e8615b0bfbb6`: allocation/default/artwork/hover QA fixes.
+- `977cee03cbb069bd04db9c0c966c7e416c99af56`: QA launcher checkout identification.
+- `62046f35224ae4d9f88d1543ce0d3c4ebd21fa08`: centered, framed variation cards.
+- `81a00bc0fe35720415fce824a2e85635452ab7a8`: compact variation polish and background preferred printing.
+- `ea135c401faea75e1567322b3135c3f9fc15e24b`: conservative Variation Family discovery.
+- `de066ea087e21873f94b917321c308d0b1eca5a2`: reusable exact-finish visualization.
+- `e87631427d6b46ae3731cdc77941f350a41df4d8`: stronger static/pointer finish light.
+- `3fc3b8d9b9ce40f292318f8d15c65ef736be0e2d`: persistent staggered shimmer.
+
+The final shimmer pass passed production typecheck/build, 11 focused component
+tests and four real-browser checks, including reduced motion, touch, pointer
+return, navigation, enlargement, multi-card rendering and image-only 500ms hover
+coverage. The preceding family correction passed 25 new Python cases and 104
+affected API/collection/deck boundary cases. These are recorded prior runs, not
+tests newly rerun for documentation closeout.
+
+The accepted QA runtime uses deck schema 2, revision 118, four functional entries
+and two saved decks. Read-only verification confirmed unchanged deck/preferences,
+collection and source data. Runtime/cache files and screenshots remain local-only.
+The closeout verifies clean worktrees, accepted ancestry, documentation-only changes,
+and preserved tags; it does not change behavior or rerun unrelated expensive suites.
+
+The entries below are historical implementation-time records. Their original
+pre-certification wording, schema 1 and earlier hover timing are not current status.
+See [the certified Phase 5 architecture](docs/phase-5-deck-builder.md) for current behavior.
+
+## September 25, 2026 — Initial Phase 5 Deck Builder implementation (historical)
 
 Status: **READY FOR PM QA**, not certified. Baseline `22a229b` matches the
 `phase-4-certified-2026-09-24` tag; historical entries below retain their original

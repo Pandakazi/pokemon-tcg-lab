@@ -1,7 +1,10 @@
 # Phase 5 — Deck Builder
 
-Implementation for PM QA; **not certified**. Mike performs final manual QA and
-explicitly approves the phase. Foundation: `22a229b`, the commit referenced by
+**PM-certified September 25, 2026, by Mike.** The Variation Family correction also
+passed PM QA; current finish visualization and persistent shimmer are accepted for
+this milestone. Further visual refinement is non-blocking polish, not a certification
+defect. The annotated `phase-5-certified-2026-09-25` tag includes accepted fixes and
+documentation closeout. Foundation: `22a229b`, the commit referenced by
 `phase-4-certified-2026-09-24`. Earlier Phase 4 prose predates that certification.
 The supplied implementation handoff is preserved in `phase-5-handoff.txt`.
 
@@ -88,6 +91,30 @@ Supported checks remain 60 cards, ordinary name-based four-copy rule, Basic
 Pokémon, ACE SPEC and dated provider Standard flags. Card-specific exceptions,
 historical rulings, exhaustive restrictions/bans and live tournament certification
 remain outside the inherited validator. These limits are available in the tray.
+
+## Accepted discovery and finish presentation
+
+The [Variation Family correction](variation-families.md) broadens discovery to
+supported equivalent/historical printings, including gold/promotional Mega Charizard
+X ex and the curated Boss's Orders wording alias. This is a separate read-only
+discovery relationship, not a rewrite of canonical functional identities, deck
+allocations, ownership or legality. Gameplay differences, incomplete evidence,
+different games and non-equivalent same-name cards stay separate. Basic Energy
+uses the existing curated type relationship; Special/ambiguous Energy stays conservative.
+Exact printing IDs and finishes remain separate in every returned variation.
+
+The shared [finish renderer](finish-visualization.md) presents known Holo and Reverse
+Holo finishes in Variations, exact Collection and Card Detail/enlargement. Existing
+approximate artwork/body masks distinguish the treatments. Slow CSS sweeps run on
+12-second Holo and 16-second Reverse round trips with deterministic phase staggering.
+Pointer reflection dominates on interaction; touch receives autonomous shimmer;
+reduced motion disables shimmer while preserving the stronger static distinction.
+Normal and unknown finishes remain neutral. Masks are approximations, not authentic
+per-printing foil maps. Existing image-only hover hitboxes and clicks are preserved.
+
+The [README polish backlog](../README.md#roadmap-and-history) records Gallery control
+centering and future finish/other minor visual refinement. None blocks certification.
+Phase 6 — Archetypes & Decklist Research is next, not implemented by this closeout.
 
 ## Persistence and concurrency
 
@@ -199,8 +226,9 @@ Logs remain in `.cache/manual-qa`. Stop with `-Action Stop`; drafts are retained
 - Standard only; format is displayed, not a selector for Expanded/Unlimited.
 - Legality is the existing supported Python checks over dated source evidence,
   not comprehensive tournament certification or every card-specific exception.
-- Basic Energy Builder Variations use deck-type scope. Normal Library/Detail keep
-  their certified scope; each energy type and Special Energy remain distinct.
+- Detail/Builder Variations use the read-only discovery-family scope, including
+  curated Basic Energy type grouping. The Library artwork chooser retains its
+  certified Library scope; each energy type and Special Energy remain distinct.
 - Browse UI memory survives navigation in the current application session. Deck
   content survives full restarts; transient scroll/filter-panel/view memory is not
   serialized into the deck database. Query URLs retain their normal refresh behavior.

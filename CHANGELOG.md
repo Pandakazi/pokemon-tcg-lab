@@ -1,5 +1,24 @@
 # Changelog
 
+## Phase 5 certification closeout — 2026-09-25
+
+- PM certified Deck Builder and accepted the Variation Family correction and current
+  finish visualization, including persistent shimmer. Phases 1–5 are certified.
+- Preserved shared Library-based deck construction, persistent active/saved decks,
+  exact mixed-printing/finish allocations, background preferred printing, supported
+  validation, collection isolation and curated Basic Energy semantics.
+- Preserved 500ms artwork-only competitive hover with functional active-deck counts,
+  contextual Card Detail/research and compact framed exact-variation controls.
+- Added conservative equivalent/historical variation discovery without name-only
+  merging, canonical identity rewrites or false legality claims.
+- Shared Holo/artwork and Reverse/body visualization includes staggered 12/16-second
+  shimmer cycles, dominant pointer reflection, touch shimmer and static reduced-motion
+  fallback. Exact finishes and the existing deterministic masks are retained.
+- Recorded Gallery +/- centering, finish refinement and minor visual inconsistencies
+  as non-blocking polish. Phase 6 — Archetypes & Decklist Research remains future work.
+- This closeout commit changes documentation only; the accepted implementation
+  history is preserved linearly under `phase-5-certified-2026-09-25`.
+
 ## Phase 3 final PM cleanup — 2026-09-24
 
 - Suppressed synthetic Unspecified finish choices; preserved and separately exposed
