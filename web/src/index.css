@@ -135,3 +135,8 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .copy-distribution {display:flex;flex-wrap:wrap;gap:16px;list-style:none;padding:0}.copy-distribution li {padding:12px;border:1px solid #64748b;border-radius:6px}
 .research-table {overflow-x:auto}.research-table table {width:100%;border-collapse:collapse}.research-table th,.research-table td {text-align:left;padding:10px;border-bottom:1px solid #64748b55}
 .trend-legend {display:flex;gap:10px;flex-wrap:wrap}.trend-legend button[aria-pressed=false] {opacity:.4}.usage-trend {width:100%;height:auto;max-height:360px;margin-top:12px;overflow:visible}.trend-point span {display:inline-block;margin:6px}
+.detail-variations-toggle {margin-top:12px;padding:8px 16px;border:1px solid #64748b;border-radius:6px}
+.associated-card-name {border:0;border-bottom:1px dotted currentColor;background:none;color:#93c5fd;padding:3px 0;text-align:left;cursor:help;font:inherit}
+.associated-card-name:focus-visible {outline:2px solid #93c5fd;outline-offset:4px}
+.associated-card-preview {position:fixed;z-index:1100;padding:10px;background:#172033;color:#f1f5f9;border:1px solid #64748b;border-radius:10px;box-shadow:0 12px 36px #0008;max-height:calc(100vh - 24px);overflow:auto}
+.associated-card-preview strong {display:block;margin-bottom:8px}.associated-card-preview img {display:block;width:100%;max-height:calc(100vh - 76px);object-fit:contain;border-radius:8px}

@@ -100,20 +100,26 @@ through the evaluation date. All metrics are unweighted deterministic counts.
   This descriptive distribution includes unclassified lists; top five ordering
   is count descending, then source archetype ID. Variants retain source labels.
 - **Prevalence within archetype:** containing lists in that archetype / all
-  eligible lists of that archetype. Below 100 eligible archetype lists, percentage
-  is null and UI shows `Insufficient sample — N decklists`. Unknown archetypes
-  do not receive prevalence claims. Zero prevalence is valid at/above 100.
+  eligible lists of that archetype. Below 15 eligible archetype lists, percentage
+  is null and UI shows `Insufficient sample — N decklist(s)` with correct grammar.
+  Unknown archetypes do not receive prevalence claims. Zero prevalence is valid
+  at/above 15. The eligible count remains visible. Ordinary field usage is ungated.
 - **Associated Cards:** field-level co-occurrence P(B|A), baseline P(B), and
   lift P(B|A)/P(B). Minimum five A-containing lists and three joint observations.
   Default ordering uses the 95% Wilson lower bound of P(B|A), divided by P(B),
   then lift and stable functional ID. Maximum 20 results. This favors supported
   association over universal staples. No archetype-specific association is offered.
 - **Usage Trend:** one graph, rolling 7/30/90-day plus cumulative Format series,
-  independent of the dashboard window. Plot dates are actual cached event dates
-  in the last 90 calendar days. Earlier cached events still contribute to rolling
+  independent of the dashboard window. When Format is available, the axis spans
+  its explicitly configured start through today; plotted dates are actual cached
+  event dates in that period, including those older than 90 days. Otherwise the
+  axis spans the available event dates within the last 90 calendar days.
+  Earlier cached events still contribute to rolling
   windows/cumulative Format. Empty denominators are null and break lines. Lines
   between observed dates are visual guides, not invented daily observations.
-  Tooltips expose unrounded-to-display API percentages and denominator counts.
+  Tooltips expose percentages with at most two decimals and exact denominator counts.
+  Average-copy and percentage formatting throughout the UI uses at most two
+  decimals; stored values and internal calculations retain their existing precision.
   No change statistic is currently presented; any future change must be percentage
   points, not relative percentage change.
 
@@ -140,6 +146,18 @@ Card Detail appends one vertically scrolling research dashboard after the existi
 details/variations. Four series share one graph, with distinct colors/dashes,
 legend toggles, native point titles and focus-accessible sample readouts.
 
+QA Fix Pass #1 places the Variations toggle directly below artwork ownership
+controls. Its expanded grid remains full-width before Research, with the existing
+quantity/finish behavior. Research section order is Overview, Copy Distribution,
+Usage Trend, Archetypes, Associated Cards, Evidence/Dataset.
+
+Associated Card names expose a separate reading preview on hover or keyboard
+focus. The API supplies a deterministic representative printing and allowlisted
+TCGdex high-resolution image URL from the same functional identity. The image
+loads only when the preview opens. No additional statistics request or navigation
+occurs. Missing/failed artwork displays an unavailable message. The primary Card
+Detail artwork component and Library analytics hover behavior are unchanged.
+
 ## Known limitations
 
 This is a cached published-list sample, not a tournament census or all entrants.
@@ -162,7 +180,7 @@ historical coverage has not been claimed.
 
 - [ ] Ingest main Limitless; verify source URLs, timestamps and tournament/list counts.
 - [ ] Compare a card's usage, copies, distribution and both archetype denominators
-      with the cached evidence; verify 99 versus 100 archetype lists and rare usage.
+      with the cached evidence; verify 14 versus 15 archetype lists and rare usage.
 - [ ] Check 30D default and 7D/30D/90D/Format controls. Without format configuration,
       confirm unavailable state; with an explicit start, confirm cumulative evidence.
 - [ ] Gallery and List: leave before one second, wait a full second, cross into popup,

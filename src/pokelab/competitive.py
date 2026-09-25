@@ -14,6 +14,7 @@ import sqlite3
 from .collection import identity
 from .engine import functional_signature, normalized_name
 from .limitless_main import SOURCE, PARSER_VERSION
+from .images import TCGdexImages
 
 
 def percent(n, d):
@@ -157,8 +158,8 @@ class Competitive:
         labels = {d['raw']['archetype_id']:d['raw']['archetype_name'] for d in eligible}
         archetypes = [dict(id=k,name=labels[k],decks=played[k],eligible_decks=field[k],
                            share_percent=percent(played[k],a),
-                           prevalence_percent=percent(played[k],field[k]) if field[k]>=100 and k!='unknown' else None,
-                           status='unclassified' if k=='unknown' else 'observed' if field[k]>=100 else 'insufficient_sample')
+                           prevalence_percent=percent(played[k],field[k]) if field[k]>=15 and k!='unknown' else None,
+                           status='unclassified' if k=='unknown' else 'observed' if field[k]>=15 else 'insufficient_sample')
                       for k in sorted(field,key=lambda k:(-played[k],k))]
         overall = Counter(k for d in eligible for k in d['cards'])
         together = Counter(k for d in containing for k in d['cards'] if k!=fid)
@@ -175,13 +176,25 @@ class Competitive:
         partners.sort(key=lambda p:(-p['conservative_lift'],-p['lift'],p['functional_id']))
         partners = partners[:20]
         if partners:
+            references = {}
+            wanted = {p['functional_id'] for p in partners}
+            images = TCGdexImages()
             with closing(self.cards.connect()) as db:
-                names = {identity(functional_signature(c)):c['name'] for r in db.execute("SELECT raw FROM cards WHERE game='tcg'") for c in [json.loads(r[0])]}
-            for p in partners: p['name'] = names.get(p['functional_id'],'Unmapped card')
+                for row in db.execute("SELECT raw FROM cards WHERE game='tcg' ORDER BY standard DESC,id DESC"):
+                    c = json.loads(row[0]); key = identity(functional_signature(c))
+                    if key not in wanted: continue
+                    image_url = images.url(c, large=True)
+                    if key not in references or (not references[key]['image_url'] and image_url):
+                        references[key] = dict(name=c['name'],printing_id=c['id'],image_url=image_url)
+            for p in partners:
+                p.update(references.get(p['functional_id'],dict(name='Unmapped card',printing_id=None,image_url=None)))
         trend = []
+        trend_boundary = self.format_start if available else today-timedelta(days=89)
+        points = sorted({d for d in dates.values() if trend_boundary<=d<=today})
+        trend_start = self.format_start.isoformat() if available else points[0].isoformat() if points else None
+        trend_end = today.isoformat() if available else points[-1].isoformat() if points else None
         if include_trend:
             # Plot actual event dates only; missing windows remain null, not zero.
-            points = sorted({d for d in dates.values() if today-timedelta(days=89)<=d<=today})
             for key in ('7','30','90','format'):
                 values = []
                 for day in points:
@@ -197,7 +210,8 @@ class Competitive:
                     copy_distribution=[dict(copies=f'{k}x' if k<4 else '4x+',decks=distribution[k],percent=percent(distribution[k],a)) for k in range(1,5)],
                     archetypes=archetypes,top_archetypes=[r for r in archetypes if r['decks']][:5],associated_cards=partners,
                     association_status='observed' if partners else 'insufficient_sample' if a<5 else 'no_qualifying_pairs',
-                    trend=trend,tournament_count=len(selected),published_decklists=len(decks),excluded_unmapped=len(decks)-n,
+                    trend=trend,trend_start=trend_start,trend_end=trend_end,
+                    tournament_count=len(selected),published_decklists=len(decks),excluded_unmapped=len(decks)-n,
                     results_without_lists=sum(e['results']-e['published'] for e in selected),
                     last_updated=max((e['fetched_at'] for e in selected),default=None),source_error=error or None,
                     provenance=[{**json.loads(e['raw']),'fetched_at':e['fetched_at']} for e in selected],parser_version=PARSER_VERSION)

@@ -29,6 +29,8 @@ class AssociatedCard(BaseModel):
     field_percent: float
     lift: float
     conservative_lift: float
+    printing_id: str | None = None
+    image_url: str | None = None
 
 
 class TrendPoint(BaseModel):
@@ -75,6 +77,8 @@ class CompetitiveResearch(BaseModel):
     associated_cards: list[AssociatedCard]
     association_status: Literal['observed','insufficient_sample','no_qualifying_pairs']
     trend: list[TrendSeries]
+    trend_start: str | None
+    trend_end: str | None
     tournament_count: int
     published_decklists: int
     excluded_unmapped: int

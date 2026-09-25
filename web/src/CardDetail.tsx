@@ -30,6 +30,7 @@ export function CardDetail() {
    <div className="detail-layout"><div className="detail-art"><MagnifiedArt key={card.id} card={card}/>
     {card.ownership && <><QuantityControls id={card.id} ownership={card.ownership} onChange={(id,o)=>{changed(id,o);setRevision(v=>v+1)}}/>
      <p>Functional total: <output aria-label="Functional total" aria-live="polite">{card.ownership.functional_total}</output></p></>}
+    {card.ownership && <button className="detail-variations-toggle" aria-expanded={variationsOpen} aria-controls="detail-variations" onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>}
    </div>
     <section><p className="source-note">CARD DETAILS · EXACT PRINTING</p><h1 ref={title} tabIndex={-1}>{card.name}</h1>
      <p>{classification(card)}</p><dl>
@@ -56,8 +57,8 @@ export function CardDetail() {
      <h2>Source legality</h2><p>{Object.entries(card.legal || {}).map(([format,legal])=>`${format}: ${legal?'legal':'not legal'}`).join(' · ') || 'Not supplied'}</p>
      <p className="source-note">Source: {data.source}<br/>Checked: {data.checked_at}<br/>Fetched: {data.fetched_at}<br/>Legality reflects dated source flags; a missing format is unknown.</p>
     </section></div>
-   {card.ownership && <section className="variations-section"><button aria-expanded={variationsOpen} onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>
-    {variationsOpen && <Variations key={printingId} id={printingId} revision={revision} onChange={changed}/>}</section>}
+   {card.ownership && variationsOpen && <section id="detail-variations" className="variations-section" aria-label="Card variations">
+    <Variations key={printingId} id={printingId} revision={revision} onChange={changed}/></section>}
    <CompetitiveDashboard key={printingId} id={printingId}/>
   </>}
  </main>

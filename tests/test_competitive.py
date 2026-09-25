@@ -105,9 +105,9 @@ def test_denominators_and_distribution(store):
     assert partner['cooccurrence_percent']==100 and partner['field_percent']==100 and partner['lift']==1
 
 
-@pytest.mark.parametrize('n,status,pct',[(99,'insufficient_sample',None),(100,'observed',20)])
+@pytest.mark.parametrize('n,status,pct',[(14,'insufficient_sample',None),(15,'observed',20)])
 def test_archetype_threshold(store,n,status,pct):
-    seed(store,n=n)
+    seed(store,n=n,a=3)
     r=store.stats('A',today=date(2026,9,24))
     assert r['archetypes'][0]['status']==status
     assert r['archetypes'][0]['prevalence_percent']==pct
@@ -117,6 +117,8 @@ def test_archetype_threshold(store,n,status,pct):
 def test_rare_card_is_observed_not_sample_gated(store):
     seed(store,n=5000,a=14)
     assert store.stats('A',today=date(2026,9,24))['usage_percent']==.28
+    seed(store,n=734,a=3)
+    assert store.stats('A',today=date(2026,9,24))['usage_percent']==round(300/734,4)
 
 
 def test_observed_zero_and_no_data_and_mapping_failure(store):
@@ -159,10 +161,44 @@ def test_four_trends_and_calendar_boundaries(store):
     assert last['7']['sample_size']==100 and last['30']['sample_size']==300
     store.format_start=date(2026,9,15)
     fmt=store.stats('A','format',today=date(2026,9,24))
-    assert fmt['sample_size']==100 and fmt['trend'][-1]['points'][0]['usage_percent'] is None
+    assert fmt['sample_size']==100 and fmt['trend'][-1]['points'][0]['usage_percent']==20
+    assert fmt['trend_start']=='2026-09-15' and fmt['trend_end']=='2026-09-24'
     store.format_start=None
     assert store.stats('A','format')['status']=='format_unavailable'
     assert store.stats('A')['trend'][-1]['available'] is False
+
+
+def test_format_trend_includes_older_evidence_without_synthetic_dates(store):
+    seed(store,day='2026-02-01',event_id='old')
+    seed(store,day='2026-08-28',event_id='worlds')
+    seed(store,day='2026-09-19',event_id='baltimore')
+    result=store.stats('A','7',today=date(2026,9,24))
+    assert result['trend_start']=='2026-01-01' and result['trend_end']=='2026-09-24'
+    assert all([p['date'] for p in s['points']]==['2026-02-01','2026-08-28','2026-09-19'] for s in result['trend'])
+    assert result['trend']==store.stats('A','30',today=date(2026,9,24))['trend']
+    store.format_start=None
+    no_format=store.stats('A',today=date(2026,9,24))
+    assert (no_format['trend_start'],no_format['trend_end'])==('2026-08-28','2026-09-19')
+    assert all([p['date'] for p in s['points']]==['2026-08-28','2026-09-19'] for s in no_format['trend'])
+    assert no_format['trend'][-1]['available'] is False
+    store.format_start=date(2027,1,1)
+    assert store.stats('A',today=date(2026,9,24))['trend_start']=='2026-08-28'
+
+
+def test_associated_card_preview_uses_existing_functional_identity_and_safe_image(store,monkeypatch):
+    seed(store)
+    fid=identity(functional_signature(card_with_name()))
+    with closing(store.connect(True)) as db,db:
+        for row in db.execute('SELECT rank,cards FROM competitive_decks').fetchall():
+            cards=json.loads(row['cards']);cards[fid]=cards.pop('B')
+            db.execute('UPDATE competitive_decks SET cards=? WHERE rank=?',(json.dumps(cards),row['rank']))
+    monkeypatch.setattr(httpx.HTTPTransport,'handle_request',lambda *a,**k:pytest.fail('Unexpected preview fetch'))
+    partner=store.stats('A',today=date(2026,9,24))['associated_cards'][0]
+    assert partner['printing_id']=='sm2-0'
+    assert partner['image_url']=='https://assets.tcgdex.net/en/sm/sm2/59/high.webp'
+    assert partner['lift']==1 and partner['decks']==20
+    raw=card_with_name();raw['image']='https://evil.invalid/image';SQLiteCards(store.cards.path).put(raw)
+    assert store.stats('A',today=date(2026,9,24))['associated_cards'][0]['image_url'] is None
 
 
 def test_top_five_and_deterministic_ties(store):

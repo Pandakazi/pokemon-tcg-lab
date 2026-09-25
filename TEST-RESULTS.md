@@ -1,5 +1,32 @@
 # Release verification — 0.1.1
 
+## September 24, 2026 — Phase 4 Manual QA Fix Pass #1
+
+- Python regression suite: **166 passed**, including **31 competitive tests**;
+  two unchanged upstream test-client deprecation warnings.
+- Frontend regression suite: **43 passed**. TypeScript and production build passed.
+- Chromium browser regression suite: **11 passed**, including the existing Phase
+  1–3 regressions and a new artwork-only Associated Card preview check.
+- Added/updated assertions cover Variations next to primary ownership and outside
+  Research; section order; simultaneous trend series independent of timeframe;
+  explicit Format extent and historical observed dates; fallback 90-day extent;
+  14/15 archetype threshold and ungated 3/734 field usage; singular/plural grammar;
+  image metadata bound to functional identity; hover/focus artwork preview without
+  analytics fetch or navigation; maximum two-decimal display in dashboard, popup
+  and chart tooltip; unchanged Library one-second delay and primary artwork behavior.
+- Read-only inspection of the original local evidence confirmed Worlds on
+  **2026-08-28 (143 lists)** and Baltimore/Indonesia PBL on
+  **2026-09-19 (559 + 32 lists)**. The two plotted dates are genuine. No additional
+  evidence was ingested and no observations were manufactured.
+- Association values, conservative ordering and minimum 5 A / 3 joint observations
+  remain unchanged; the prevalence-only minimum is now 15 eligible archetype lists.
+- Variations placement follows the QA intent: toggle under artwork ownership,
+  expanded full-width chooser before Research. Collection/finish logic is untouched.
+- Preview artwork depends on the existing TCGdex asset URL; failed/missing artwork
+  shows an unavailable state. Format still needs explicit configuration.
+
+**Not certified. Mike continues manual Phase 4 certification.**
+
 ## September 24, 2026 — Phase 4 Competitive Analytics
 
 Implemented on `phase-4-competitive`, based on Phase 3 commit `411b78d`.
