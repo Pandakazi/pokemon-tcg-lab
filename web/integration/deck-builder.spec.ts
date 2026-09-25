@@ -92,8 +92,8 @@ test('draft persistence, save-state validation, New guard, reopen and selected f
  await tray.getByRole('link',{name:card.name,exact:true}).click()
  await page.getByRole('button',{name:'Variations',exact:true}).click()
  const choice=page.locator('.variation-card').first();await expect(choice).toBeVisible()
- await choice.getByRole('button',{name:'Set as default printing',exact:true}).click()
- await expect(choice.getByRole('button',{name:'✓ Default printing',exact:true})).toBeVisible()
+ await expect(choice.getByRole('button',{name:/default printing/i})).toHaveCount(0)
+
  await page.locator('.detail-art').getByRole('button',{name:'Add '+card.name+' to deck',exact:true}).click()
  await expect(tray.locator('footer')).toContainText('Draft stored')
  page.once('dialog',dialog=>dialog.dismiss())

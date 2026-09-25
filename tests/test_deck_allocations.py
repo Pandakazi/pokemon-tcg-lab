@@ -85,7 +85,7 @@ def test_energy_allocations_type_defaults_and_variations(setup):
     assert result['deck']['entries'][1]['identity']=='deck-basic-energy:Fire'
     result=exact(c,'sm2-7')
     assert not result['deck']['entries'][2]['identity'].startswith('deck-basic-energy:')
-    assert set(result['defaults'])=={'deck-basic-energy:Water','deck-basic-energy:Fire'}
+    assert {'deck-basic-energy:Water','deck-basic-energy:Fire'} <= set(result['defaults'])
     page=c.get('/api/v1/cards/sm2-4/variations?scope=deck').json()
     assert {v['id'] for v in page['cards']}=={'sm2-4','sm2-5'}
     # The certified functional/Library endpoints still have their original scope.
@@ -165,3 +165,25 @@ def test_old_client_contract_is_rejected_without_mutation(setup):
     response=c.post('/api/v1/deck-workspace',json=dict(action='quantity',revision=before['revision'],printing_id='sm2-1',delta=1))
     assert response.status_code==422
     assert c.get('/api/v1/deck-workspace').json()==before
+
+
+def test_exact_add_remembers_preference_atomically_without_rewriting_existing_copies(setup):
+    cards,state,c=setup
+    ownership=state.read_bytes()
+    original=exact(c,'sm2-1',2)
+    saved=mutate(c,'save')
+    selected=exact(c,'sm2-2',1,'reverse')
+    key=selected['deck']['entries'][0]['identity']
+    assert allocations(selected)=={('sm2-1','normal'):2,('sm2-2','reverse'):1}
+    assert selected['defaults'][key]==dict(printing_id='sm2-2',variant='reverse',available=True)
+    decremented=mutate(c,'quantity',printing_id='sm2-1',variant='normal',delta=-1,exact=True)
+    assert decremented['defaults']==selected['defaults']
+    assert allocations(add(c,'sm2-1'))=={('sm2-1','normal'):1,('sm2-2','reverse'):2}
+    restart=TestClient(create_app(cards.path,state))
+    assert restart.get('/api/v1/deck-workspace').json()['defaults']==selected['defaults']
+    reopened=mutate(restart,'open',deck_id=saved['deck']['id'],discard=True)
+    assert reopened['deck']==saved['deck']
+    assert reopened['validation']==saved['validation']
+    mutate(restart,'new')
+    assert allocations(add(restart,'sm2-1'))=={('sm2-2','reverse'):1}
+    assert state.read_bytes()==ownership

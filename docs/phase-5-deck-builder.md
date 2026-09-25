@@ -60,11 +60,20 @@ allocations are labeled unavailable and remain stored; they are not silently rea
 User-level Default Printing is stored separately from deck composition and collection
 ownership, keyed by deck identity (Basic Energy type included). Implicit additions
 use an available default; explicit Variation additions always use that variation.
+An exact Variation + also remembers its printing/finish as the default, atomically
+with the addition. Decrements and implicit additions do not replace that preference.
+There is no separate default button/status in Variations; inspection remains read-only.
 Changing defaults never rewrites existing active/saved deck allocations, ownership,
 Library preferences or validation. General decrement removes from the default/current
 printing if allocated, otherwise the last remaining allocation; exact decrement never
 steals from another allocation. An unavailable default remains remembered, while an
 implicit add falls back to the available displayed printing/finish.
+
+Builder variation tiles own their persistent frame class directly. Compact identity,
+prominent finish/ownership, and centered quantity/total groups are enclosed together.
+Normal Library presentation is unchanged. The reported disappearing frame was not
+reproduced; settled-state browser checks cover data load, quantity changes, reload,
+navigation and API refresh. Frame/whitespace has no competitive-hover handlers.
 
 The authoritative `tcg_lab.service.Lab.validate` is reused. Its new keyword-only
 `require_complete` defaults to true, preserving every legacy caller. An unsaved

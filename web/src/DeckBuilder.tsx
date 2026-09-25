@@ -61,21 +61,13 @@ export function DeckControls({card,exact=false,detail=false}:{card:Card;exact?:b
  const quantity=exact?(entry?.allocations.find(a=>a.printing_id===card.id&&a.variant===card.ownership?.variant)?.quantity||0):total
  const change=(delta:number)=>send({action:'quantity',printing_id:card.id,variant:card.ownership?.variant,delta,exact})
  return <div className="deck-card-controls">
-  <span>{detail?'Add to deck':exact?'This printing / finish':'In deck'}</span>
+  {!exact&&<span>{detail?'Add to deck':'In deck'}</span>}
   <div className="deck-stepper"><button disabled={!data||!!error||!quantity||!key} aria-label={`Remove ${card.name} from deck`} onClick={()=>change(-1)}>−</button>
    <output aria-label={`${card.name} deck quantity`}>{quantity}</output>
    <button disabled={!data||!!error||!key} aria-label={`Add ${card.name} to deck`} onClick={()=>change(1)}>+</button></div>
   {!key&&<small>Restart the API to enable deck controls.</small>}
   {exact&&<small>Total in deck: {total}</small>}
  </div>
-}
-
-export function DefaultPrinting({card}:{card:Card}) {
- const builder=useBuilder()
- if(!builder)return null
- const {data,error,send}=builder,key=card.deck_identity,selected=key?data?.defaults[key]:undefined
- const active=selected?.printing_id===card.id&&selected?.variant===card.ownership?.variant
- return <button disabled={!data||!!error||!key||active} aria-pressed={active} onClick={()=>send({action:'default_printing',printing_id:card.id,variant:card.ownership?.variant})}>{active?'✓ Default printing':'Set as default printing'}</button>
 }
 
 export function DeckTray() {

@@ -43,13 +43,15 @@ try {
  assert.equal(await page.locator('.competitive-popup').count(),0)
  await page.getByRole('button',{name:'Variations',exact:true}).click()
  await page.locator('.variation-card').first().waitFor()
- assert(await page.getByRole('button',{name:/Set as default printing|✓ Default printing/}).count()>0)
+ assert.equal(await page.getByRole('button',{name:/Set as default printing|✓ Default printing/}).count(),0)
+ assert.equal(await page.locator('.deck-variation-card').first().evaluate(el=>getComputedStyle(el).borderTopWidth),'1px')
+ assert.equal(await page.locator('.deck-variation-card .deck-stepper').first().evaluate(el=>getComputedStyle(el).justifyContent),'center')
  const output=path.join(root,'.cache','manual-qa')
  await page.screenshot({path:path.join(output,'qa-fix1-runtime.png'),fullPage:true})
  const after=await read('/api/v1/deck-workspace')
  assert.deepEqual(after,before)
  assert.deepEqual(errors,[])
- const result={verified_at:new Date().toISOString(),url:base,commit:expected,schema_version:after.schema_version,revision:after.revision,functional_entries:after.deck.entries.length,saved_decks:after.saved.length,hard_refresh:true,artwork_loaded:true,centered_controls:true,hover_context:true,variation_defaults:true,user_state_unchanged:true,browser_errors:errors}
+ const result={verified_at:new Date().toISOString(),url:base,commit:expected,schema_version:after.schema_version,revision:after.revision,functional_entries:after.deck.entries.length,saved_decks:after.saved.length,hard_refresh:true,artwork_loaded:true,centered_controls:true,hover_context:true,settled_variation_frame:true,variation_controls_centered:true,default_buttons_absent:true,user_state_unchanged:true,browser_errors:errors}
  fs.writeFileSync(path.join(output,'qa-fix1-runtime.json'),JSON.stringify(result,null,2)+'\n')
  console.log(JSON.stringify(result,null,2))
 } finally {await browser.close()}

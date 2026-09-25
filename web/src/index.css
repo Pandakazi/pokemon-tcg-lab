@@ -158,13 +158,14 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .detail-art > .deck-card-controls { text-align:center; }
 .detail-art > .deck-card-controls .deck-stepper { justify-content:center; }
 
-/* Builder variations: one quiet frame from artwork through the default control. */
+/* Permanent Builder tile styling belongs to the article, independent of loading state. */
 .deck-variation-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
-.deck-variation-grid>.variation-card{box-sizing:border-box;padding:12px;gap:8px;border:1px solid #ffffff20;border-radius:12px;background:#ffffff04;text-align:center}
-.deck-variation-grid>.variation-card>.artwork-frame{padding:0;border:0;background:none;border-radius:0}
-.deck-variation-grid>.variation-card>strong{min-height:2.5em;display:flex;align-items:center;justify-content:center}
-.deck-variation-grid>.variation-card>strong+p{min-height:2.8em}
-.deck-variation-grid .deck-card-controls{margin-top:auto;text-align:center}
-.deck-variation-grid .deck-stepper{justify-content:center}
-.deck-variation-grid .deck-card-controls>small{display:block;margin-top:6px}
-.deck-variation-grid>.variation-card>button{text-align:center;padding:7px 8px;min-height:34px;border:1px solid #ffffff20;border-radius:6px;background:#ffffff06;white-space:normal}
+.variation-card.deck-variation-card{box-sizing:border-box;padding:12px;gap:10px;border:1px solid #ffffff26;border-radius:12px;background:#ffffff04;text-align:center}
+.deck-variation-card>.artwork-frame{padding:0;border:0;background:none;border-radius:0}
+.deck-variation-card .variation-identity,.deck-variation-card .variation-finish-ownership{display:flex;flex-direction:column;gap:2px;line-height:1.35}
+.deck-variation-card .variation-identity strong{font-size:13px}
+.deck-variation-card .variation-identity p{margin:0;line-height:1.35}
+.deck-variation-card .variation-finish{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#ddd6fe}
+.deck-variation-card .deck-card-controls{text-align:center;margin-top:auto}
+.deck-variation-card .deck-stepper{justify-content:center;margin:0}
+.deck-variation-card .deck-card-controls>small{display:block;margin-top:4px;text-align:center}

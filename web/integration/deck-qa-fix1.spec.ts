@@ -42,21 +42,30 @@ test('real variation allocations, defaults, aggregate tooltip and reload persist
  const detail=`/deck-builder/cards/${card.id}`
  await page.goto(detail);await page.getByRole('button',{name:'Variations',exact:true}).click()
  const first=page.locator(`[data-variation="${a.id}:${a.ownership.variant}"]`),second=page.locator(`[data-variation="${b.id}:${b.ownership.variant}"]`)
+ const checkSettled=async()=>{
+  await expect(first).toHaveCSS('border-top-width','1px')
+  await expect(first.locator('.deck-stepper')).toHaveCSS('justify-content','center')
+  await expect(first.locator('.deck-card-controls>small')).toHaveCSS('text-align','center')
+  await expect(first.locator('.variation-identity p')).toHaveText(a.set.name||a.set.id)
+  await expect(first.locator('.variation-finish')).toHaveCSS('font-size','14px')
+  await expect(first.locator('.variation-finish-ownership small')).toHaveText(a.ownership.quantity?`Owned: ${a.ownership.quantity}`:'Not owned')
+ }
+ await checkSettled()
  await first.getByRole('button',{name:`Add ${a.name} to deck`,exact:true}).click()
  await second.getByRole('button',{name:`Add ${b.name} to deck`,exact:true}).click({clickCount:2,delay:80})
  await expect(first.getByRole('status')).toHaveText('1');await expect(second.getByRole('status')).toHaveText('2')
  await expect(first).toContainText('Total in deck: 3');await expect(second).toContainText('Total in deck: 3')
- await second.getByRole('button',{name:'Set as default printing',exact:true}).click()
- await expect(second.getByRole('button',{name:'✓ Default printing',exact:true})).toBeVisible()
+ await checkSettled()
+ await expect(page.getByRole('button',{name:/default printing/i})).toHaveCount(0)
+ await expect(first).not.toContainText('This printing / finish')
  const tray=page.getByRole('complementary',{name:'Active deck'})
  await tray.getByRole('button',{name:'Save',exact:true}).click();await expect(tray.locator('footer')).toContainText('Saved')
  const saved=await (await request.get('/api/v1/deck-workspace')).json()
- await first.getByRole('button',{name:'Set as default printing',exact:true}).click()
- await expect(first.getByRole('button',{name:'✓ Default printing',exact:true})).toBeVisible()
- expect((await (await request.get('/api/v1/deck-workspace')).json()).deck.entries).toEqual(saved.deck.entries)
+ expect(saved.defaults[card.deck_identity]).toMatchObject({printing_id:b.id,variant:b.ownership.variant})
  await page.reload();await page.getByRole('button',{name:'Variations',exact:true}).click()
  await expect(first.getByRole('status')).toHaveText('1');await expect(second.getByRole('status')).toHaveText('2')
- await expect(first.getByRole('button',{name:'✓ Default printing',exact:true})).toBeVisible()
+ expect((await (await request.get('/api/v1/deck-workspace')).json()).deck.entries).toEqual(saved.deck.entries)
+ await checkSettled()
  await first.scrollIntoViewIfNeeded();await page.screenshot({path:info.outputPath('mixed-printing-allocations.png')})
  for(const width of [1440,1280,1100]){
   await page.setViewportSize({width,height:1000})
@@ -64,7 +73,7 @@ test('real variation allocations, defaults, aggregate tooltip and reload persist
   const geometry=await page.locator('.deck-variation-grid>.variation-card').evaluateAll(cards=>cards.slice(0,4).map(card=>{
    const frame=card.getBoundingClientRect(),art=card.querySelector('.artwork-frame')!.getBoundingClientRect()
    const buttons=card.querySelectorAll('.deck-stepper button'),left=buttons[0].getBoundingClientRect(),right=buttons[1].getBoundingClientRect()
-   const preference=card.querySelector(':scope>button')!.getBoundingClientRect()
+   const preference=card.querySelector('.deck-card-controls')!.getBoundingClientRect()
    return {x:frame.x,y:frame.y,width:frame.width,height:frame.height,border:getComputedStyle(card).borderTopWidth,center:frame.x+frame.width/2,artCenter:art.x+art.width/2,controlCenter:(left.x+right.right)/2,contained:preference.left>=frame.left&&preference.right<=frame.right&&preference.bottom<frame.bottom}
   }))
   for(const card of geometry){
@@ -90,9 +99,15 @@ test('real variation allocations, defaults, aggregate tooltip and reload persist
  await tile.getByRole('button',{name:`Add ${card.name} to deck`,exact:true}).click()
  await expect(tile.getByRole('status')).toHaveText('4')
  const updated=await (await request.get('/api/v1/deck-workspace')).json()
- expect(updated.deck.entries[0].allocations.find((v:any)=>v.printing_id===a.id&&v.variant===a.ownership.variant).quantity).toBe(2)
+ expect(updated.deck.entries[0].allocations.find((v:any)=>v.printing_id===b.id&&v.variant===b.ownership.variant).quantity).toBe(3)
  await tile.locator('.card-art img').hover()
  await expect(page.locator('.competitive-popup strong').filter({hasText:'4 Cards in deck'})).toBeVisible()
+ await page.goto(detail);await page.getByRole('button',{name:'Variations',exact:true}).click()
+ await checkSettled()
+ await expect(first.getByRole('status')).toHaveText('1');await expect(second.getByRole('status')).toHaveText('3')
+ await page.getByRole('button',{name:'Refresh active deck'}).click()
+ await expect(tray.locator('footer')).not.toContainText('Storing changes')
+ await checkSettled()
 })
 
 test('detail artwork independent of deck membership and view; controls centered; honest fallback',async({page,request},info)=>{

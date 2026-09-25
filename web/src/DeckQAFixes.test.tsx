@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
 import { CardImage, CardTile } from './CardTile'
-import { DeckProvider, DeckControls, DefaultPrinting, type Workspace } from './DeckBuilder'
+import { DeckProvider, DeckControls, type Workspace } from './DeckBuilder'
 import type { Card } from './api'
 
 const card:Card={id:'test-1',name:'Test',deck_identity:'f',category:'Pokemon',legal:{standard:true},localId:'1',set:{id:'test'},image_url:'/first/high.webp',legality_provenance:{source:'TCGdex',checked_at:'today'},ownership:{functional_id:'f',library_id:'l',variant:'normal',quantity:0,functional_total:0,library_total:0}}
@@ -52,8 +52,8 @@ test('exact controls, independent default, and live bold hover aggregate across 
   return {ok:true,json:async()=>structuredClone(state)}
  }))
  const view=render(<MemoryRouter initialEntries={['/deck-builder']}><DeckProvider>
-  <div data-testid="a"><DeckControls card={card} exact/><DefaultPrinting card={card}/></div>
-  <div data-testid="b"><DeckControls card={other} exact/><DefaultPrinting card={other}/></div>
+  <div data-testid="a"><DeckControls card={card} exact/></div>
+  <div data-testid="b"><DeckControls card={other} exact/></div>
   <CardTile card={card} competitive/><CardTile card={other} competitive/>
  </DeckProvider></MemoryRouter>)
  const a=within(screen.getByTestId('a')),b=within(screen.getByTestId('b'))
@@ -69,12 +69,6 @@ test('exact controls, independent default, and live bold hover aggregate across 
  expect(a.getByRole('status')).toHaveTextContent('1');expect(b.getByRole('status')).toHaveTextContent('2')
  expect(a.getByText('Total in deck: 3')).toBeInTheDocument();expect(b.getByText('Total in deck: 3')).toBeInTheDocument()
  await leave();await hover(1);expect(screen.getByText('3 Cards in deck')).toBeInTheDocument()
- const entries=structuredClone(state.deck.entries)
- await act(async()=>{fireEvent.click(b.getByRole('button',{name:'Set as default printing'}))})
- expect(b.getByRole('button',{name:'✓ Default printing'})).toBeDisabled()
- await act(async()=>{fireEvent.click(a.getByRole('button',{name:'Set as default printing'}))})
- expect(a.getByRole('button',{name:'✓ Default printing'})).toBeDisabled()
- expect(b.getByRole('button',{name:'Set as default printing'})).toBeEnabled()
- expect(state.deck.entries).toEqual(entries)
+ expect(screen.queryByRole('button',{name:/Default printing|default printing/})).toBeNull()
  expect(commands.filter(c=>c.action==='quantity').every(c=>c.exact)).toBe(true)
 })

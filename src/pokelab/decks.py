@@ -234,6 +234,11 @@ class Decks:
                                (key, command.printing_id, variant))
                 else:
                     if command.delta not in (-1, 1): raise ValueError('Quantity change must be -1 or +1.')
+                    # Remember an intentional exact addition in the same transaction.
+                    # Decrements and implicit additions never replace the preference.
+                    if command.exact and command.delta == 1:
+                        db.execute('INSERT INTO default_printings VALUES (?,?,?) ON CONFLICT(identity) DO UPDATE SET printing_id=excluded.printing_id,variant=excluded.variant',
+                                   (key, command.printing_id, variant))
                     printing_id = command.printing_id
                     if not command.exact:
                         preferred = db.execute('SELECT * FROM default_printings WHERE identity=?', (key,)).fetchone()

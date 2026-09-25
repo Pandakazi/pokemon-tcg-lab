@@ -4,7 +4,7 @@ import { loadVariations, savePreference, withOwnership, finishLabel, type Card, 
 import { CardImage } from './CardTile'
 import { MagnifiedArt } from './MagnifiedArt'
 import { QuantityControls } from './QuantityControls'
-import { useBuilder, detailPath, DeckControls, DefaultPrinting } from './DeckBuilder'
+import { useBuilder, detailPath, DeckControls } from './DeckBuilder'
 
 export function Variations({id,library=false,onSelected,onChange,revision=0}:{id:string;library?:boolean;onSelected?:()=>void;onChange?:(id:string,o:Ownership)=>void;revision?:number}) {
  const location=useLocation()
@@ -28,12 +28,18 @@ export function Variations({id,library=false,onSelected,onChange,revision=0}:{id
   {error && <p role="alert">{error}</p>}
   {!data && !error && <p role="status">Loading variations…</p>}
   <div className={`variation-grid${builder&&!library?' deck-variation-grid':''}`}>
-   {data?.cards.map(card=><article className="variation-card" key={`${card.id}:${card.ownership!.variant}`} data-variation={`${card.id}:${card.ownership!.variant}`}>
+   {data?.cards.map(card=><article className={`variation-card${builder&&!library?' deck-variation-card':''}`} key={`${card.id}:${card.ownership!.variant}`} data-variation={`${card.id}:${card.ownership!.variant}`}>
     {library?<button disabled={busy} onClick={()=>choose(card)} aria-label={`Use ${card.id} ${finishLabel(card.ownership!.variant)} in Library`}><CardImage card={card}/></button>:
      <MagnifiedArt card={card}><Link to={`${detailPath(card.id,!!builder)}?variant=${encodeURIComponent(card.ownership!.variant)}`} state={{library:location.state?.library||(builder?'/deck-builder':'/')}} aria-label={`Inspect ${card.id} ${finishLabel(card.ownership!.variant)}`}><CardImage card={card}/></Link></MagnifiedArt>}
-    <strong>{card.name}</strong><p>{card.set.name || card.set.id} · {card.localId}</p><code>{card.id}</code><p>{finishLabel(card.ownership!.variant)}</p>
-    <small>{card.ownership!.quantity?`Owned ×${card.ownership!.quantity}`:'Not owned'}</small>
-    {!library && (builder?<><DeckControls card={card} exact/><DefaultPrinting card={card}/></>:<QuantityControls id={card.id} ownership={card.ownership!} onChange={changed}/>)}
+    {builder&&!library?<>
+     <div className="variation-identity"><strong>{card.name}</strong><p>{card.set.name || card.set.id}</p><code>{card.id}</code></div>
+     <div className="variation-finish-ownership"><strong className="variation-finish">{card.ownership!.variant==='reverse'?'Reverse Holo':finishLabel(card.ownership!.variant)}</strong><small>{card.ownership!.quantity?`Owned: ${card.ownership!.quantity}`:'Not owned'}</small></div>
+     <DeckControls card={card} exact/>
+    </>:<>
+     <strong>{card.name}</strong><p>{card.set.name || card.set.id} · {card.localId}</p><code>{card.id}</code><p>{finishLabel(card.ownership!.variant)}</p>
+     <small>{card.ownership!.quantity?`Owned ×${card.ownership!.quantity}`:'Not owned'}</small>
+     {!library&&<QuantityControls id={card.id} ownership={card.ownership!} onChange={changed}/>}
+    </>}
    </article>)}
   </div>
   {!library && !!data?.unassigned?.length && <section className="unassigned-ownership" aria-label="Copies with no recorded finish"><h3>Copies with no recorded finish</h3><p>These existing copies are included in your total. They have not been assigned a finish.</p>
