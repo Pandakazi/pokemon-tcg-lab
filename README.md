@@ -2,8 +2,9 @@
 
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
-The roadmap describes future capabilities. Phase 2 is PM-certified; Phase 3 adds
-local exact-printing collection ownership and variations and awaits PM QA.
+The roadmap describes future capabilities. Phases 1–4 are certified at the
+`phase-4-certified-2026-09-24` baseline. This branch adds Phase 5 Deck Builder for
+PM QA; Phase 5 is not certified. See [scope, architecture and QA startup](docs/phase-5-deck-builder.md).
 
 The approved PokéLab Web Prototype v0.1 Figma Make frontend supplies the visual
 and interaction direction. We reuse its generated source, not a screenshot recreation.
@@ -26,7 +27,10 @@ and interaction direction. We reuse its generated source, not a screenshot recre
   research with usage, copies, archetypes, four-window trends and association/lift.
   See [Phase 4 setup, definitions and manual QA](docs/phase-4-competitive.md).
 
-Phase 4 awaits Mike's manual certification. Agent and authentication remain
+- Persistent Deck Builder with shared Library/detail/research, functional counts,
+  read-only ownership context, saved drafts, and Python-backed validation.
+
+Phase 5 awaits Mike's manual certification. Agent and authentication remain
 disabled/unconnected. PWA installation,
 offline service workers, hosting and billing are not implemented.
 

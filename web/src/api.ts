@@ -1,5 +1,6 @@
 export type Category = 'Pokemon' | 'Trainer' | 'Energy'
 export interface Card {
+  deck_identity?: string
   id: string; name: string; category: Category; localId: string | number
   set: { id: string; name?: string; code?: string }; hp?: number; types?: string[]; stage?: string
   rarity?: string; regulationMark?: string; legal: Record<string, boolean>

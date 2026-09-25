@@ -10,7 +10,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
       background: 'rgba(11,13,19,0.95)', flexShrink: 0, gap: 0, zIndex: 100,
     }}>
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 32 }}>
+      <button aria-label="PokéLab Home" onClick={()=>onNavChange('Home')} style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 32 }}>
         <div style={{
           width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
@@ -21,11 +21,11 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
         <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', fontFamily: 'Outfit', letterSpacing: '-0.01em' }}>
           Poké<span style={{ color: '#8b5cf6' }}>Lab</span>
         </span>
-      </div>
+      </button>
 
       {/* Navigation */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        {['Library', 'Collection', 'Analytics'].map(nav => (
+        {['Library', 'Collection', 'Analytics', 'Deck Builder'].map(nav => (
           <button
             key={nav}
             disabled={nav === "Analytics"} onClick={() => onNavChange(nav)}
@@ -47,7 +47,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{color:'#8892a4',fontSize:11}}>Local collection · Phase 3</span>
+        <span style={{color:'#8892a4',fontSize:11}}>Local collection</span>
       </div>
     </div>
   )
@@ -66,7 +66,7 @@ export function LibraryControls({
   totalCards: number; filteredCount: number
 }) {
   return (
-    <div style={{
+    <div className="library-controls" style={{
       height: 52, display: 'flex', alignItems: 'center', padding: '0 16px',
       borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, gap: 12,
       background: 'rgba(11,13,19,0.6)',

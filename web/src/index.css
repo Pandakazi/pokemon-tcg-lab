@@ -140,3 +140,17 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .associated-card-name:focus-visible {outline:2px solid #93c5fd;outline-offset:4px}
 .associated-card-preview {position:fixed;z-index:1100;padding:10px;background:#172033;color:#f1f5f9;border:1px solid #64748b;border-radius:10px;box-shadow:0 12px 36px #0008;max-height:calc(100vh - 24px);overflow:auto}
 .associated-card-preview strong {display:block;margin-bottom:8px}.associated-card-preview img {display:block;width:100%;max-height:calc(100vh - 76px);object-fit:contain;border-radius:8px}
+/* Phase 5: shared browser and detail retain their certified artwork behavior. */
+.deck-tray{width:310px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;border-left:1px solid #ffffff20;background:#0d1018}
+.deck-tray header,.deck-validation,.deck-tray footer,.deck-tray>[role=alert]{padding:12px;border-bottom:1px solid #ffffff18}
+.deck-tray h2{font-size:12px;color:#a5adc0;margin:0 0 6px}.deck-tray h3{font-size:15px;letter-spacing:0;overflow-wrap:anywhere;margin:4px 0 8px}
+.deck-tray button,.deck-card-controls button{padding:5px 9px;border:1px solid #ffffff25;border-radius:5px;background:#ffffff08;color:#ddd6fe}
+.deck-actions,.deck-stepper{display:flex;gap:6px;align-items:center;margin:8px 0}.deck-stepper output{min-width:24px;text-align:center;font-variant-numeric:tabular-nums}.deck-actions{flex-wrap:wrap}
+.deck-validation{font-size:12px;max-height:32%;overflow:auto}.deck-validation>strong{font-size:20px}.deck-validation p{margin:6px 0;color:#a5adc0}.deck-validation ul{list-style:disc;padding-left:18px}.deck-validation li{margin:5px 0}.deck-validation details{margin-top:8px}
+.deck-state{font-size:11px;font-weight:700;margin-left:8px}.state-invalid{color:#fca5a5}.state-valid{color:#6ee7b7}.state-in-progress{color:#fcd34d}
+.deck-entries{flex:1;overflow:auto;padding:12px}.deck-entries article{border-bottom:1px solid #ffffff18;padding:8px 0}.deck-entries a{font-weight:600;color:#ddd6fe;overflow-wrap:anywhere}.deck-entries small{display:block;font-size:11px;color:#a5adc0;overflow-wrap:anywhere}
+.deck-tray footer{font-size:11px;color:#a5adc0;display:flex;align-items:center;justify-content:space-between;gap:8px}.deck-open{max-height:160px;overflow:auto;display:flex;flex-direction:column;gap:6px}.deck-tray input{width:100%;background:#161b29;border:1px solid #ffffff30;padding:8px;border-radius:4px}
+.deck-ownership{font-size:12px;color:#a5adc0;margin:6px 0}.deck-ownership strong{font-size:10px;letter-spacing:.05em}.deck-card-controls{font-size:12px}.deck-card-controls>button{font-size:11px}.deck-card-controls .deck-stepper{margin:4px 0}
+.builder-workspace .library-controls{height:auto!important;min-height:52px;flex-wrap:wrap;padding-top:8px!important;padding-bottom:8px!important;gap:6px!important}.builder-workspace .library-controls input{min-width:70px;width:100%}
+.builder-workspace .card-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}.builder-workspace .detail-layout{grid-template-columns:minmax(190px,250px) minmax(190px,1fr);gap:24px}.builder-workspace .detail-page dl{grid-template-columns:100px 1fr}
+@media(max-width:1200px){.builder-workspace .filter-panel{width:160px;padding:12px}.builder-workspace .deck-tray{width:285px}.builder-workspace .agent-panel:not(.collapsed){width:200px}.builder-workspace .detail-layout{grid-template-columns:1fr}.builder-workspace .detail-art{max-width:276px}}

@@ -77,6 +77,7 @@ class Preference(BaseModel):
 
 class CardSummary(BaseModel):
     id: str
+    deck_identity: str | None = None
     name: str
     category: Category
     localId: str | int

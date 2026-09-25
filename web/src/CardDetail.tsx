@@ -5,10 +5,12 @@ import { MagnifiedArt } from './MagnifiedArt'
 import { QuantityControls } from './QuantityControls'
 import { Variations } from './Variations'
 import { CompetitiveDashboard } from './Competitive'
+import { useBuilder, ReadOnlyOwnership, DeckControls } from './DeckBuilder'
 
 export function CardDetail() {
  const {printingId=''}=useParams()
  const location=useLocation()
+ const builder=useBuilder()
  const [params]=useSearchParams(),variant=params.get('variant')||undefined
  const [variationsOpen,setVariationsOpen]=useState(false),[revision,setRevision]=useState(0)
  const [data,setData]=useState<Detail|null>(null), [error,setError]=useState(''), [attempt,setAttempt]=useState(0)
@@ -23,12 +25,12 @@ export function CardDetail() {
  const card=data?.card
  function changed(id:string,owned:Ownership) {setData(old=>old?{...old,card:withOwnership(old.card,id,owned)}:old)}
  return <main className="detail-page">
-  <Link to={location.state?.library || '/'}>← Back to library</Link>
+  <Link to={location.state?.library || (builder?'/deck-builder':'/')}>← Back to {builder?'Deck Builder':'library'}</Link>
   {!card && !error && <p role="status">Loading card…</p>}
   {error && <div role="alert"><h1>Card could not be loaded</h1><p>{error}</p><button onClick={()=>setAttempt(v=>v+1)}>Retry</button></div>}
   {card && data && <>
    <div className="detail-layout"><div className="detail-art"><MagnifiedArt key={card.id} card={card}/>
-    {card.ownership && <><QuantityControls id={card.id} ownership={card.ownership} onChange={(id,o)=>{changed(id,o);setRevision(v=>v+1)}}/>
+    {builder?<><ReadOnlyOwnership card={card} detail/><DeckControls card={card} presentation/></>:card.ownership && <><QuantityControls id={card.id} ownership={card.ownership} onChange={(id,o)=>{changed(id,o);setRevision(v=>v+1)}}/>
      <p>Functional total: <output aria-label="Functional total" aria-live="polite">{card.ownership.functional_total}</output></p></>}
     {card.ownership && <button className="detail-variations-toggle" aria-expanded={variationsOpen} aria-controls="detail-variations" onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>}
    </div>

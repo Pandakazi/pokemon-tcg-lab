@@ -10,14 +10,14 @@ class Lab:
     def __init__(self, cards: CardProvider, store: DeckStore):
         self.cards, self.store = cards, store
 
-    def validate(self, deck: Deck) -> dict:
+    def validate(self, deck: Deck, *, require_complete: bool = True) -> dict:
         counts = deck.counts()
         total = sum(counts.values())
         errors, unknown = [], []
         sources = {}
         by_name, categories = Counter(), Counter()
         basic, ace_spec = 0, 0
-        if total != 60:
+        if total > 60 or (require_complete and total != 60):
             errors.append(f"Deck contains {total} cards; exactly 60 are required.")
         for card_id, count in counts.items():
             try:

@@ -1,5 +1,35 @@
 # Release verification — 0.1.1
 
+## September 25, 2026 — Phase 5 Deck Builder
+
+Status: **READY FOR PM QA**, not certified. Baseline `22a229b` matches the
+`phase-4-certified-2026-09-24` tag; historical entries below retain their original
+pre-certification wording.
+
+- Full Python regression: **186 passed** (172 existing + 14 Phase 5), with the
+  same two upstream test-client deprecation warnings.
+- Full frontend suite: **51 passed** (45 existing + 6 Phase 5).
+- TypeScript and production build passed.
+- Browser coverage: **17 distinct scenarios passed** (11 existing regressions
+  and 6 Phase 5 scenarios). Initial new-test locator ambiguities were corrected;
+  failed scenarios passed on rerun. Final affected persistence/dense checks were
+  rerun after the unfinished-rename guard. No existing test was removed/weakened.
+- Real local cache: **23,736 cards**, competitive evidence **734 eligible lists**
+  observed in the retained research dashboard. No card synchronization/ingestion
+  was initiated. Browser API tests disallow outbound card-data connections;
+  artwork loads from the existing allowlisted asset service.
+- Browser checks cover one-second hover, read-only ownership throughout Builder,
+  queued deck edits, full research and navigation state, save failures, saved
+  incomplete drafts, selected finish, real-artwork desktop layouts, 20-entry deck
+  scrolling, keyboard enlargement, long names and restored gallery scroll.
+- Manual-QA launcher Start and Restart verified on ports 8003/5175. Process command
+  lines point to this checkout. A real unsaved draft survived an API/frontend
+  restart, then the isolated QA workspace was returned to EMPTY. The frontend proxy
+  reports deck schema version 1. The certified app's collection is not used for
+  QA writes; the launcher uses a SQLite backup snapshot and separate deck database.
+
+See [the completed QA Scope Matrix and limitations](docs/phase-5-deck-builder.md).
+
 ## September 24, 2026 — Phase 4 Manual QA Fix Pass #2
 
 - Root cause reproduced at both port 8001 and the port-5173 frontend proxy: the

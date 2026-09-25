@@ -13,6 +13,7 @@ from tcg_lab.cards import CardLookupError, check_id, public_card, summary
 from .collection import Collection, identity
 from .competitive import Competitive
 from .competitive_models import CompetitiveResearch
+from .decks import Decks, DeckCommand, DeckConflict, deck_identity
 from .images import TCGdexImages
 from .library_identity import library_signature, basic_image_priority, REPRESENTATIVE_ORDER_SQL
 from .web_models import LibraryQuery, CardPage, CardDetail, Status, Ownership, QuantityWrite, Preference, VariationPage, Category
@@ -79,7 +80,7 @@ class ReadOnlyCards(SQLiteCards):
         return total, rows
 
 
-def create_app(database=None, state_database=None, competitive_database=None, format_start=None):
+def create_app(database=None, state_database=None, competitive_database=None, format_start=None, deck_database=None):
     app = FastAPI(title='PokéLab API', version='0.1.0')
     cards = ReadOnlyCards(database or os.getenv('TCG_CARDS_DB_PATH', 'data/cards.sqlite3'))
     images = TCGdexImages()
@@ -88,6 +89,27 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
                               format_start or os.getenv('POKELAB_FORMAT_START'))
     if competitive.path == collection.path:
         raise ValueError('Competitive storage must be separate from collection storage')
+    decks = Decks(collection, deck_database or os.getenv('POKELAB_DECK_DB_PATH') or collection.path.with_name('deck-workspace.sqlite3'))
+    if decks.path == competitive.path:
+        raise ValueError('Deck storage must be separate from competitive storage')
+
+    @app.get('/api/v1/deck-workspace')
+    def deck_workspace():
+        try:
+            return decks.read()
+        except (sqlite3.Error, OSError, ValueError):
+            raise HTTPException(503, detail='Deck workspace or card cache unavailable. Your stored decks have been preserved.') from None
+
+    @app.post('/api/v1/deck-workspace')
+    def change_deck(body: DeckCommand):
+        try:
+            return decks.apply(body)
+        except DeckConflict as error:
+            raise HTTPException(409, detail=str(error)) from None
+        except ValueError as error:
+            raise HTTPException(422, detail=str(error)) from None
+        except (sqlite3.Error, OSError):
+            raise HTTPException(503, detail='Unable to save deck changes. Retry; your last stored draft is preserved.') from None
 
     @app.get('/api/v1/competitive/cards/{printing_id}', response_model=CompetitiveResearch)
     def competitive_card(printing_id: str, window: Literal['7','30','90','format']='30',
@@ -127,6 +149,7 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
         result['game'] = record['game']
         result['legality_provenance'] = {'source':'TCGdex', 'checked_at':record['checked_at']}
         result['ownership'] = snapshot.ownership(id, variant)
+        result['deck_identity'] = deck_identity(record)
         if include_image:
             result['image_url'] = images.url(record['card'])
         return result
@@ -251,6 +274,7 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
             except ValueError as error:
                 raise HTTPException(422, detail=str(error)) from None
             record['card']['ownership'] = snapshot.ownership(printing_id, variant)
+            record['card']['deck_identity'] = deck_identity(snapshot.records[printing_id])
             return record
         except (sqlite3.Error, OSError, ValueError):
             raise unavailable() from None

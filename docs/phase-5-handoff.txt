@@ -1,0 +1,535 @@
+PHASE 5 — DECK BUILDER IMPLEMENTATION HANDOFF
+
+Build Deck Builder as a first-class PokéLab workspace using the certified Phases 1–4 application as the foundation.
+
+Figma is a layout reference only. Do not port its mock data, validation, identity logic, placeholder artwork, or placeholder interactions.
+
+Deck Builder sits beside Analytics in global navigation.
+
+The PokéLab logo must navigate Home.
+
+Reuse the existing certified:
+- Library
+- search
+- categories
+- filters
+- Gallery/List
+- Card Detail
+- Variations
+- ownership data
+- artwork behavior
+- competitive hover
+- Competitive Research
+
+Do not create parallel versions of these systems unless technically necessary.
+
+
+PRODUCT / UX REQUIREMENTS
+
+Deck Builder mode must never modify collection ownership.
+
+Collection quantities are read-only context everywhere inside Deck Builder.
+
+All +/- controls shown in Deck Builder must affect deck quantity only.
+
+
+DECK BUILDER GALLERY / LIST
+
+In Deck Builder Gallery/List:
+
+- clicking a card opens Card Detail;
+- the existing 1-second Phase 4 competitive hover remains enabled;
+- ownership is displayed as static/read-only context;
+- cards provide dedicated deck quantity controls:
+  [-] quantity [+]
+- these controls modify only the active deck;
+- collection ownership must not be editable from Deck Builder.
+
+Users must be able to add/remove cards from either:
+- the Gallery/List deck controls; or
+- the persistent deck tray.
+
+
+PERSISTENT ACTIVE DECK TRAY
+
+The active deck tray remains visible and populated while:
+
+- browsing the Library;
+- searching/filtering;
+- inspecting Card Detail;
+- reviewing Competitive Research.
+
+The tray must support:
+
+- deck name;
+- format;
+- total deck count;
+- Pokémon count;
+- Trainer count;
+- Energy count;
+- validation state;
+- New;
+- Open;
+- Save;
+- Rename;
+- [-] quantity [+];
+- remove card.
+
+Clicking a deck entry should open that card for inspection while preserving the active deck and tray.
+
+The tray should allow the user to glance at the active deck while researching cards.
+
+
+CARD DETAIL FROM DECK BUILDER
+
+Card Detail entered from Deck Builder is contextual.
+
+Preserve the existing certified:
+
+- card presentation;
+- artwork behavior;
+- click-to-enlarge behavior;
+- Variations placement;
+- Competitive Research;
+- card metadata.
+
+Do not use the normal editable collection ownership controls while Card Detail is being viewed from Deck Builder.
+
+Instead, display read-only ownership information followed by deck controls.
+
+The intended presentation is:
+
+OWNED
+  <owned quantity>
+
+<finish> - this variation: <qty>
+Function total: <qty>
+
+Add to deck
+[-] <deck quantity> [+]
+
+[Variations]
+
+Card Detail entered normally from Library or Collection retains the certified Phase 3 collection controls unchanged.
+
+The "Add to deck" controls should only appear when Card Detail was entered from Deck Builder context.
+
+
+STATE PRESERVATION / NAVIGATION
+
+Returning from Card Detail or Full Research to Deck Builder must restore the previous builder state.
+
+Preserve:
+
+- active deck;
+- deck tray contents;
+- deck quantities;
+- selected category;
+- search query;
+- filter state;
+- pagination and/or scroll position;
+- Gallery/List mode;
+- relevant navigation state;
+- selected/inspected context where appropriate.
+
+Opening Full Research must not destroy the active deck state.
+
+The active deck tray should remain available while viewing card research where practical within the existing layout.
+
+
+DECK IDENTITY MODEL
+
+Deck contents use:
+
+functional card identity + quantity
+
+Optional selected printing/finish is presentation metadata only.
+
+Changing artwork, printing, or finish must never change:
+
+- functional deck quantity;
+- legality identity;
+- collection ownership.
+
+Equivalent legal printings of the same functional card must share functional deck counts.
+
+Distinct gameplay identities must remain distinct.
+
+
+BASIC ENERGY
+
+Recognized Basic Energy must use functional Energy type identity for deck construction.
+
+Examples conceptually:
+- Grass Energy is one functional deck identity;
+- Fire Energy is another;
+- Water Energy is another.
+
+Specific Basic Energy artwork/printing/finish remains separate collection and presentation data.
+
+Basic Energy ownership must not restrict theoretical deck construction.
+
+A user may build a deck containing Basic Energy even if they do not physically own enough copies.
+
+Physical ownership remains visible as collection context.
+
+Special Energy and ambiguous Energy cards must remain normal functional cards and must not be collapsed into Basic Energy identity logic.
+
+Do not silently rebuild or replace the existing certified Library/collection identity model. Add the deck-specific mapping deliberately and document any adapter required.
+
+
+VALIDATION STATES
+
+Use these user-facing states:
+
+EMPTY
+IN PROGRESS
+VALID
+INVALID
+
+Rules:
+
+EMPTY
+- new/unsaved deck with zero cards.
+
+IN PROGRESS
+- unsaved deck containing fewer than 60 cards;
+- no other validation failures are present.
+
+VALID
+- complete deck passing all applicable rules.
+
+INVALID
+- any actual deck-rule violation, regardless of save state.
+
+Examples of immediate INVALID conditions include applicable:
+- copy-limit violations;
+- restricted-card violations;
+- Standard legality violations;
+- missing required Basic Pokémon;
+- oversized deck;
+- other authoritative rule-service failures.
+
+SPECIAL SAVE RULE
+
+Before a deck has been saved:
+
+- fewer than 60 cards by itself does NOT make the deck INVALID;
+- it remains IN PROGRESS if no other rules are violated.
+
+Once a deck has been saved:
+
+- fewer than 60 cards IS an INVALID condition.
+
+Examples:
+
+unsaved 43/60, otherwise legal
+→ IN PROGRESS
+
+unsaved 43/60 with copy-limit violation
+→ INVALID
+
+saved 43/60, otherwise legal
+→ INVALID
+→ useful reason such as "17 cards remaining"
+
+60/60 and legal
+→ VALID
+
+A real rule violation always overrides IN PROGRESS.
+
+Validation messages must be concise and actionable.
+
+Do not show only "INVALID" when useful reasons can be surfaced.
+
+
+VALIDATION AUTHORITY
+
+Validation must use the existing authoritative Python rule services.
+
+Do not implement independent React-only/mock legality logic.
+
+Inspect and reuse existing deck services before creating new validation systems.
+
+Ownership shortages are informational only.
+
+Physical collection ownership must never masquerade as a deck legality failure.
+
+
+COMPETITIVE RESEARCH
+
+Preserve the certified Phase 4 competitive hover inside Deck Builder.
+
+This is a critical Deck Builder workflow and should not be disabled.
+
+The existing hover timing remains:
+
+1 second
+
+Preserve existing Phase 4 semantics, including where applicable:
+
+- selected timeframe;
+- usage;
+- average copies;
+- archetype evidence;
+- source/evidence state;
+- no-evidence states;
+- failure states;
+- denominators/exclusions.
+
+Do not replace these calculations with mock or simplified Deck Builder logic.
+
+Full Research must open the existing research experience.
+
+Returning from Full Research must preserve the active deck and Deck Builder state.
+
+
+AGENT PANEL
+
+Keep the Agent panel visible/available in the Deck Builder workspace.
+
+Phase 5 does NOT add new autonomous Agent behavior.
+
+Do not add:
+
+- AI deck generation;
+- autonomous deck optimization;
+- autonomous card replacement;
+- simulation;
+- self-play;
+- matchup simulation;
+- autonomous research decisions.
+
+The Agent panel is present as part of the workspace and future architecture only.
+
+The player remains in control.
+
+
+PERSISTENCE
+
+Phase 5 must support:
+
+- persistent editable drafts;
+- save;
+- reopen;
+- rename;
+- continued editing after reopen.
+
+Incomplete decks may be saved.
+
+Saved incomplete decks follow the validation rule above and are INVALID until completed.
+
+Save failures must be visible and must not silently lose work.
+
+New/Open flows must not silently discard unsaved work.
+
+
+PHASE 5 INCLUDED SCOPE
+
+Include:
+
+- Deck Builder route/tab beside Analytics;
+- logo → Home;
+- reuse of certified Library;
+- reuse of certified Card Detail;
+- reuse of certified Variations;
+- reuse of certified competitive hover;
+- reuse of certified Competitive Research;
+- persistent active-deck tray;
+- add/remove from Gallery/List;
+- add/remove from tray;
+- add/remove from contextual Card Detail;
+- New;
+- Open;
+- Save;
+- Rename;
+- editable incomplete drafts;
+- save/reopen persistence;
+- functional deck identity;
+- optional printing/finish presentation metadata;
+- Basic Energy deck semantics;
+- ownership context;
+- Empty / In Progress / Valid / Invalid states;
+- useful validation messages.
+
+
+PHASE 5 EXCLUSIONS
+
+Do not add unless already trivial and safely reusable:
+
+- Export;
+- drag-and-drop;
+- themes / Light / Dark / System;
+- AI deck generation;
+- autonomous optimization;
+- self-play;
+- matchup simulation;
+- new competitive analytics calculations;
+- a separate card browser;
+- auth;
+- mobile redesign;
+- unrelated refactors.
+
+Preserve all certified Phase 1–4 behavior.
+
+
+IMPLEMENTATION INSTRUCTIONS
+
+Before editing:
+
+1. Inspect the existing Phase 1–4 implementation.
+2. Inspect existing deck-related Python services.
+3. Reuse existing services/components wherever possible.
+4. Identify the authoritative functional identity and validation paths.
+5. Do not duplicate certified systems.
+6. Do not rebuild collection, identity, legality, or analytics logic in parallel.
+
+Work incrementally.
+
+Prefer deterministic:
+
+- Python;
+- SQL;
+- application logic;
+- tests;
+
+over AI-mediated processing.
+
+Avoid unrelated refactors.
+
+Do not weaken correctness, tests, documentation, or architecture merely to reduce usage.
+
+Conserve Work/Codex usage by inspecting before editing and batching related implementation where practical.
+
+
+TESTING
+
+Add targeted automated coverage for Phase 5 behavior.
+
+At minimum cover:
+
+NAVIGATION
+- Deck Builder beside Analytics;
+- logo reaches Home;
+- returning from Card Detail restores builder state;
+- returning from Full Research restores builder state.
+
+QUANTITY SAFETY
+- Deck Builder +/- changes deck quantity only;
+- deck edits do not change collection ownership;
+- collection behavior outside Deck Builder remains unchanged;
+- zero deck quantity removes the deck entry;
+- rapid quantity edits stay consistent.
+
+IDENTITY
+- equivalent printings share functional deck counts;
+- distinct gameplay identities remain distinct;
+- printing/finish presentation changes cannot bypass copy limits.
+
+BASIC ENERGY
+- same recognized Basic Energy type shares deck identity;
+- different Energy types remain distinct;
+- Special Energy is not collapsed;
+- Basic Energy ownership remains exact collection data;
+- ownership does not block deck construction.
+
+PRESENTATION
+- selected printing/finish survives save/reopen where presentation selection is supported;
+- presentation selection does not affect functional counts;
+- missing artwork has an honest fallback.
+
+VALIDATION
+- Empty;
+- unsaved partial / In Progress;
+- valid 60-card deck;
+- oversized deck;
+- copy-limit violation;
+- restricted-card violation where supported;
+- missing Basic Pokémon where supported;
+- illegal card;
+- unresolved legality evidence;
+- saved incomplete deck becomes Invalid;
+- ownership shortage does not become legality failure.
+
+RESEARCH
+- competitive hover still works in Deck Builder;
+- hover retains 1-second delay;
+- quick context retains Phase 4 semantics;
+- Full Research opens correctly;
+- returning preserves the active deck.
+
+PERSISTENCE
+- draft survives restart;
+- saved deck reopens correctly;
+- incomplete saved deck reopens correctly;
+- save errors are surfaced;
+- New/Open does not silently discard unsaved work.
+
+USABILITY
+- long card names;
+- long deck lists;
+- tray scrolling;
+- keyboard focus where applicable;
+- representative desktop widths;
+- real artwork readability with tray open.
+
+REGRESSION
+- run targeted Phase 5 tests during implementation;
+- once stable, run the full existing Phase 1–4 regression suite;
+- do not remove or weaken existing tests to make Phase 5 pass.
+
+
+RUNTIME VERIFICATION
+
+After any backend/API-changing implementation pass:
+
+1. stop/restart the API;
+2. hard-refresh the frontend/browser;
+3. verify the running application corresponds to the current code/commit;
+4. only then perform browser/E2E or manual QA.
+
+Do not diagnose runtime behavior against a stale API process or stale frontend state.
+
+
+READY-FOR-QA HANDOFF
+
+Before handing Phase 5 to the PM for manual certification, provide:
+
+- implementation summary;
+- files/components/services changed;
+- architectural decisions;
+- any deviations from this handoff and why;
+- targeted Phase 5 automated test results;
+- full regression results;
+- TypeScript results;
+- production build results;
+- browser/E2E results;
+- real-data/runtime verification;
+- exact startup/restart instructions for manual QA;
+- known limitations;
+- completed QA Scope Matrix.
+
+Use this QA Scope Matrix vocabulary:
+
+🟢 WIRED
+Must work. Failure is a bug.
+
+🟡 PARTIAL
+Only the explicitly documented behavior is implemented/testable.
+
+⚪ NOT WIRED
+Expected no-op, unavailable, or intentionally excluded.
+
+🧊 FROZEN
+Previously certified behavior preserved and outside the current implementation scope.
+
+
+CERTIFICATION RULE
+
+Do not declare Phase 5 certified.
+
+Work may declare the implementation:
+
+READY FOR PM QA
+
+Final Phase 5 certification occurs only after Mike performs manual QA and explicitly approves the phase.

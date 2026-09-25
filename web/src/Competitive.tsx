@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
+import { useBuilder, detailPath } from './DeckBuilder'
 import { AssociatedCardPreview } from './AssociatedCardPreview'
 
 type Window = '7'|'30'|'90'|'format'
@@ -67,13 +68,14 @@ export function useCompetitiveHover(enabled:boolean) {
  return {open,position,enter,leave,keep:()=>clearTimeout(grace.current),close:()=>{clear();setOpen(false)}}
 }
 export function CompetitivePopup({id,name,hover}:{id:string;name:string;hover:ReturnType<typeof useCompetitiveHover>}) {
+ const builder=useBuilder(),location=useLocation()
  const {data,error,window}=useResearch(id,hover.open,false)
  if(!hover.open)return null
  return createPortal(<aside role="dialog" aria-label={`${name} competitive preview`} className="competitive-popup" style={hover.position} onPointerEnter={hover.keep} onPointerLeave={hover.leave} onFocus={hover.keep} onBlur={hover.leave} onKeyDown={e=>{if(e.key==='Escape')hover.close()}}>
   <strong>{name}</strong><p>Competitive • {window==='format'?'Current Format':`Last ${window} Days`}</p><State data={data} error={error}/>
   {data&&<><dl><dt>Usage</dt><dd>{pct(data.usage_percent)}</dd><dt>Average copies</dt><dd>{decimal(data.average_copies)}</dd></dl>
    <h3>Top five archetypes</h3><ol>{data.top_archetypes.slice(0,5).map(a=><li key={a.id}>{a.name} <span>{pct(a.share_percent)}</span></li>)}</ol>{!data.top_archetypes.length&&<p>No archetype observations.</p>}<Sample data={data}/></>}
-  <p>Source: Limitless</p><Link to={`/cards/${encodeURIComponent(id)}`} onClick={hover.close}>Click for full research →</Link>
+  <p>Source: Limitless</p><Link to={detailPath(id,!!builder)} state={{library:location.pathname+location.search}} onClick={hover.close}>Click for full research →</Link>
  </aside>,document.body)
 }
 const colors:Record<Window,string>={'7':'#60a5fa','30':'#fbbf24','90':'#f472b6',format:'#34d399'}
