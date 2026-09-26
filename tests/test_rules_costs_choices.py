@@ -237,6 +237,8 @@ def test_search_candidates_do_not_disclose_order():
 def test_usage_validation_and_hash_compatibility():
     state=scenario().model_copy(update={'turn':None})
     old=state.model_dump(mode='json'); old.pop('turn'); old.pop('usage')
+    for card in old['instances']:
+        card.pop('attached_to'); card.pop('damage_counters')
     old['instances']=sorted(old['instances'],key=lambda c:c['id'])
     assert state.state_hash()==digest(old)
     usage=Usage(turn='one',player='alice',scope='instance',instance='gum',effect='Evidence Gathering')

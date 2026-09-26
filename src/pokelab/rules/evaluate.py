@@ -43,7 +43,7 @@ def evaluate(action: Action, state: Scenario, cards: CardProvider, registry: Reg
 
     instances = {c.id: c for c in state.instances}
     source = instances.get(action.source)
-    if action.actor not in state.players or action.actor != state.turn_player:
+    if action.actor not in state.players or (profile.handler != 'attached-retreat-cost' and action.actor != state.turn_player):
         return result('SUPPORTED_ILLEGAL', 'ACTOR', 'Actor must be the turn owner in this isolated scope.')
     if source is None:
         return result('SUPPORTED_ILLEGAL', 'SOURCE', 'Source instance does not exist.')
@@ -51,6 +51,9 @@ def evaluate(action: Action, state: Scenario, cards: CardProvider, registry: Reg
         return result('SUPPORTED_ILLEGAL', 'SOURCE_CONTROL', 'Source must be owned, controlled and located with the actor.')
     if source.profile != action.profile or source.printing_id != profile.printing_id or source.functional_id != profile.functional_id:
         return result('UNSUPPORTED', 'INSTANCE_PROFILE', 'Source instance does not match the reviewed printing, function and profile.')
+    if profile.handler != 'attached-retreat-cost' and any(c.attached_to is not None for c in state.instances):
+        return result('UNSUPPORTED', 'ATTACHED_EFFECTS', 'A/B/C transitions do not resolve attached-effect dependencies.',
+                      unsupported_dependencies=('attached-effects',))
 
     # One detached lookup per relevant instance. No canonical/collection mutation.
     resolved = {}
@@ -73,6 +76,10 @@ def evaluate(action: Action, state: Scenario, cards: CardProvider, registry: Reg
     if source_fingerprint(resolved[source.id]) != profile.source_fingerprint:
         return result('UNSUPPORTED', 'SOURCE_CHANGED', 'Source changed during evaluation; re-review is required.',
                       unsupported_dependencies=('matching-source-fingerprint',))
+
+    if profile.handler == 'attached-retreat-cost':
+        from .modifiers import derive_retreat_cost
+        return derive_retreat_cost(action, state, source, profile, resolved, result)
 
     if profile.handler in ('ultra-ball', 'evidence-gathering'):
         from .interactions import evaluate_interaction

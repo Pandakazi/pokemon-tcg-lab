@@ -1,15 +1,16 @@
-# Phase 6.5A/B/C — isolated rules/mechanics foundation
+# Phase 6.5A/B/C/D — isolated rules/mechanics foundation
 
 Implementation for PM review, not merged, tagged or certified. Baseline:
 `645bc3b3188995a9cbc51c20e17738413ddd99ca`. Branch: `phase6.5-rules-foundation`.
 A/B passed PM QA at `b17195a310564e35e92129aae517b56c44594ef5`.
-Pass C adds only Ultra Ball and Evidence Gathering for PM review. No Pass D, UI,
-public API, Agent or battle engine. Nothing is merged, tagged or certified by this pass.
+Pass C passed PM QA at `af6f58aa5c308d71e071331126fae748968eee7b`.
+Pass D adds only Rescue Board for PM review. No UI, public API, Agent or battle engine.
+Nothing is merged, tagged or certified by this pass.
 
 ## Actual architecture
 
 `pokelab.rules.models` contains frozen, extra-forbidden Pydantic contracts.
-`registry` holds four reviewed profiles, evidence excerpts and source fingerprints.
+`registry` holds five reviewed profiles, evidence excerpts and source fingerprints.
 `evaluate` provides pure `evaluate` and `apply` functions over caller-owned scenarios.
 Existing CardProvider lookup, functional_signature and identity hashing are reused
 without changing any certified identity, deck validation or persistence behavior.
@@ -83,9 +84,9 @@ ledger order. Additive C fields are an optional external turn token and usage en
 When both are absent, original A/B state hashes are retained. Schema 1 and the A/B
 ruleset context pin remain; C has separately identified/versioned profiles and handlers.
 
-No Prize, Lost Zone, Energy attachments, damage counters, conditions, persistent
-effects, universal visibility engine or turn engine is implemented. C's ordered deck,
-usage entries and bounded projections are described below.
+No Prize, Lost Zone, Energy attachments, conditions, universal visibility engine or
+turn engine is implemented. C's ordered deck, usage entries and bounded projections,
+and D's damage-counter input and attached modifier derivation, are described below.
 
 Switch requires matching source/profile identity, own controlled resolving source,
 own controlled Active and one own controlled Bench target. Missing choice returns
@@ -250,9 +251,103 @@ Changed files: `rules/models.py`, `rules/registry.py`, `rules/evaluate.py`,
 `rules/perspective.py`, `tests/test_rules_costs_choices.py`,
 `examples/rules_costs_choices_demo.py`.
 
-Ready for Mike's Pass C review. The existing architecture is suitable for a separately
-scoped Pass D after acceptance; no Pass D implementation has begun. Broad card coverage,
+At the C checkpoint the architecture was suitable for a separately scoped Pass D,
+subsequently authorized after Mike's acceptance. Broad card coverage,
 global Trainer/Ability timing, automatic parsing, Energy solving, damage/KO/prizes,
 conditions/evolution/retreat, battle loop, Agent integration, corpus ingestion and
 historical rulesets remain unsupported. Certified collection, printing, deck,
 analytics, research, copy and gallery behavior is untouched.
+
+## Pass D — persistent conditional modifier proof
+
+Architecture outcome **B: a small justified reusable modifier primitive**, extending
+the existing Scenario, registry, evaluation receipt, status and perspective contracts.
+No parallel evaluator, material redesign or retreat transition was needed.
+
+Exact cached source: **Rescue Board, sv05-159**, Trainer / Tool, Uncommon,
+regulation H, cached standard/expanded flags true. These are source fields, not a
+current tournament-legality determination. CARD_TEXT `/effect` is pinned verbatim:
+
+> The Retreat Cost of the Pokémon this card is attached to is {C} less. If that Pokémon's remaining HP is 30 or less, it has no Retreat Cost.
+
+The condition is **remaining HP**, not simply the presence of damage counters.
+The profile `rescue-board.retreat-cost` v1 / handler `attached-retreat-cost` v1 binds
+printing, existing functional identity, mechanics fingerprint, source evidence and
+engineering-reviewed interpretation. The real-cache demo verifies all of them.
+Changing effect/classification or any included fingerprint field marks it STALE.
+
+An attached gameplay CardInstance has `attached_to` referencing an in-play host and
+an `attached` location. Its unique ID, owner/controller, printing and profile remain
+intact. Attached positions are unique within the player's attached zone, not separate
+per-host slot numbers. Missing/non-in-play hosts, duplicate IDs/slots, and mismatched
+host/attachment ownership or control are schema-invalid. Provider verification rejects
+non-Pokemon hosts and source identity/profile mismatches. This validates only the
+bounded existing relationship; it never authorizes attaching a Tool. Existing A/B/C
+transitions fail explicitly if attachments are present, rather than ignoring newly
+representable attached effects.
+
+Optional `damage_counters` lives on the gameplay instance; unknown is distinct from
+zero. Printed HP and retreat are read from the local host record, whose fingerprint
+is included in the derivation. In the explicitly isolated unmodified-HP context:
+remaining HP = printed HP minus 10 per damage counter. More than 30 HP applies
+subtract-one with floor zero. At 30 HP or less the operation is set-zero instead.
+Nonpositive remaining HP fails as an unsupported knockout boundary. Missing/invalid
+printed values or unknown damage counts return INSUFFICIENT_INFORMATION.
+
+`PersistentModifier` identifies source instance/profile, affected host/value,
+condition/threshold/result, selected arithmetic operation and amount, while-attached
+duration, single-modifier scope, evidence and unsupported dependencies.
+`RetreatDerivation` records base cost, printed HP, counters, remaining HP, modifier,
+result, host printing/fingerprint and `executable=false`. It is recomputed from current
+state, never persisted as a changed printed stat. Off-turn derivation is allowed:
+persistence does not grant permission to initiate retreat.
+
+A SUPPORTED_LEGAL result means only **attached-retreat-cost-only derivation**, with
+check DERIVED_VALUE_ONLY. It does not mean legal retreat. No delta is produced;
+calling apply returns applied=false and unchanged state. Unknown declared relevant
+effects (including HP modifiers) block any definitive derivation through the existing
+dependency gate. Multiple attachments on the affected host fail UNSUPPORTED; no
+relevance, stacking or ordering rules are guessed. The host must honestly declare
+isolation and relevant dependencies, as in A/B/C.
+
+The public derivation projection contains only the in-play host/source inputs and
+evidence. Neither player's projection includes hidden hand/deck instances, choices,
+private state hashes or unrelated card data. Raw receipts remain trusted-engine data.
+New optional instance fields preserve prior A/B/C hashes when absent; all declared
+attachment and damage state is hashed when present. No database schema or migration.
+
+### Pass D PM command
+
+```powershell
+Set-Location 'C:/Users/Mike/Documents/Codex/2026-09-25/referenced-chatgpt-conversation-this-is-an/work/phase5'
+$env:PYTHONPATH = Join-Path $PWD 'src'
+$env:PYTHONIOENCODING = 'utf-8'
+& 'C:/Users/Mike/Documents/pokemon-tcg-lab/.venv/Scripts/python.exe' examples/rules_modifier_demo.py --cards 'C:/Users/Mike/Documents/pokemon-tcg-lab/data/cards.sqlite3'
+```
+
+Omit `--cards ...` to run against deterministic cached excerpts. The host is Bulbasaur
+me01-001: printed HP 80, retreat 2. At zero counters, 80 remaining HP produces cost 1.
+At five counters, 30 remaining HP produces cost 0. Its attack is not implemented.
+Inspect profile/provenance and both typed derivations, then unknown-modifier
+UNSUPPORTED, changed-source STALE, no delta and no mutation. The command ends:
+**PASS D DEMO PASSED — NOT PM CERTIFICATION**.
+
+Verification: **136 passed** — 32 Pass D, all 81 A/B/C tests, and 23 targeted existing
+Deck Builder/research-copy regressions. Two existing third-party deprecation warnings.
+Coverage includes both threshold paths, zero floor, missing/malformed attachment and
+host inputs, identity/fingerprint changes, duplicate and multiple attachments,
+unknown effects, deterministic immutable evaluation, no executable delta, off-turn
+persistence and private-information filtering. No broad suite, frontend or browser run.
+Both fixture and real-cache demos passed. Card, collection and competitive database
+SHA-256 hashes were unchanged across the demo runs.
+
+Files: modified rules models/registry/evaluator/exports/perspective, prior C hash
+compatibility test and this document; added `rules/modifiers.py`,
+`tests/test_rules_modifiers.py`, `examples/rules_modifier_demo.py`.
+
+Recommendation: the A/B/C/D foundation is ready for certification-closeout review
+**after Mike accepts D**. No certification, merge or tag is performed here. No actual
+retreat, Energy payment, retreat-use tracking, general Tool legality/removal/replacement,
+modifier stacking/order, attacks, damage/healing/KO/prizes, additional mechanic,
+Phase 7, Agent, UI/API or rules-corpus work was implemented. Certified deck, collection,
+printing, competitive and research systems remain unchanged.

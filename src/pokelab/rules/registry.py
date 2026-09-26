@@ -13,8 +13,9 @@ SWITCH = ProfileRef(id='switch.active-bench', version='1')
 ODDISH = ProfileRef(id='oddish.seed-bomb.printed', version='1')
 ULTRA_BALL = ProfileRef(id='ultra-ball.cost-search', version='1')
 GUMSHOOS = ProfileRef(id='gumshoos.evidence-gathering', version='1')
+RESCUE_BOARD = ProfileRef(id='rescue-board.retreat-cost', version='1')
 HANDLER_VERSIONS = MappingProxyType({'switch-effect': '1', 'printed-damage': '1',
-                                   'ultra-ball': '1', 'evidence-gathering': '1'})
+                                   'ultra-ball': '1', 'evidence-gathering': '1', 'attached-retreat-cost': '1'})
 
 # Presentation/source bookkeeping cannot affect gameplay. Unknown new fields ARE
 # included: source evolution fails closed instead of silently hiding new mechanics.
@@ -30,6 +31,9 @@ def source_fingerprint(card):
 def reviewed_sources():
     """Detached source excerpts from the September 23 local cache, not live fetches."""
     return {
+        'sv05-159': dict(id='sv05-159', name='Rescue Board', category='Trainer', rarity='Uncommon',
+            trainerType='Tool', effect="The Retreat Cost of the Pokémon this card is attached to is {C} less. If that Pokémon's remaining HP is 30 or less, it has no Retreat Cost.",
+            regulationMark='H', legal={'standard': True, 'expanded': True}),
         'me01-131': dict(id='me01-131', name='Ultra Ball', category='Trainer', rarity='Common',
             trainerType='Item', effect='You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.',
             regulationMark='I', legal={'standard': True, 'expanded': True}),
@@ -72,6 +76,9 @@ def builtin_profiles():
          json.dumps(cards['me01-110']['abilities'][0], sort_keys=True, ensure_ascii=False, separators=(',', ':')),
          None,
          'Already-authorized isolated Evidence Gathering only. This Ability means the source instance, not a player-wide or all-Gumshoos restriction. Once per externally identified own turn, exchange one chosen own hand card with the top own deck card privately. No general Ability timing or leave/re-enter reset is established.'),
+        (RESCUE_BOARD, 'sv05-159', 'attached-retreat-cost', 'attached-retreat-cost-only', '/effect',
+         cards['sv05-159']['effect'], None,
+         'Derive only for one existing own Tool attached to an own in-play Pokemon with known printed HP/retreat and damage counters. Remaining HP is printed HP minus ten per damage counter in isolated unmodified-HP context. Subtract one Colorless from printed retreat, flooring at zero; at remaining HP 30 or less set cost to zero instead. No stacking, attachment authorization, retreat permission/payment/execution or knockout resolution. Zero remaining HP is outside scope.'),
     )
     output = []
     for ref, printing, handler, scope, path, text, retrieved, interpretation in specs:
@@ -84,7 +91,9 @@ def builtin_profiles():
                       evidence(ref.id+'.interpretation', 'POKELAB_INTERPRETATION', 'pokelab/rules/registry.py', ref.id, interpretation)),
             scope=scope, limitations=('Isolated scenario only; not full gameplay legality.',
                 'No official rulebook/ruling corpus is bundled. Missing global interactions are not inferred.',
-                'No source card play/discard, attachments, conditions, modifiers, knockouts or prizes are executed.')))
+                'No source card play/discard, attachments, conditions, modifiers, knockouts or prizes are executed.') +
+                (('Derived cost only; not retreat permission or execution. No Energy payment, retreat-use tracking, Tool legality or modifier stacking.',)
+                 if handler == 'attached-retreat-cost' else ())))
     return tuple(output)
 
 

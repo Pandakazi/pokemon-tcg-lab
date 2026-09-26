@@ -71,7 +71,7 @@ class MechanicProfile(StrictModel):
     reviewed_by: str | None = None
     review_note: str | None = None
     evidence: tuple[Evidence, ...] = ()
-    scope: Literal['switch-effect-only', 'printed-damage-preview', 'ultra-ball-effect-only', 'evidence-gathering-only']
+    scope: Literal['switch-effect-only', 'printed-damage-preview', 'ultra-ball-effect-only', 'evidence-gathering-only', 'attached-retreat-cost-only']
     limitations: tuple[str, ...]
 
 
@@ -84,7 +84,7 @@ class ProfileResolution(StrictModel):
 
 class Location(StrictModel):
     player: Key
-    zone: Literal['active', 'bench', 'resolving', 'hand', 'discard', 'deck']
+    zone: Literal['active', 'bench', 'resolving', 'hand', 'discard', 'deck', 'attached']
     position: Annotated[int, Field(strict=True, ge=0, le=199)] = 0
 
     @model_validator(mode='after')
@@ -102,6 +102,14 @@ class CardInstance(StrictModel):
     printing_id: Key
     profile: ProfileRef | None = None
     location: Location
+    attached_to: Key | None = None
+    damage_counters: Count | None = None
+
+    @model_validator(mode='after')
+    def attachment_location(self):
+        if (self.location.zone == 'attached') != (self.attached_to is not None):
+            raise ValueError('Attached instances require a host and attached location together.')
+        return self
 
 
 class Usage(StrictModel):
@@ -148,6 +156,15 @@ class Scenario(StrictModel):
                 raise ValueError('Two instances occupy the same location.')
             slots.add(slot)
         usage_keys = set()
+        by_id = {c.id: c for c in self.instances}
+        for card in self.instances:
+            if card.attached_to is not None:
+                host = by_id.get(card.attached_to)
+                if host is None or host.location.zone not in ('active', 'bench'):
+                    raise ValueError('Attachment requires an existing in-play host.')
+                if len({card.owner, card.controller, card.location.player,
+                        host.owner, host.controller, host.location.player}) != 1:
+                    raise ValueError('Attachment/host ownership and control must agree in this scope.')
         for entry in self.usage:
             if entry.player not in self.players or (entry.instance is not None and entry.instance not in ids):
                 raise ValueError('Invalid usage reference.')
@@ -160,6 +177,11 @@ class Scenario(StrictModel):
     def state_hash(self) -> str:
         value = self.model_dump(mode='json')
         value['instances'] = sorted(value['instances'], key=lambda c: c['id'])
+        for card in value['instances']:
+            # Preserve accepted A/B/C hashes when the additive D context is absent.
+            for field in ('attached_to', 'damage_counters'):
+                if card[field] is None:
+                    card.pop(field)
         # Preserve A/B hashes when the additive C context is absent.
         if self.turn is None and not self.usage:
             value.pop('turn')
@@ -233,6 +255,36 @@ class DamagePreview(StrictModel):
     scope: Literal['printed-base-only'] = 'printed-base-only'
 
 
+class PersistentModifier(StrictModel):
+    source: Key
+    profile: ProfileRef
+    affected: Key
+    value: Literal['retreat-cost']
+    condition: Literal['remaining-hp-at-most']
+    threshold: Count
+    condition_satisfied: bool = Field(strict=True)
+    operation: Literal['subtract-floor-zero', 'set-zero']
+    amount: Count
+    duration: Literal['while-attached'] = 'while-attached'
+    scope: Literal['isolated-single-modifier'] = 'isolated-single-modifier'
+    evidence: tuple[Evidence, ...]
+    unsupported_dependencies: tuple[str, ...] = ()
+
+
+class RetreatDerivation(StrictModel):
+    host: Key
+    host_printing: Key
+    host_fingerprint: Digest
+    base_printed_cost: Count
+    printed_hp: Count
+    damage_counters: Count
+    remaining_hp: Count
+    modifier: PersistentModifier
+    derived_cost: Count
+    executable: Literal[False] = False
+    scope: Literal['derived-value-only'] = 'derived-value-only'
+
+
 class Evaluation(StrictModel):
     schema_version: Literal[1] = 1
     action: Action
@@ -254,6 +306,7 @@ class Evaluation(StrictModel):
     limitations: tuple[str, ...] = ()
     delta: Delta | None = None
     preview: DamagePreview | None = None
+    derivation: RetreatDerivation | None = None
 
 
 class ApplyResult(StrictModel):

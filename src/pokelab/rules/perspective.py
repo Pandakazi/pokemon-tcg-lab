@@ -11,7 +11,7 @@ def state_view(state, player):
         raise ValueError('Unknown perspective.')
     zones = []
     for owner in state.players:
-        for name in ('active', 'bench', 'resolving', 'discard', 'hand', 'deck'):
+        for name in ('active', 'bench', 'resolving', 'discard', 'hand', 'deck', 'attached'):
             cards = sorted((c for c in state.instances if c.location.player == owner and c.location.zone == name),
                            key=lambda c: c.location.position)
             visible = name != 'deck' and (name != 'hand' or owner == player)
@@ -25,6 +25,11 @@ def state_view(state, player):
 def evaluation_view(evaluation, player, *, players):
     if player not in players:
         raise ValueError('Unknown perspective.')
+    if evaluation.derivation is not None:
+        # Derivation contains public in-play source/host data only, never the action
+        # hash, hidden zones or a gameplay delta. Retreat is explicitly non-executable.
+        return dict(status=evaluation.status, scope=evaluation.scope,
+                    derivation=evaluation.derivation.model_dump(mode='json'), limitations=evaluation.limitations)
     # Even status/checks on an opponent's pending private choice can be an oracle.
     if player != evaluation.action.actor:
         return {'visibility': 'private-pending-resolution'}
