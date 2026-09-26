@@ -1,8 +1,19 @@
 # Phase 7A — deterministic Agent Evidence Packet
 
-Implementation awaiting Mike's PM QA. Certified base:
+**Phase 7A — Deterministic Agent Evidence Packet ✅ CERTIFIED** by Mike following
+manual PM QA PASS on September 26, 2026. Certified base:
 `88e3675d4844bbc70543aab97b5e2983b8348eda`; branch `phase7-agent-context`.
-No merge, tag or certification closeout. No Phase 7B work.
+Accepted implementation: `771ebfead1552de72c1dd9eaf13b65d530335153`.
+Preservation tag: `phase-7a-agent-context-certified-2026-09-26`, targeting the final
+documentation closeout/main commit. No Phase 7B work.
+
+Certification covers the immutable typed packet, genuine read-only service
+composition, deterministic selection/provenance/budget, privacy-safe rules adapter
+and no-LLM real-data demo described below. Existing authority and unsupported
+boundaries remain unchanged. Closeout is documentation/Git-only: no executable code,
+database schema or runtime semantics changed. The established 178-test validation
+and successful real-data demo are retained; no suites or model calls were rerun for
+closeout. PM acceptance does not certify a provider, Agent UI, action or memory system.
 
 ## Authority and implementation
 
@@ -168,4 +179,5 @@ Focused repeat, if needed:
 No provider/API keys, API/UI, MCP coupling, Agent action, memory, database migration,
 new mechanics, analytics changes or hover changes. The requested deterministic
 competitive-hover hierarchy is recorded in README's future polish backlog only.
-No Phase 7B, merge, tag or certification work is part of this implementation.
+Phase 7B remains unimplemented. The subsequent documentation/Git certification
+closeout preserves this accepted implementation without expanding its scope.

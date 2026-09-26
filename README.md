@@ -6,7 +6,11 @@ Phases 1–6 and Phase 6.5 are PM-certified. Phase 6.5 — Rules & Interaction F
 was certified by Mike after A/B/C/D PM QA passed. This is a bounded deterministic
 foundation, not a complete Pokémon TCG rules engine. See the
 [certified foundation scope and boundaries](docs/phase-6.5-foundation.md).
-Phase 7 Agent / Research Mode is not implemented.
+Phase 7A — Deterministic Agent Evidence Packet is PM-certified September 26, 2026.
+It provides backend-only read-only evidence assembly without an LLM, provider,
+Agent UI, actions or memory. See [certified Phase 7A scope and QA](docs/phase-7a-agent-context.md).
+Tag: `phase-7a-agent-context-certified-2026-09-26`.
+Phase 7B and the broader Agent / Research Mode remain unimplemented.
 Phase 6 — Archetypes & Decklist Research was certified
 by Mike on September 25, 2026 after manual PM QA passed. See
 [certified Phase 6 capabilities and methodology](docs/phase-6-research.md).
