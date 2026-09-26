@@ -1,5 +1,11 @@
 # Gemini v2 output-contract failure — PM report and diagnostic limitation
 
+**Subsequent PM disposition:** this historical attempt is NOT_EVALUATED /
+INDETERMINATE_ASSESSMENT_FAILURE, not a model-quality FAIL. The Nemotron v2 hold
+is now lifted, pending separate live authorization. See the
+[authoritative PM disposition](gemini-v2-pm-disposition.md). The original report
+and investigation below are retained as historical context only.
+
 PM reports Gemini `gemini-3.5-flash-lite` completed the v2 request normally:
 status ok, finish reason stop, latency 3636 ms, input 4698 tokens, output 989
 tokens, allowance 4096, estimated cost $0. Actual provider cost was not supplied.
