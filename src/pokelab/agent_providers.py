@@ -50,6 +50,40 @@ class Response(Frozen):
     estimated_cost_usd: float | None = None
     actual_cost_usd: float | None = None
     cost_basis: str = 'unreported'
+    diagnostics: dict[str, str | int] = Field(default_factory=dict)
+
+
+def error_diagnostics(response):
+    """Allowlisted machine fields only; never preserve error prose/raw metadata."""
+    try:
+        raw = b''
+        for chunk in response.iter_bytes():
+            raw += chunk
+            if len(raw) > 16384: return {'capture':'oversized_discarded'}
+        text = raw.decode('utf-8')
+        headers = {k: response.headers.get(k, '') for k in (
+            'retry-after','x-ratelimit-limit','x-ratelimit-remaining','x-ratelimit-reset')}
+        if secret_present(text + json.dumps(headers)): return {'capture':'secret_quarantined'}
+        data = json.loads(text)
+        if secret_present(json.dumps(data, ensure_ascii=False)): return {'capture':'secret_quarantined'}
+        error = data.get('error', {})
+        metadata = error.get('metadata') or {}
+        result = {}
+        for key, value in [('error_code', error.get('code')), ('provider_code', metadata.get('provider_code'))]:
+            if type(value) is int and 100 <= value <= 599: result[key] = value
+        allowed = {
+            'error_type': {'rate_limit_exceeded'},
+            'limit_source': {'openrouter_in_flight_budget','openrouter_key_limit','openrouter_credits'},
+            'reason': {'in_flight_budget_exhausted','weight_exceeds_budget'},
+        }
+        for key, values in allowed.items():
+            if isinstance(metadata.get(key), str) and metadata[key] in values: result[key] = metadata[key]
+        for key, value in headers.items():
+            if re.fullmatch(r'[0-9]{1,13}', value): result[key] = int(value)
+        if secret_present(json.dumps(result)): return {'capture':'secret_quarantined'}
+        return result
+    except Exception:
+        return {'capture':'unavailable'}
 
 
 def secret_forms():
@@ -117,7 +151,9 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
     try:
         with httpx.Client(transport=transport,timeout=90,follow_redirects=False,trust_env=False) as client:
             with client.stream('POST',provider.endpoint,json=payload,headers=headers) as response:
-                if response.status_code!=200: return failed('http_'+str(response.status_code))
+                if response.status_code!=200:
+                    diagnostics = error_diagnostics(response) if selection.provider == 'openrouter' else {}
+                    return failed('http_'+str(response.status_code)).model_copy(update={'diagnostics':diagnostics})
                 chunks=[]; length=0
                 for chunk in response.iter_bytes():
                     length+=len(chunk)

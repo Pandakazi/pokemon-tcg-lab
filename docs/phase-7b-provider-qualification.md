@@ -6,6 +6,10 @@ for metrics, scope and the proposed OpenRouter comparison awaiting authorization
 The earlier Gemini attempt #1 returned HTTP 404 in 428 ms and was not evaluated.
 OpenRouter attempt #1 also returned 404 and remains NOT_EVALUATED. See the
 [endpoint diagnosis and proposed attempt #2](../qualification/openrouter-attempt-1-diagnosis.md).
+OpenRouter attempt #2 returned 429 and is also NOT_EVALUATED. The
+[429 correction and bounded diagnostics](../qualification/openrouter-attempt-2-diagnosis.md)
+describe the general non-answer classification fix. Validation: 98 targeted
+provider/harness and 7A regression tests passed; no further live call was made.
 Branch: `phase7b-provider-qualification`. Certified 7A starting point:
 `3370ac76e440926becf2acf11b141ac2275d7173`.
 Mocked results alone do not qualify a model. Gemini's PM acceptance is limited

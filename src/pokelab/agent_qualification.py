@@ -145,13 +145,20 @@ def run(selections, *, live=False, transport_factory=None):
             if not live and not isinstance(transport, httpx.MockTransport): raise ValueError('mock_transport_required')
             response = complete(selection, system, user, transport=transport)
             record = dict(provider=selection.provider, model=selection.model, input_hash=input_hash,
-                **response.model_dump(exclude={'text'}), **assess(response.text, packet))
-            if response.status != 'ok': record['qualification'] = 'FAIL'
-            if response.status == 'http_404':
-                # No inference result exists to score. Do not turn a transport
-                # rejection into a model-quality verdict or manufacture usage.
+                **response.model_dump(exclude={'text'}))
+            if response.status == 'ok':
+                record.update(assess(response.text, packet))
+            else:
+                # Never grade an absent/quarantined/undelivered answer. A timeout
+                # does not establish whether server-side inference began.
+                category = 'RESPONSE_UNAVAILABLE_OR_EXECUTION_BLOCKED'
+                if response.status == 'http_404': category = 'PRE_INFERENCE_TRANSPORT_CONFIGURATION'
+                elif response.status == 'http_429': category = 'PRE_INFERENCE_PROVIDER_RATE_LIMIT_OR_CAPACITY'
+                elif response.status.startswith('http_'): category = 'HTTP_PROVIDER_FAILURE'
+                elif response.status == 'transport_or_response_error': category = 'TRANSPORT_OR_RESPONSE_FAILURE'
+                elif response.status == 'nonzero_cost_reported_stop': category = 'COST_POLICY_STOP'
                 record.update(qualification='NOT_EVALUATED',
-                    failure_category='PRE_INFERENCE_TRANSPORT_CONFIGURATION',
+                    failure_category=category,
                     output_valid=None, grounding_correct=None,
                     evidence_references_valid=None, rules_boundary_compliant=None,
                     unsupported_claims=[], hallucinations='NOT_EVALUATED',

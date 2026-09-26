@@ -198,6 +198,55 @@ def test_unknown_usage_is_not_zero():
     assert response.input_tokens is None and response.output_tokens is None and response.reasoning_tokens is None
 
 
+@pytest.mark.parametrize('status',['http_400','http_401','http_402','http_403','http_404','http_429',
+    'http_500','http_502','http_503','transport_or_response_error','secret_response_quarantined',
+    'missing_credential','live_not_authorized','empty_output','incomplete_or_blocked_output','nonzero_cost_reported_stop'])
+def test_unavailable_answers_never_scored(status,monkeypatch):
+    monkeypatch.setattr(q,'complete',lambda *a,**k:p.Response(status=status,latency_ms=515))
+    def forbidden(*a,**k): raise AssertionError('No answer to assess')
+    monkeypatch.setattr(q,'assess',forbidden)
+    report=q.run([selection('openrouter','qwen/qwen3.8-27b:free')])
+    record=report['records'][0]
+    assert record['qualification']=='NOT_EVALUATED'
+    for key in ('output_valid','grounding_correct','evidence_references_valid','rules_boundary_compliant','answer'):
+        assert record[key] is None
+    assert record['unsupported_claims']==[] and record['hallucinations']=='NOT_EVALUATED'
+    assert 'invalid_output_contract' not in json.dumps(record)
+    if status=='http_429': assert record['failure_category']=='PRE_INFERENCE_PROVIDER_RATE_LIMIT_OR_CAPACITY'
+
+
+def test_openrouter_allowlisted_error_diagnostics():
+    body={'error':{'code':429,'message':'private error prose','metadata':{
+        'error_type':'rate_limit_exceeded','provider_code':429,'raw':'private raw',
+        'provider_name':'do not retain arbitrary strings'}}}
+    transport=httpx.MockTransport(lambda r:httpx.Response(429,json=body,headers={
+        'Retry-After':'30','X-RateLimit-Limit':'20','X-RateLimit-Remaining':'0',
+        'X-RateLimit-Reset':'1790000000','x-private':'do not retain'}))
+    report=q.run([selection('openrouter','qwen/qwen3.8-27b:free')],transport_factory=lambda s:transport)
+    record=report['records'][0]
+    assert record['diagnostics']=={'error_code':429,'provider_code':429,'error_type':'rate_limit_exceeded',
+        'retry-after':30,'x-ratelimit-limit':20,'x-ratelimit-remaining':0,'x-ratelimit-reset':1790000000}
+    assert record['qualification']=='NOT_EVALUATED' and 'private' not in json.dumps(report)
+
+
+@pytest.mark.parametrize('where',['body','header','unicode'])
+def test_error_diagnostics_quarantine(monkeypatch,where):
+    secret='synthetic-secret-error-marker'
+    monkeypatch.setenv('POKELAB_OPENROUTER_API_KEY',secret)
+    raw=json.dumps({'error':{'code':429,'message':secret if where!='header' else 'limited'}})
+    if where=='unicode': raw=raw.replace(secret,''.join('\\u%04x'%ord(c) for c in secret))
+    transport=httpx.MockTransport(lambda r:httpx.Response(429,text=raw,headers={'Retry-After':secret if where=='header' else '30'}))
+    response=p.complete(selection('openrouter'),'s','u',transport=transport)
+    assert response.status=='http_429' and response.diagnostics=={'capture':'secret_quarantined'}
+    assert secret not in response.model_dump_json()
+
+
+@pytest.mark.parametrize('raw',['not json','x'*16385])
+def test_bad_error_diagnostics_preserve_http_status(raw):
+    response=p.complete(selection('openrouter'),'s','u',transport=httpx.MockTransport(lambda r:httpx.Response(429,text=raw)))
+    assert response.status=='http_429' and response.diagnostics['capture'] in ('unavailable','oversized_discarded')
+
+
 def test_json_unicode_secret_and_truncation(monkeypatch):
     secret='synthetic-sensitive-marker-987654'
     monkeypatch.setenv('POKELAB_GEMINI_API_KEY',secret)
