@@ -189,8 +189,38 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
                 return failed('provider_error').model_copy(update={'diagnostics':diagnostics})
             if message.get('tool_calls') or message.get('function_call'): return failed('tool_output_rejected')
             text=message.get('content'); finish=choice.get('finish_reason')
-        if finish not in (None,'stop','end_turn'): return failed('incomplete_or_blocked_output')
-        if not isinstance(text,str) or not text.strip(): return failed('empty_output')
+        if finish not in (None,'stop','end_turn') or not isinstance(text,str) or not text.strip():
+            # Describe shape/termination only; never retain partial answer or refusal prose.
+            safe_finish = finish if isinstance(finish,str) and finish in (
+                'stop','end_turn','length','content_filter','error','tool_calls',
+                'function_call','max_tokens','refusal','pause_turn','stop_sequence') else None
+            content_state = ('missing' if not provider.anthropic and 'content' not in message else
+                'null' if text is None else 'non_string' if not isinstance(text,str) else
+                'empty' if not text.strip() else 'nonempty')
+            usage=data.get('usage')
+            details=usage.get('completion_tokens_details') if isinstance(usage,dict) else None
+            def safe_count(container,key):
+                value=container.get(key) if isinstance(container,dict) else None
+                return value if type(value) is int and 0<=value<=2**63-1 else None
+            metadata=dict(http_status=200,stage='completion_termination',
+                finish_reason=safe_finish or ('missing_or_null' if finish is None else 'other'),
+                content_state=content_state,
+                refusal_present=int(not provider.anthropic and bool(message.get('refusal'))),
+                usage_state='object' if isinstance(usage,dict) else 'missing_or_null' if usage is None else 'invalid',
+                reported_model_state='matches_requested' if data.get('model')==selection.model else
+                    'present_other' if data.get('model') is not None else 'missing_or_null',
+                provider_state='present' if data.get('provider') is not None else 'missing_or_null',
+                cost_present=int(isinstance(usage,dict) and 'cost' in usage))
+            # Only known provider labels; arbitrary provider identifiers are not retained.
+            if data.get('provider') in ('Nvidia','ModelRun'): metadata['provider']=data['provider']
+            result=failed('incomplete_or_blocked_output' if finish not in (None,'stop','end_turn') else 'empty_output').model_copy(update={
+                'diagnostics':metadata,'finish_reason':safe_finish,
+                'reported_model':selection.model if data.get('model')==selection.model else None,
+                'input_tokens':safe_count(usage,'input_tokens' if provider.anthropic else 'prompt_tokens'),
+                'output_tokens':safe_count(usage,'output_tokens' if provider.anthropic else 'completion_tokens'),
+                'reasoning_tokens':safe_count(details,'reasoning_tokens')})
+            if secret_present(result.model_dump_json()): return failed('secret_response_quarantined')
+            return result
         if len(text.encode())>16384: return failed('output_too_large')
         usage=data.get('usage') or {}
         def count(key):

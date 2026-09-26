@@ -198,6 +198,41 @@ def test_unknown_usage_is_not_zero():
     assert response.input_tokens is None and response.output_tokens is None and response.reasoning_tokens is None
 
 
+@pytest.mark.parametrize('finish',['length','content_filter','error','unexpected-private-value'])
+@pytest.mark.parametrize('content',[None,'','partial private response'])
+def test_termination_diagnostics_without_partial_content(finish,content):
+    model='nvidia/nemotron-3-super-120b-a12b:free'
+    body=wire(content,model=model,provider='Nvidia',usage={'prompt_tokens':4700,'completion_tokens':1200,
+        'completion_tokens_details':{'reasoning_tokens':1190}})
+    body['choices'][0]['finish_reason']=finish
+    report=q.run([selection('openrouter',model)],transport_factory=lambda s:httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
+    record=report['records'][0]
+    assert record['status']=='incomplete_or_blocked_output' and record['qualification']=='NOT_EVALUATED'
+    assert record['diagnostics']['http_status']==200
+    assert record['diagnostics']['finish_reason']==('other' if finish=='unexpected-private-value' else finish)
+    assert record['input_tokens']==4700 and record['output_tokens']==1200 and record['reasoning_tokens']==1190
+    assert record['reported_model']==model and record['diagnostics']['provider']=='Nvidia'
+    assert record['answer'] is None
+    assert 'partial private response' not in json.dumps(report) and 'unexpected-private-value' not in json.dumps(report)
+
+
+def test_empty_refusal_shape_and_absent_usage():
+    body={'choices':[{'message':{'refusal':'private refusal prose'},'finish_reason':'stop'}]}
+    response=p.complete(selection('openrouter'),'s','u',transport=httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
+    assert response.status=='empty_output'
+    assert response.diagnostics['refusal_present']==1 and response.diagnostics['content_state']=='missing'
+    assert response.diagnostics['usage_state']=='missing_or_null'
+    assert response.input_tokens is None and 'private refusal' not in response.model_dump_json()
+
+
+def test_termination_secret_still_quarantined(monkeypatch):
+    marker='synthetic-sensitive-partial-output'
+    monkeypatch.setenv('POKELAB_OPENROUTER_API_KEY',marker)
+    body=wire(marker); body['choices'][0]['finish_reason']='length'
+    response=p.complete(selection('openrouter'),'s','u',transport=httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
+    assert response.status=='secret_response_quarantined' and marker not in response.model_dump_json()
+
+
 @pytest.mark.parametrize('nested',[False,True])
 def test_openrouter_http200_error_not_generic(nested):
     error={'code':502,'message':'private upstream message','metadata':{'error_type':'provider_unavailable'}}
