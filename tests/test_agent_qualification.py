@@ -244,9 +244,79 @@ def test_assessment_internal_failure_distinguishable(monkeypatch):
     def broken(*a): raise RuntimeError('private internal exception')
     monkeypatch.setattr(q,'expected',broken)
     result=q.assess(text,packet)
-    assert result['contract_diagnostics']['schema_valid'] is True
-    assert result['contract_diagnostics']['condition']=='schema_valid_assessment_failed'
+    assert result['qualification']=='NOT_EVALUATED'
+    assert result['failure_category']=='INDETERMINATE_ASSESSMENT_FAILURE'
+    assert result['contract_diagnostics']=={'condition':'internal_assessment_error'}
     assert 'private internal' not in json.dumps(result)
+
+
+@pytest.mark.parametrize('stage',['parse','validate','evaluate','diagnose'])
+def test_internal_exceptions_never_fail_model(stage,monkeypatch):
+    packet=q.load_case()
+    text=p.complete(selection(),'s','u',transport=q.mock_transport(packet,'gemini')).text
+    def broken(*a,**k): raise RuntimeError('private exception and arbitrary provider details')
+    if stage=='parse': monkeypatch.setattr(q.json,'loads',broken)
+    elif stage=='validate': monkeypatch.setattr(q.Answer,'model_validate',broken)
+    elif stage=='evaluate': monkeypatch.setattr(q,'expected',broken)
+    else:
+        text='invalid json'
+        monkeypatch.setattr(q,'contract_diagnostics',broken)
+    result=q.assess(text,packet)
+    assert result['qualification']=='NOT_EVALUATED'
+    assert result['failure_category']=='INDETERMINATE_ASSESSMENT_FAILURE'
+    for key in ('output_valid','grounding_correct','evidence_references_valid','rules_boundary_compliant','answer'):
+        assert result[key] is None
+    assert result['unsupported_claims']==[]
+    assert result['hallucinations']==result['usefulness']=='NOT_EVALUATED'
+    assert 'private' not in json.dumps(result) and text not in json.dumps(result)
+
+
+def test_validation_exception_from_evaluator_is_internal(monkeypatch):
+    packet=q.load_case()
+    text=p.complete(selection(),'s','u',transport=q.mock_transport(packet,'gemini')).text
+    def broken(*a): q.Facts.model_validate({})
+    monkeypatch.setattr(q,'expected',broken)
+    result=q.assess(text,packet)
+    assert result['qualification']=='NOT_EVALUATED' and result['answer'] is None
+
+
+@pytest.mark.parametrize('suite',['v1','v2'])
+def test_assessment_boundary_retains_metadata_and_stops_batch(suite,monkeypatch):
+    calls=[]
+    def complete(*a,**k):
+        calls.append(1)
+        return p.Response(status='ok',text='private answer',latency_ms=3636,
+            reported_model='gemini-3.5-flash-lite',finish_reason='stop',
+            input_tokens=4698,output_tokens=989,reasoning_tokens=100,actual_cost_usd=0)
+    def broken(*a,**k): raise RuntimeError('private error')
+    monkeypatch.setattr(q,'complete',complete)
+    monkeypatch.setattr(q,'assess',broken)
+    report=q.run([selection(p,m) for p,m in V2_CANDIDATES],live=True,suite=suite)
+    assert len(calls)==1 and len(report['records'])==1
+    record=report['records'][0]
+    assert record['qualification']=='NOT_EVALUATED'
+    assert record['failure_category']=='INDETERMINATE_ASSESSMENT_FAILURE'
+    assert (record['latency_ms'],record['input_tokens'],record['output_tokens'])==(3636,4698,989)
+    assert record['reasoning_tokens']==100 and record['finish_reason']=='stop' and record['actual_cost_usd']==0
+    assert record['answer'] is None and 'private' not in json.dumps(report)
+
+
+def test_definitive_contract_failure_does_not_infer_other_quality():
+    for text in ('not JSON','{}','{"summary":"a","summary":"b"}'):
+        result=q.assess(text,q.load_case())
+        assert result['qualification']=='FAIL' and result['output_valid'] is False
+        assert result['unsupported_claims']==['invalid_output_contract']
+        assert result['grounding_correct'] is None and result['evidence_references_valid'] is None
+        assert result['rules_boundary_compliant'] is None and result['answer'] is None
+
+
+def test_cli_internal_failure_returns_nonzero(monkeypatch,capsys):
+    monkeypatch.setattr(sys,'argv',['qualification','--suite','v2'])
+    def broken(*a,**k): raise RuntimeError('private failure')
+    monkeypatch.setattr(q,'assess',broken)
+    assert q.main()==1
+    report=json.loads(capsys.readouterr().out)
+    assert all(r['qualification']=='NOT_EVALUATED' for r in report['records'])
 
 
 def test_contract_diagnostics_secret_and_bounds(monkeypatch):

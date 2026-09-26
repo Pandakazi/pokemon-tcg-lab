@@ -136,18 +136,43 @@ def contract_diagnostics(text):
     return result
 
 
+class DuplicateAnswerKey(Exception):
+    """Known output-contract violation, distinct from arbitrary evaluator errors."""
+
+
+def internal_assessment_failure():
+    return dict(output_valid=None, grounding_correct=None, evidence_references_valid=None,
+        rules_boundary_compliant=None, unsupported_claims=[], hallucinations='NOT_EVALUATED',
+        usefulness='NOT_EVALUATED', qualification='NOT_EVALUATED', answer=None,
+        failure_category='INDETERMINATE_ASSESSMENT_FAILURE',
+        contract_diagnostics={'condition':'internal_assessment_error'})
+
+
 def assess(text, packet):
-    result = dict(output_valid=False, grounding_correct=False, evidence_references_valid=False,
-        rules_boundary_compliant=False, unsupported_claims=['unassessed'],
+    result = dict(output_valid=False, grounding_correct=None, evidence_references_valid=None,
+        rules_boundary_compliant=None, unsupported_claims=['unassessed'],
         hallucinations='PM_REVIEW_REQUIRED', usefulness='PM_REVIEW_REQUIRED',
         qualification='PENDING_PM_REVIEW', answer=None)
     try:
         # Reject duplicate keys rather than accepting ambiguous model output.
         def unique(pairs):
             values = dict(pairs)
-            if len(values) != len(pairs): raise ValueError('duplicate_key')
+            if len(values) != len(pairs): raise DuplicateAnswerKey()
             return values
-        answer = Answer.model_validate(json.loads(text, object_pairs_hook=unique))
+        # Catch only established model-contract errors at their exact operation.
+        # The same exception type raised later by evaluator code is internal.
+        try:
+            parsed=json.loads(text, object_pairs_hook=unique)
+        except (json.JSONDecodeError, DuplicateAnswerKey):
+            result.update(qualification='FAIL',unsupported_claims=['invalid_output_contract'],
+                contract_diagnostics=contract_diagnostics(text))
+            return result
+        try:
+            answer=Answer.model_validate(parsed)
+        except ValidationError:
+            result.update(qualification='FAIL',unsupported_claims=['invalid_output_contract'],
+                contract_diagnostics=contract_diagnostics(text))
+            return result
         facts, rules = expected(packet)
         valid = {e.payload.kind: e.id for e in packet.evidence}
         references_ok = set(answer.citations) == set(valid) and all(
@@ -161,9 +186,7 @@ def assess(text, packet):
             unsupported_claims=violations, answer=answer.model_dump(mode='json'))
         if violations: result['qualification'] = 'FAIL'
     except Exception:
-        result['qualification'] = 'FAIL'
-        result['unsupported_claims'] = ['invalid_output_contract']
-        result['contract_diagnostics'] = contract_diagnostics(text)
+        return internal_assessment_failure()
     # These deterministic checks do NOT certify the free-form prose. PM must review it.
     return result
 
@@ -208,7 +231,12 @@ def run(selections, *, live=False, transport_factory=None, suite='v1'):
                 configuration_hash=config_hash,suite_hash=suite_hash,max_output_tokens=config['max_output_tokens'],
                 **response.model_dump(exclude={'text'}))
             if response.status == 'ok':
-                record.update(assess(response.text, packet))
+                try:
+                    record.update(assess(response.text, packet))
+                except Exception:
+                    # Final boundary: preserve safe execution fields already in
+                    # the record even if the assessment entry point itself fails.
+                    record.update(internal_assessment_failure())
             else:
                 # Never grade an absent/quarantined/undelivered answer. A timeout
                 # does not establish whether server-side inference began.
@@ -227,7 +255,8 @@ def run(selections, *, live=False, transport_factory=None, suite='v1'):
                     unsupported_claims=[], hallucinations='NOT_EVALUATED',
                     usefulness='NOT_EVALUATED', answer=None)
             records.append(record)
-            if live and response.status != 'ok': break  # No retry, fallback or next-model spend after failure.
+            if live and (response.status != 'ok' or record.get('failure_category')=='INDETERMINATE_ASSESSMENT_FAILURE'):
+                break  # No retry, fallback or next-model spend after execution/evaluator failure.
         report = dict(harness=config['suite'], configuration=config,configuration_hash=config_hash,suite_hash=suite_hash,
             mode='LIVE' if live else 'MOCK_NOT_QUALIFICATION',
             certified_base='3370ac76e440926becf2acf11b141ac2275d7173', packet_hash=PACKET_HASH,
@@ -248,7 +277,7 @@ def main():
         selections = [Selection(provider=p, model=os.environ.get('POKELAB_'+p.upper()+'_MODEL','') if args.live else dict(V2_CANDIDATES).get(p,'fixture-model') if args.suite=='v2' else 'fixture-model') for p in providers]
         report = run(selections, live=args.live,suite=args.suite)
         print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0 if all(r['status']=='ok' and r['qualification']!='FAIL' for r in report['records']) else 1
+        return 0 if all(r['status']=='ok' and r['qualification']=='PENDING_PM_REVIEW' for r in report['records']) else 1
     except Exception:
         # Never echo validation inputs, environment, HTTP exceptions or raw output.
         print('{"status":"qualification_rejected; check configuration or frozen case"}')
