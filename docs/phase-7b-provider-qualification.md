@@ -1,11 +1,13 @@
 # Phase 7B — provider transport and frozen qualification
 
-Implementation; PM-reported Gemini attempt #1 returned HTTP 404 in 428 ms.
-Awaiting fresh PM authorization before attempt #2. The correction below was
-validated with mocks only; no additional live calls were made.
+Gemini `gemini-3.5-flash-lite` passed `ultra-ball-v1` in Mike's PM review.
+See the [preserved case result](../qualification/ultra-ball-v1-gemini-pm-review.md)
+for metrics, scope and the proposed OpenRouter comparison awaiting authorization.
+The earlier Gemini attempt #1 returned HTTP 404 in 428 ms and was not evaluated.
 Branch: `phase7b-provider-qualification`. Certified 7A starting point:
 `3370ac76e440926becf2acf11b141ac2275d7173`.
-No provider/model is live-qualified or certified by these mocked results.
+Mocked results alone do not qualify a model. Gemini's PM acceptance is limited
+to this case; Phase 7B is not certified.
 No UI, Research Mode, memory, actions, tools, automatic model routing, selection
 policy, database writes, 7C work, merge or certification is included.
 
