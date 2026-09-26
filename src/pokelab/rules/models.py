@@ -71,7 +71,7 @@ class MechanicProfile(StrictModel):
     reviewed_by: str | None = None
     review_note: str | None = None
     evidence: tuple[Evidence, ...] = ()
-    scope: Literal['switch-effect-only', 'printed-damage-preview']
+    scope: Literal['switch-effect-only', 'printed-damage-preview', 'ultra-ball-effect-only', 'evidence-gathering-only']
     limitations: tuple[str, ...]
 
 
@@ -84,8 +84,8 @@ class ProfileResolution(StrictModel):
 
 class Location(StrictModel):
     player: Key
-    zone: Literal['active', 'bench', 'resolving', 'hand', 'discard']
-    position: Annotated[int, Field(strict=True, ge=0, le=99)] = 0
+    zone: Literal['active', 'bench', 'resolving', 'hand', 'discard', 'deck']
+    position: Annotated[int, Field(strict=True, ge=0, le=199)] = 0
 
     @model_validator(mode='after')
     def active_slot(self):
@@ -104,6 +104,20 @@ class CardInstance(StrictModel):
     location: Location
 
 
+class Usage(StrictModel):
+    turn: Key
+    player: Key
+    effect: Key
+    scope: Literal['instance', 'player', 'named-effect']
+    instance: Key | None = None
+
+    @model_validator(mode='after')
+    def scope_key(self):
+        if (self.scope == 'instance') != (self.instance is not None):
+            raise ValueError('Only instance-scoped usage requires an instance.')
+        return self
+
+
 class Scenario(StrictModel):
     schema_version: Literal[1] = 1
     ruleset: Ruleset
@@ -114,6 +128,9 @@ class Scenario(StrictModel):
     # Mandatory caller-supplied boundary. None means dependencies were not assessed.
     unresolved_dependencies: tuple[Key, ...] | None
     isolation_confirmed: bool = Field(strict=True)
+    # Caller-owned turn token. No automatic turn progression/reset is inferred.
+    turn: Key | None = None
+    usage: tuple[Usage, ...] = ()
 
     @model_validator(mode='after')
     def consistent(self):
@@ -130,12 +147,44 @@ class Scenario(StrictModel):
             if slot in slots:
                 raise ValueError('Two instances occupy the same location.')
             slots.add(slot)
+        usage_keys = set()
+        for entry in self.usage:
+            if entry.player not in self.players or (entry.instance is not None and entry.instance not in ids):
+                raise ValueError('Invalid usage reference.')
+            key = (entry.turn, entry.player, entry.effect, entry.scope, entry.instance)
+            if key in usage_keys:
+                raise ValueError('Duplicate usage entry.')
+            usage_keys.add(key)
         return self
 
     def state_hash(self) -> str:
         value = self.model_dump(mode='json')
         value['instances'] = sorted(value['instances'], key=lambda c: c['id'])
+        # Preserve A/B hashes when the additive C context is absent.
+        if self.turn is None and not self.usage:
+            value.pop('turn')
+            value.pop('usage')
+        else:
+            value['usage'] = sorted(value['usage'], key=lambda u: (u['turn'], u['player'], u['effect'], u['scope'], u['instance'] or ''))
         return digest(value)
+
+
+class Choices(StrictModel):
+    payment: tuple[Key, ...] | None = None
+    search: Key | None = None
+    # Trusted resolver input, never an exposed deck-order choice for a player.
+    shuffle: tuple[Key, ...] | None = None
+    exchange: Key | None = None
+
+
+class Choice(StrictModel):
+    id: Literal['payment', 'search', 'shuffle', 'exchange']
+    kind: Literal['cost', 'search', 'resolution', 'exchange']
+    cardinality: Count
+    candidates: tuple[Key, ...]
+    supplied: tuple[Key, ...] | None = None
+    constraint: str
+    rejection: str | None = None
 
 
 class Action(StrictModel):
@@ -146,6 +195,7 @@ class Action(StrictModel):
     target: Key | None = None
     expected_revision: Count
     expected_state_hash: Digest
+    choices: Choices = Choices()
 
 
 class Check(StrictModel):
@@ -159,11 +209,19 @@ class Move(StrictModel):
     after: Location
 
 
+class Step(StrictModel):
+    phase: Literal['cost', 'effect']
+    operation: Literal['discard', 'search', 'reveal', 'move-to-hand', 'shuffle', 'exchange', 'record-usage']
+    instances: tuple[Key, ...] = ()
+
+
 class Delta(StrictModel):
     base_revision: Count
     base_hash: Digest
     next_revision: Count
     moves: tuple[Move, ...]
+    steps: tuple[Step, ...] = ()
+    usage_added: tuple[Usage, ...] = ()
 
 
 class DamagePreview(StrictModel):
@@ -187,6 +245,7 @@ class Evaluation(StrictModel):
     checks: tuple[Check, ...] = ()
     legal_targets: tuple[Key, ...] = ()
     required_choices: tuple[str, ...] = ()
+    choices: tuple[Choice, ...] = ()
     missing_information: tuple[str, ...] = ()
     unsupported_dependencies: tuple[str, ...] = ()
     evidence: tuple[Evidence, ...] = ()

@@ -3,7 +3,7 @@ from sqlite3 import Error as SQLiteError
 from tcg_lab.cards import CardLookupError, CardProvider
 from pokelab.collection import identity
 from pokelab.engine import functional_signature
-from .models import (Action, ApplyResult, Check, DamagePreview, Delta, Evaluation,
+from .models import (Action, ApplyResult, Check, Choices, DamagePreview, Delta, Evaluation,
                      Move, Scenario)
 from .registry import Registry
 
@@ -38,6 +38,8 @@ def evaluate(action: Action, state: Scenario, cards: CardProvider, registry: Reg
     if state.unresolved_dependencies:
         return result('UNSUPPORTED', 'UNKNOWN_DEPENDENCIES', 'Relevant unmodelled interactions prevent certainty.',
                       unsupported_dependencies=state.unresolved_dependencies)
+    if profile.handler in ('switch-effect', 'printed-damage') and action.choices != Choices():
+        return result('UNSUPPORTED', 'EXTRA_CHOICES', 'This profile does not interpret Pass C choices.')
 
     instances = {c.id: c for c in state.instances}
     source = instances.get(action.source)
@@ -53,7 +55,8 @@ def evaluate(action: Action, state: Scenario, cards: CardProvider, registry: Reg
     # One detached lookup per relevant instance. No canonical/collection mutation.
     resolved = {}
     for card in state.instances:
-        if card.id == source.id or card.location.zone in ('active', 'bench'):
+        if (card.id == source.id or card.location.zone in ('active', 'bench')
+            or (profile.handler in ('ultra-ball', 'evidence-gathering') and card.location.player == action.actor)):
             try:
                 record = cards.get(card.printing_id)['card']
                 if record['id'] != card.printing_id or identity(functional_signature(record)) != card.functional_id:
@@ -70,6 +73,10 @@ def evaluate(action: Action, state: Scenario, cards: CardProvider, registry: Reg
     if source_fingerprint(resolved[source.id]) != profile.source_fingerprint:
         return result('UNSUPPORTED', 'SOURCE_CHANGED', 'Source changed during evaluation; re-review is required.',
                       unsupported_dependencies=('matching-source-fingerprint',))
+
+    if profile.handler in ('ultra-ball', 'evidence-gathering'):
+        from .interactions import evaluate_interaction
+        return evaluate_interaction(action, state, source, profile, resolved, result)
 
     if profile.handler == 'switch-effect':
         if source.location.zone != 'resolving':
@@ -130,6 +137,7 @@ def apply(action: Action, state: Scenario, cards: CardProvider, *, evaluated: Ev
     destinations = {move.instance: move.after for move in current.delta.moves}
     changed = state.model_dump()
     changed['revision'] = current.delta.next_revision
+    changed['usage'] = tuple(u.model_dump() for u in (*state.usage, *current.delta.usage_added))
     changed['instances'] = tuple(c.model_copy(update={'location': destinations[c.id]}).model_dump()
                                 if c.id in destinations else c.model_dump() for c in state.instances)
     return ApplyResult(applied=True, evaluation=current, state=Scenario.model_validate(changed))

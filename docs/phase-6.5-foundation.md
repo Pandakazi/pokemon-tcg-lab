@@ -1,19 +1,21 @@
-# Phase 6.5A/B — isolated rules/mechanics foundation
+# Phase 6.5A/B/C — isolated rules/mechanics foundation
 
 Implementation for PM review, not merged, tagged or certified. Baseline:
 `645bc3b3188995a9cbc51c20e17738413ddd99ca`. Branch: `phase6.5-rules-foundation`.
-Only Pass A + Pass B. No Pass C, UI, public API, Agent or battle engine.
+A/B passed PM QA at `b17195a310564e35e92129aae517b56c44594ef5`.
+Pass C adds only Ultra Ball and Evidence Gathering for PM review. No Pass D, UI,
+public API, Agent or battle engine. Nothing is merged, tagged or certified by this pass.
 
 ## Actual architecture
 
 `pokelab.rules.models` contains frozen, extra-forbidden Pydantic contracts.
-`registry` holds two reviewed profiles, evidence excerpts and source fingerprints.
+`registry` holds four reviewed profiles, evidence excerpts and source fingerprints.
 `evaluate` provides pure `evaluate` and `apply` functions over caller-owned scenarios.
 Existing CardProvider lookup, functional_signature and identity hashing are reused
 without changing any certified identity, deck validation or persistence behavior.
 
-The only executable transition is **resolution of an already-authorized isolated
-Switch effect**. The caller places Switch in `resolving`; this package does not
+The A/B executable transition is **resolution of an already-authorized isolated
+Switch effect**. The caller places Switch in `resolving`; that handler does not
 authorize playing an Item, pay costs, discard it, clear Special Conditions, process
 attachments or execute triggers. An explicit isolation declaration and assessed
 empty dependency list are required. These are scenario assumptions, not an automatic
@@ -49,7 +51,7 @@ needed/bundled for these bounded proofs. Records include reference URL/path, fie
 content hash, applicability, retrieval metadata and optional publication/effective
 dates. Unknown dates remain null; cache checked_at is not an effective date.
 
-The two interpretations were engineering-reviewed against pinned local source
+The interpretations were engineering-reviewed against pinned local source
 excerpts and their narrow handler behavior in this implementation; review metadata
 states that explicitly. This is not an official ruling or Mike's certification.
 Profiles are trusted version-controlled code, not user-submittable declarations.
@@ -73,14 +75,17 @@ and evaluation is checked again. Unsupported target-instance data cannot be igno
 
 Schema 1 has exactly two players, turn owner, revision, ruleset, unique instances,
 owner/controller references, functional/source/profile references and locations.
-Zones are Active, Bench, resolving, hand and discard with positions. A position
+Zones are Active, Bench, resolving, hand, discard and deck with positions. A position
 bound is an input safety limit, not an official Bench-capacity rule. Duplicate IDs,
 duplicate slots, invalid Active positions and unknown player references are rejected.
-State hash covers all scenario data and canonicalizes instance enumeration order.
+State hash covers all scenario data and canonicalizes instance enumeration and usage
+ledger order. Additive C fields are an optional external turn token and usage entries.
+When both are absent, original A/B state hashes are retained. Schema 1 and the A/B
+ruleset context pin remain; C has separately identified/versioned profiles and handlers.
 
-No deck, Prize, Lost Zone, Energy attachments, damage counters, conditions, persistent
-effects, hidden-information engine or turn-history model is implemented. They are
-unnecessary for an isolated swap and non-executable printed preview.
+No Prize, Lost Zone, Energy attachments, damage counters, conditions, persistent
+effects, universal visibility engine or turn engine is implemented. C's ordered deck,
+usage entries and bounded projections are described below.
 
 Switch requires matching source/profile identity, own controlled resolving source,
 own controlled Active and one own controlled Bench target. Missing choice returns
@@ -114,7 +119,7 @@ Inspect evidence/review notes and the explicit isolation contract before approvi
 If local source content changes, the live demo should refuse execution until review;
 never update hashes merely to make it pass.
 
-## Next checkpoint
+## Accepted A/B verification
 
 Verification: 36 new deterministic foundation tests and 44 existing validator,
 Deck Builder and research-copy regression tests passed (80 total). Two pre-existing
@@ -123,7 +128,131 @@ read-only local card cache; the demo produced the expected swap and printed prev
 No frontend build, browser suite, broad backend suite, server restart or ingestion
 was needed: no existing runtime module or database schema was changed.
 
-The architecture is suitable for a later narrowly scoped Pass C design after PM
-acceptance. Costs, private choices, usage ledgers, shuffle resolution and source-card
-lifecycle are still absent. They must be specified and tested before Ultra Ball or
-Gumshoos execution. Nothing in this package starts that work automatically.
+## Pass C implementation and scope
+
+No material A/B redesign was required. `interactions.py` supplies two handlers to the
+existing evaluator; both produce its same revision-bound delta/receipt and use its
+same atomic apply path. `models.py` adds typed choices, ordered steps, deck locations,
+an optional external turn token and a usage ledger. `perspective.py` filters trusted
+results for a specified player. None of this is connected to the public API or UI.
+
+**Ultra Ball, me01-131:** `ultra-ball.cost-search` version 1, handler `ultra-ball`
+version 1, scope `ultra-ball-effect-only`. The exact cached text starts “You can use
+this card only if you discard 2 other cards from your hand.” It is pinned verbatim,
+including the blank line before the search instruction; the brief's paraphrase is
+not substituted for source evidence. Source starts and remains in resolving. General
+Item legality, source play/discard, timing and triggers are not implemented.
+
+Cost is exactly two distinct other own, controlled hand instances. Choice validation
+precedes all application. After a valid cost proposal, search accepts exactly one
+own, controlled deck Pokemon. The successful receipt explicitly orders **cost:
+discard**, then **effect: search, reveal, move-to-hand, shuffle**. All changes commit
+together; failed costs, invalid targets or absent/invalid shuffle resolution discard
+nothing. Search with no eligible Pokemon returns UNSUPPORTED; there is no invented
+no-result/fail-to-find rule.
+
+Choices carry an ID, type, cardinality, bounded candidates, supplied selections,
+constraint and rejection reason. Missing selections return NEEDS_CHOICE, beginning
+with payment, then search, then shuffle resolution. Search candidates are not exposed
+before a valid cost proposal and are sorted by opaque ID, not hidden deck position.
+These are isolated trusted-engine proposals, not an implemented interactive search
+session or cancellation/rollback protocol for a real game.
+
+The explicit shuffle input is an exact permutation of every remaining own deck
+instance. Duplicates, foreign/missing/extra instances reject the entire transition.
+An empty remaining deck still requires an explicit empty permutation. No random
+generator is called. **The permutation belongs to a trusted resolver, not a player's
+choice of deck order.** This proof checks permutation completeness, not randomness
+quality or fairness. Positions define deck order (lowest position is top); gaps are
+allowed. Ultra Ball packs affected hand/discard/deck positions; Gumshoos swaps slots.
+
+**Gumshoos, me01-110:** `gumshoos.evidence-gathering` version 1, handler
+`evidence-gathering` version 1, scope `evidence-gathering-only`. The exact cached
+Ability is “Once during your turn, you may use this Ability. Switch a card from your
+hand with the top card of your deck.” Only that Ability is executable; Bite is not.
+An own in-play source exchanges the chosen hand instance with the top own deck
+instance. All other slots are preserved. Empty hand/deck cannot perform this exchange.
+
+The reviewed restriction is **instance-scoped**, keyed by external turn token,
+player, source instance and named effect. A second source has its own availability.
+The ledger distinguishes instance/player/named-effect scopes; a conflicting scope
+for this Ability fails closed rather than silently applying a generic rule. First
+use adds one entry atomically; repeat in that turn is blocked. An authoritative host
+can supply a fresh turn token and advance revision to demonstrate later availability.
+The package cannot authenticate turn progression and does not implement leave/re-enter
+resets, evolution, turn history or general Ability timing. Callers must not declare
+isolation when such dependencies are unresolved.
+
+## Pass C privacy and atomicity
+
+Raw Scenario, Action, Evaluation and ApplyResult objects contain trusted hidden
+information. **Never serialize them directly to a player.** The host selects the
+authenticated perspective; these helpers are filtering, not an authentication layer.
+Only evaluator-produced results are appropriate inputs, not client-forged receipts.
+
+- `state_view`: public zones show instances/printings; own hand is visible; opponent
+  hand and all decks expose counts only. No private hash, deck order or hidden IDs.
+- `evaluation_view`: an opponent sees only a private-pending marker, including on
+  failed proposals. The actor sees choice/check information, but no delta, top-deck
+  card, state hash or shuffle permutation. Authorized search candidates are available
+  after a valid cost proposal. No proposed reveal is published to an opponent.
+- `apply_view`: state projection plus committed reveal events. Successful Ultra Ball
+  reveals only its selected Pokemon; cost cards appear in the public discard zone.
+  Gumshoos publishes no reveal: only the acting hand view sees the received top card.
+  Failed applications publish no reveal. Events are not a persistent knowledge ledger.
+
+Pure evaluation and complete receipt comparison are retained. Apply recomputes the
+entire cost/effect/usage delta against the expected revision/hash and current reviewed
+source. Changed choices, forged moves/steps/usage, changed state or stale evidence
+cannot apply the old receipt. No intermediate cost state is emitted or persisted.
+Schema-invalid inputs raise validation errors before mutation; semantically invalid
+valid-model inputs return an unchanged state with a scoped rejection.
+
+Both new profiles use the existing fingerprint/evidence gate and versioned reviewed
+interpretations. Exact local source fields were inspected; real-cache demo resolves
+both as REVIEWED. Unknown source retrieval/effective dates remain null. No online
+rulebook or rulings were imported and no official-complete legality is asserted.
+
+## Pass C PM review commands
+
+From PowerShell:
+
+```powershell
+Set-Location 'C:/Users/Mike/Documents/Codex/2026-09-25/referenced-chatgpt-conversation-this-is-an/work/phase5'
+$env:PYTHONPATH = Join-Path $PWD 'src'
+$env:PYTHONIOENCODING = 'utf-8'
+& 'C:/Users/Mike/Documents/pokemon-tcg-lab/.venv/Scripts/python.exe' examples/rules_costs_choices_demo.py
+& 'C:/Users/Mike/Documents/pokemon-tcg-lab/.venv/Scripts/python.exe' examples/rules_costs_choices_demo.py --cards 'C:/Users/Mike/Documents/pokemon-tcg-lab/data/cards.sqlite3'
+& 'C:/Users/Mike/Documents/pokemon-tcg-lab/.venv/Scripts/python.exe' -m pytest tests/test_rules_foundation.py tests/test_rules_costs_choices.py -q
+```
+
+Expected checkpoint: `PASS C DEMO PASSED — NOT PM CERTIFICATION`. Inspect the pinned
+provenance, payment/search choice stages, ordered cost/effect steps, successful
+application and invalid-cost atomicity. Bob's Ultra Ball view reveals only the
+selected Pokemon plus public discard cards. Bob's Gumshoos view contains no exchanged
+IDs; Alice sees the received card. Repeat reports ALREADY_USED; fresh external turn
+reports SUPPORTED_LEGAL; stale replay is rejected; original state remains unchanged.
+The JSON includes explicitly labelled trusted evidence/steps for PM inspection; it is
+not a player response format.
+
+Verification: 81 foundation tests (36 existing A/B, 45 Pass C) and 23 focused existing
+Deck Builder/research-copy regressions passed, **104 total**. Two existing third-party
+deprecation warnings. No frontend/browser/build work is warranted for this disconnected
+backend package. No database schema, migration, runtime revision or certified system
+semantics changed; all state exists only in caller-owned memory.
+Fixture and real-cache C demos passed, as did the A/B real-cache demo. SHA-256 hashes
+of card, collection and competitive databases were unchanged across these read-only
+checks. Additional focused receipt assertions (serialized round-trip, forged steps
+and removed usage entries) passed in the final 45-case C run.
+
+Changed files: `rules/models.py`, `rules/registry.py`, `rules/evaluate.py`,
+`rules/__init__.py`, this document. Added: `rules/interactions.py`,
+`rules/perspective.py`, `tests/test_rules_costs_choices.py`,
+`examples/rules_costs_choices_demo.py`.
+
+Ready for Mike's Pass C review. The existing architecture is suitable for a separately
+scoped Pass D after acceptance; no Pass D implementation has begun. Broad card coverage,
+global Trainer/Ability timing, automatic parsing, Energy solving, damage/KO/prizes,
+conditions/evolution/retreat, battle loop, Agent integration, corpus ingestion and
+historical rulesets remain unsupported. Certified collection, printing, deck,
+analytics, research, copy and gallery behavior is untouched.
