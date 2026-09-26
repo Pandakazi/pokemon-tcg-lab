@@ -70,8 +70,9 @@ def live_gate(selection):
     if os.environ.get('POKELAB_7B_LIVE_AUTHORIZATION') != 'PM_APPROVED_ZERO_COST':
         return 'live_not_authorized'
     if selection.provider=='gemini':
-        # A deliberate reviewed allowlist, not every model available at this endpoint.
-        if selection.model not in ('gemini-2.5-flash','gemini-2.5-flash-lite'): return 'model_not_free_qualified'
+        # 2.5 access is restricted to prior users. Pin the documented new-project
+        # free-tier replacement; never silently substitute a requested model.
+        if selection.model != 'gemini-3.5-flash-lite': return 'model_not_free_qualified'
         if os.environ.get('POKELAB_GEMINI_FREE_TIER_CONFIRMED')!='NO_BILLING': return 'free_tier_not_confirmed'
     elif selection.provider=='openrouter':
         if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+:free',selection.model): return 'explicit_free_model_required'

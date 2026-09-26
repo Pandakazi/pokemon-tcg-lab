@@ -1,6 +1,8 @@
 # Phase 7B — provider transport and frozen qualification
 
-Implementation only, awaiting PM authorization before the first live call.
+Implementation; PM-reported Gemini attempt #1 returned HTTP 404 in 428 ms.
+Awaiting fresh PM authorization before attempt #2. The correction below was
+validated with mocks only; no additional live calls were made.
 Branch: `phase7b-provider-qualification`. Certified 7A starting point:
 `3370ac76e440926becf2acf11b141ac2275d7173`.
 No provider/model is live-qualified or certified by these mocked results.
@@ -139,11 +141,12 @@ attached. Do not paste the key into chat or any command literal. Configure:
 
 ```powershell
 $env:POKELAB_GEMINI_API_KEY = [System.Net.NetworkCredential]::new('', (Read-Host 'Gemini key' -AsSecureString)).Password
-$env:POKELAB_GEMINI_MODEL = 'gemini-2.5-flash-lite'
+$env:POKELAB_GEMINI_MODEL = 'gemini-3.5-flash-lite'
 $env:POKELAB_GEMINI_FREE_TIER_CONFIRMED = 'NO_BILLING'
 ```
 
-The other allowed Gemini model is `gemini-2.5-flash`. Test each separately, serially.
+This is the sole allowed Gemini model for the corrected attempt. There is no
+automatic substitution/fallback. The previous Gemini 2.5 IDs are rejected locally.
 For OpenRouter, create a key without purchasing credits. Select a currently
 available explicit free model from the model catalogue; copy its full ID ending
 in `:free`. Do not use `openrouter/free`, `openrouter/auto`, presets or paid IDs.
@@ -168,8 +171,10 @@ Only after that authorization, in the same shell:
 ```powershell
 $env:POKELAB_7B_LIVE_AUTHORIZATION = 'PM_APPROVED_ZERO_COST'
 try {
-    # One call at a time, Gemini then OpenRouter; transport failure stops the batch.
-    & $phase7Python -m pokelab.agent_qualification --live --provider gemini --provider openrouter
+    # Attempt #2 is Gemini-only, after fresh PM authorization.
+    & $phase7Python -m pokelab.agent_qualification --live --provider gemini
+    # OpenRouter requires its own future authorization:
+    # & $phase7Python -m pokelab.agent_qualification --live --provider openrouter
     # Optional separate local run, only if authorized and configured:
     # & $phase7Python -m pokelab.agent_qualification --live --provider ollama
 } finally {
@@ -186,7 +191,7 @@ Remove-Item Env:POKELAB_GEMINI_API_KEY, Env:POKELAB_OPENROUTER_API_KEY -ErrorAct
 
 ## Verification
 
-**73 tests passed**: 47 targeted provider/harness cases plus 26 certified 7A
+**75 tests passed** after the Gemini correction: 49 targeted provider/harness cases plus 26 certified 7A
 regression tests. The CLI mock run exercised all eight providers with sockets
 blocked. Two existing dependency deprecation warnings remain. No broad UI,
 build or browser work is required because this standalone code is not connected
@@ -194,4 +199,33 @@ to application behavior. Network sockets are forbidden in tests. Tests cover all
 eight mock wire formats, gates, no key transmission to mocks, bounded/error/tool
 responses, secret quarantine, frozen tamper detection, serial isolation, duplicate
 JSON, rules conflation, wrong facts/citations, unknown usage and stop-on-cost-failure.
-Live model calls: **zero**. Live API spend: **$0**.
+Initial implementation validation made zero live calls. PM subsequently reported
+one authorized Gemini call returning 404; actual cost/usage were unreported.
+Transport correction validation made **zero additional live calls**.
+
+## Gemini attempt #1 diagnosis and correction
+
+Checked September 26, 2026: Google's [OpenAI compatibility contract](https://ai.google.dev/gemini-api/docs/openai)
+still specifies POST `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+with Bearer authentication. Our endpoint and authentication format match it.
+The [deprecations/access policy](https://ai.google.dev/gemini-api/docs/deprecations)
+now restricts Gemini 2.5 models to prior users and recommends 3.5 Flash-Lite or
+3.8 Flash for new projects. They are not globally shut down. The original
+allowlist/setup recommendation incorrectly assumed general 2.5 availability.
+This is the likely cause of the reported 404; the discarded provider error body
+and lack of account inspection prevent proving its account-specific cause.
+
+Use `gemini-3.5-flash-lite` at the same endpoint. Its current
+[standard pricing](https://ai.google.dev/gemini-api/docs/pricing#gemini-3.5-flash-lite)
+lists free-tier input and output. The NO_BILLING requirement and $0-only boundary
+remain unchanged. Only `POKELAB_GEMINI_MODEL` needs updating; retain the existing
+key and free-tier confirmation if still valid. Do not enable the live authorization
+gate or run again until PM explicitly authorizes attempt #2. That attempt is
+Gemini-only: `python -m pokelab.agent_qualification --live --provider gemini`.
+
+HTTP 404 now records `NOT_EVALUATED` with pre-inference transport/configuration
+failure classification and null score fields. No scoring criteria changed for
+actual answers. Packet, question, system/output contract and input hash are
+unchanged: `389165b46a93ce34ea62853b5d49beeaf7c45c4875a16bbcfb8fb46631719432`.
+The added tests assert the literal endpoint/model, exact frozen messages, and
+404 non-qualification classification; no provider error body is captured.

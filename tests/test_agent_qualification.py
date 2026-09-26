@@ -22,7 +22,7 @@ def no_network(monkeypatch):
     monkeypatch.delenv('POKELAB_7B_LIVE_AUTHORIZATION', raising=False)
 
 
-def selection(provider='gemini', model='gemini-2.5-flash-lite'):
+def selection(provider='gemini', model='gemini-3.5-flash-lite'):
     return p.Selection(provider=provider, model=model)
 
 
@@ -69,6 +69,8 @@ def test_free_gates(monkeypatch):
     monkeypatch.setenv('POKELAB_GEMINI_FREE_TIER_CONFIRMED','NO_BILLING')
     assert p.live_gate(selection()) is None
     assert p.live_gate(selection(model='arbitrary-paid-model'))=='model_not_free_qualified'
+    assert p.live_gate(selection(model='gemini-2.5-flash-lite'))=='model_not_free_qualified'
+    assert p.live_gate(selection(model='gemini-2.5-flash'))=='model_not_free_qualified'
     assert p.live_gate(selection('openrouter','openrouter/free'))=='explicit_free_model_required'
     assert p.live_gate(selection('openrouter','org/name'))=='explicit_free_model_required'
     assert p.live_gate(selection('openrouter','org/name:free')) is None
@@ -210,6 +212,35 @@ def test_json_unicode_secret_and_truncation(monkeypatch):
 def test_contract_tamper(monkeypatch):
     monkeypatch.setattr(q,'SYSTEM',q.SYSTEM+' changed')
     with pytest.raises(ValueError,match='frozen_contract_mismatch'): q.run([selection()])
+
+
+def test_gemini_corrected_wire_contract_and_frozen_input():
+    packet=q.load_case()
+    delegate=q.mock_transport(packet,'gemini')
+    def respond(request):
+        assert request.method=='POST'
+        assert str(request.url)=='https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+        data=json.loads(request.content)
+        assert data['model']=='gemini-3.5-flash-lite'
+        system,user,hashed=q.inputs(packet)
+        assert hashed=='389165b46a93ce34ea62853b5d49beeaf7c45c4875a16bbcfb8fb46631719432'
+        assert data['messages']==[{'role':'system','content':system},{'role':'user','content':user}]
+        return delegate.handle_request(request)
+    report=q.run([selection()],transport_factory=lambda s:httpx.MockTransport(respond))
+    assert report['records'][0]['status']=='ok'
+
+
+def test_404_not_a_model_qualification_failure():
+    report=q.run([selection()],transport_factory=lambda s:httpx.MockTransport(
+        lambda r:httpx.Response(404,text='private provider error must not be retained')))
+    record=report['records'][0]
+    assert record['status']=='http_404'
+    assert record['qualification']=='NOT_EVALUATED'
+    assert record['failure_category']=='PRE_INFERENCE_TRANSPORT_CONFIGURATION'
+    for key in ('grounding_correct','rules_boundary_compliant','evidence_references_valid',
+                'input_tokens','output_tokens','actual_cost_usd','reported_model','answer'):
+        assert record[key] is None
+    assert 'private provider error' not in json.dumps(report)
 
 
 def test_cli_mock_and_secret_configuration(monkeypatch,capsys):

@@ -147,6 +147,15 @@ def run(selections, *, live=False, transport_factory=None):
             record = dict(provider=selection.provider, model=selection.model, input_hash=input_hash,
                 **response.model_dump(exclude={'text'}), **assess(response.text, packet))
             if response.status != 'ok': record['qualification'] = 'FAIL'
+            if response.status == 'http_404':
+                # No inference result exists to score. Do not turn a transport
+                # rejection into a model-quality verdict or manufacture usage.
+                record.update(qualification='NOT_EVALUATED',
+                    failure_category='PRE_INFERENCE_TRANSPORT_CONFIGURATION',
+                    output_valid=None, grounding_correct=None,
+                    evidence_references_valid=None, rules_boundary_compliant=None,
+                    unsupported_claims=[], hallucinations='NOT_EVALUATED',
+                    usefulness='NOT_EVALUATED', answer=None)
             records.append(record)
             if live and response.status != 'ok': break  # No retry, fallback or next-model spend after failure.
         report = dict(harness='pokelab-qualification-v1', mode='LIVE' if live else 'MOCK_NOT_QUALIFICATION',
