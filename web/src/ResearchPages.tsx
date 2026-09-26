@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useParams, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import type { Card } from './api'
 import { CardTile } from './CardTile'
 import { CompetitiveWindows, useCompetitiveTimeframe } from './Competitive'
-import { useBuilder } from './DeckBuilder'
+import { useBuilder, useDeck, type CopySource } from './DeckBuilder'
 
 type Reference={functional_id:string;card:Card|null;owned:number}
 type Counted=Reference&{quantity:number}
@@ -34,6 +34,24 @@ function Cards({cards,view}:{cards:Counted[];view:string}){return <div className
  {cards.map(row=><div className="research-card" key={row.functional_id}><strong className="research-quantity">×{row.quantity}</strong><EvidenceCard row={row} list={view==='list'}/></div>)}
  </div>}
 
+function CopyResearch({source,eligible,label}:{source:CopySource;eligible:boolean;label:string}){
+ const deck=useDeck(),navigate=useNavigate(),[error,setError]=useState(''),[busy,setBusy]=useState(false)
+ useEffect(()=>{if(eligible&&deck&&!deck.data&&!deck.pending&&!deck.error)deck.reload()},[eligible,deck?.data,deck?.pending,deck?.error])
+ const copy=async()=>{
+  if(!deck?.data||busy)return
+  const discard=deck.data.deck.dirty
+  if(discard&&!window.confirm('Discard unsaved changes to the active draft and open a new copied deck? Existing saved decks are kept. Cancel to save your draft first.'))return
+  setBusy(true);setError('')
+  try{await deck.copyResearch(source,discard);navigate('/deck-builder')}
+  catch(e){setError(e instanceof Error?e.message:'Copy failed. Reload the active deck before retrying.')}
+  finally{setBusy(false)}
+ }
+ return <div className="research-copy"><button disabled={!eligible||!deck?.data||!!deck?.pending||!!deck?.error||busy} onClick={copy}>{busy?'Copying…':label}</button>
+  {!eligible&&<p>A complete, representable 60-card list is required to copy.</p>}
+  {(error||deck?.error)&&<p role="alert">{error||deck?.error} <button disabled={busy||!!deck?.pending} onClick={()=>{setError('');deck?.reload()}}>Reload active deck</button></p>}
+ </div>
+}
+
 export function ArchetypeResearch(){
  const ctx=useResearchPage(),{key,window,params,path,main,prefix,state,change,view}=ctx
  const page=Math.max(1,Number(params.get('page'))||1),excluded=params.get('excluded')==='1'
@@ -59,9 +77,10 @@ export function ArchetypeResearch(){
    {loaded.summary.source_error&&<p role="alert">Last source refresh failed: {loaded.summary.source_error}. Showing cached evidence.</p>}
    <Modes view={view} change={change}/>
    <section aria-label="Archetype Composite"><h2>Archetype Composite</h2><p>Deterministic analytical synthesis — not an actual tournament deck, an AI-generated deck, or a claim of optimality.</p>
+    <CopyResearch key={`${key}:${window}`} source={{source:'composite',key,window}} eligible={loaded.composite.status==='available'&&loaded.composite.total===60&&loaded.composite.cards.every(c=>!!c.card)} label="Copy Composite to Deck Builder"/>
     <p>{loaded.composite.limited_evidence?'Limited evidence — ':''}Composite based on {loaded.composite.sample_size} published decklists · {window==='format'?'Format':`${window}D`}</p>
     {loaded.composite.status==='available'?<><Totals categories={loaded.composite.categories} total={loaded.composite.total}/><Cards cards={loaded.composite.cards} view={view}/></>:<><p>Composite unavailable from current evidence.</p><ul>{loaded.composite.reasons.map(r=><li key={r}>{r}</li>)}</ul></>}
-    <details><summary>Method and limitations</summary><p>We select the supported-check-valid observed quantity vector with the smallest total absolute copy-count distance to every eligible entrant. Ties favor common cards, then stable functional IDs and quantities. Whole observed vectors retain 60 cards and observed structure; cards are never independently rounded or invented. The result can match an observed list, but is presented as analytical synthesis.</p>{loaded.composite.limitations.map(r=><p key={r}>{r}</p>)}<p>Copy to Deck Builder is deferred; browsing does not alter your active deck.</p></details>
+    <details><summary>Method and limitations</summary><p>We select the supported-check-valid observed quantity vector with the smallest total absolute copy-count distance to every eligible entrant. Ties favor common cards, then stable functional IDs and quantities. Whole observed vectors retain 60 cards and observed structure; cards are never independently rounded or invented. The result can match an observed list, but is presented as analytical synthesis.</p>{loaded.composite.limitations.map(r=><p key={r}>{r}</p>)}<p>Copy creates a new editable deck using local preferred printings. Research evidence stays unchanged.</p></details>
    </section>
    <section aria-label="Core cards"><h2>Observed cards</h2><p>Ordered by decks containing the functional card, then total copies. Artwork is representative; source finish is not inferred.</p>
     <div className={`research-cards ${view}`}>{loaded.stats.map(row=><div className="research-card" key={row.functional_id}><EvidenceCard row={row} list={view==='list'}/>
@@ -95,13 +114,14 @@ export function TournamentDeckResearch(){
    <p className="source-note">ACTUAL OBSERVED TOURNAMENT DECK · LIMITLESS</p><h2>{loaded.observation.player} · #{loaded.observation.placement}</h2><p>{loaded.observation.event} · {loaded.observation.date}</p>
    <p>Archetype: <Link to={`${prefix}/archetypes/${loaded.observation.archetype_id}?window=${window}`} state={state}>{loaded.observation.archetype}</Link></p>
    <p>{loaded.presentation_note}</p><Totals categories={loaded.categories} total={loaded.card_count}/>
+   <CopyResearch key={key} source={{source:'tournament',key,window}} eligible={loaded.observation.mapped&&loaded.card_count===60&&loaded.mapped_card_count===60&&!loaded.unmapped_cards.length&&loaded.cards.every(c=>!!c.card)} label="Copy to Deck Builder"/>
    {!loaded.observation.mapped&&<p role="status">Some cards could not be mapped. Showing {loaded.mapped_card_count} mapped copies; this list is excluded from aggregate statistics. Original published lines remain below.</p>}
    <Modes view={view} change={change}/><Cards cards={loaded.cards} view={view}/>
    <section><h2>Published source list</h2><p>Original names, set codes, numbers and quantities. Source finish is not established.</p><ul>{loaded.published_cards.map((c,i)=><li key={i}>{c.count} × {c.name} · {c.set} {c.number}</li>)}</ul>
    {!!loaded.unmapped_cards.length&&<><h3>Unmapped source lines</h3><ul>{loaded.unmapped_cards.map((c,i)=><li key={i}>{c.count} × {c.name} · {c.set} {c.number}</li>)}</ul></>}
    </section>
    <section><h2>Evidence / Dataset</h2><p>Observation ID: <code>{loaded.observation.id}</code> · Event {loaded.observation.event_id}, placement {loaded.observation.placement}</p><p>Fetched: {loaded.observation.fetched_at}</p>{loaded.observation.source_url&&<p><a href={loaded.observation.source_url} target="_blank" rel="noreferrer">View source on Limitless</a></p>}
-    <details><summary>Archived source pages / hashes</summary>{loaded.pages.map(p=><p key={p.url}><a href={p.url} target="_blank" rel="noreferrer">Source page</a> · {p.parser}<br/><code>{p.sha256}</code></p>)}</details><p>Copy to Deck Builder is deferred. This evidence and your active deck remain unchanged.</p>
+    <details><summary>Archived source pages / hashes</summary>{loaded.pages.map(p=><p key={p.url}><a href={p.url} target="_blank" rel="noreferrer">Source page</a> · {p.parser}<br/><code>{p.sha256}</code></p>)}</details><p>Copy creates a new editable deck. Source quantities remain unchanged; local printings and finishes are presentation choices.</p>
    </section>
   </>}
  </main>

@@ -6,7 +6,8 @@ type Allocation = {printing_id:string;variant:string;quantity:number;available:b
 type Entry = {identity:string;quantity:number;allocations:Allocation[];printing_id:string;variant:string;name:string;category:string;presentation_available:boolean;owned:Ownership|null}
 export type Workspace = {schema_version:2;runtime_revision?:string;defaults:Record<string,{printing_id:string;variant:string;available:boolean}>;revision:number;deck:{id:string;name:string;format:string;entries:Entry[];has_saved:boolean;dirty:boolean};validation:{state:'EMPTY'|'IN PROGRESS'|'VALID'|'INVALID';total:number;categories:Record<string,number>;reasons:string[];unknown:string[];limitations:string[]};saved:{id:string;name:string;updated_at:string}[]}
 type Command = {action:'quantity'|'remove'|'default_printing'|'rename'|'save'|'new'|'open';printing_id?:string;variant?:string;identity?:string;delta?:number;name?:string;deck_id?:string;discard?:boolean;exact?:boolean}
-type Context = {data:Workspace|null;error:string;pending:number;send:(command:Command)=>void;reload:()=>void;active:boolean}
+export type CopySource = {source:'tournament'|'composite';key:string;window:string}
+type Context = {data:Workspace|null;error:string;pending:number;send:(command:Command)=>void;copyResearch:(source:CopySource,discard:boolean)=>Promise<void>;reload:()=>void;active:boolean}
 const DeckContext=createContext<Context|null>(null)
 export const useDeck=()=>useContext(DeckContext)
 export const useBuilder=()=>{const context=useDeck();return context?.active?context:null}
@@ -23,6 +24,7 @@ export function DeckProvider({children}:{children:ReactNode}) {
  const location=useLocation(),active=location.pathname.startsWith('/deck-builder')
  const [data,setData]=useState<Workspace|null>(null),[error,setError]=useState(''),[pending,setPending]=useState(0)
  const current=useRef<Workspace|null>(null),queue=useRef(Promise.resolve()),blocked=useRef(false),loading=useRef(false)
+ const copying=useRef(false)
  const apply=(value:Workspace)=>{current.current=value;setData(value)}
  const reload=()=>{
   if(loading.current)return
@@ -35,7 +37,7 @@ export function DeckProvider({children}:{children:ReactNode}) {
   window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn)
  },[pending])
  const send=(command:Command)=>{
-  if(blocked.current||!current.current)return
+  if(copying.current||blocked.current||!current.current)return
   setPending(n=>n+1)
   queue.current=queue.current.then(async()=>{
    try{if(!blocked.current)apply(await request(command,current.current!.revision))}
@@ -43,7 +45,17 @@ export function DeckProvider({children}:{children:ReactNode}) {
    finally{setPending(n=>n-1)}
   })
  }
- return <DeckContext.Provider value={{data,error,pending,send,reload,active}}>{children}</DeckContext.Provider>
+ const copyResearch=async(source:CopySource,discard:boolean)=>{
+  if(copying.current||pending||blocked.current||!current.current)throw new Error('Wait for deck changes to finish or reload the active deck before copying.')
+  copying.current=true;setPending(n=>n+1)
+  try {
+   const response=await fetch('/api/v1/deck-workspace/copy-research',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...source,discard,schema_version:2,revision:current.current.revision})})
+   const result=await response.json()
+   if(!response.ok)throw new Error(typeof result.detail==='string'?result.detail:'Copy failed. Reload the active deck before retrying.')
+   apply(result)
+  } finally {copying.current=false;setPending(n=>n-1)}
+ }
+ return <DeckContext.Provider value={{data,error,pending,send,copyResearch,reload,active}}>{children}</DeckContext.Provider>
 }
 
 export function ReadOnlyOwnership({card,detail=false}:{card:Card;detail?:boolean}) {

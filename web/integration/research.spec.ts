@@ -78,5 +78,6 @@ test('unmapped evidence remains inspectable in a deterministic partial-deck fixt
  await expect(page.getByText(/Some cards could not be mapped. Showing 4 mapped copies/)).toBeVisible()
  await expect(page.getByText('60 cards',{exact:true})).toBeVisible()
  await expect(page.getByText('56 × Unmapped evidence · X 2')).toHaveCount(2)
+ await expect(page.getByRole('button',{name:'Copy to Deck Builder',exact:true})).toBeDisabled()
  await expect(page.getByRole('button',{name:/Add one|Add .* to deck/})).toHaveCount(0)
 })

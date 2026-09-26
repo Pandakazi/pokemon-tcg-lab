@@ -47,6 +47,16 @@ class DeckConflict(ValueError):
     pass
 
 
+class ResearchCopy(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    schema_version: Literal[2]
+    revision: int = Field(ge=0, strict=True)
+    source: Literal['tournament', 'composite']
+    key: str = Field(min_length=1, max_length=100)
+    window: Literal['7', '30', '90', 'format'] = '30'
+    discard: bool = False
+
+
 class DeckProvider:
     """Resolve functional deck keys independently of chosen presentation.
 
@@ -191,6 +201,74 @@ class Decks:
             row = db.execute('SELECT * FROM workspace WHERE id=1').fetchone()
             return self.response(db, json.loads(row['document']), row['revision'])
 
+    @staticmethod
+    def preferred_allocation(db, snapshot, key, printing_id, variant):
+        preferred = db.execute('SELECT * FROM default_printings WHERE identity=?', (key,)).fetchone()
+        if preferred and preferred['printing_id'] in snapshot.records:
+            record = snapshot.records[preferred['printing_id']]
+            if deck_identity(record) == key and preferred['variant'] in snapshot.variants(preferred['printing_id']):
+                return preferred['printing_id'], preferred['variant']
+        return printing_id, variant
+
+    def copy_research(self, command, research):
+        # Resolve authoritative evidence on the server; never trust browser quantities.
+        if command.source == 'tournament':
+            source = research.tournament_deck(command.key)
+            if (not source['observation']['mapped'] or source['unmapped_cards']
+                or source['card_count'] != 60 or source['mapped_card_count'] != 60):
+                raise ValueError('Copy requires a complete mapped 60-card list. Review the published source lines.')
+            observation = source['observation']
+            name = ' — '.join(observation[k] for k in ('archetype', 'player', 'event') if observation[k])
+        else:
+            source = research.composite(command.key, command.window)
+            if source['status'] != 'available' or source['total'] != 60:
+                raise ValueError('A validated 60-card composite is unavailable. Refresh research or select another timeframe.')
+            name = research.archetype(command.key)['name'] + ' — Archetype Composite'
+        cards = source['cards']
+        if (not cards or any(type(c['quantity']) is not int or c['quantity'] <= 0 for c in cards)
+            or sum(c['quantity'] for c in cards) != 60
+            or len({c['functional_id'] for c in cards}) != len(cards)):
+            raise ValueError('Research quantities cannot be represented safely. Refresh the research page.')
+        with closing(self.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE'); self.initialize(db)
+            row = db.execute('SELECT * FROM workspace WHERE id=1').fetchone()
+            if row['revision'] != command.revision:
+                raise DeckConflict('Deck changed in another window. Reload the active deck before retrying.')
+            previous = json.loads(row['document']); check_allocations(previous)
+            if previous['dirty'] and not command.discard:
+                raise DeckConflict('Save changes or confirm discarding the active draft before copying research.')
+            snapshot = self.collection.snapshot()
+            functional_keys = {}
+            for record in snapshot.records.values():
+                functional_keys.setdefault(record['functional_id'], set()).add(deck_identity(record))
+            document = blank(); document.update(name=name[:100] or 'Research Deck', has_saved=True)
+            for card in cards:
+                printing_id = (card['card'] or {}).get('id')
+                record = snapshot.records.get(printing_id)
+                # Curated Basic Energy may have another canonical presentation ID;
+                # require the same certified deck key, never name-only equivalence.
+                keys = functional_keys.get(card['functional_id'], set())
+                if not record or len(keys) != 1 or deck_identity(record) not in keys:
+                    raise ValueError('A source card has no safe local printing. Refresh the card cache and research page.')
+                key = deck_identity(record)
+                variant = snapshot.default_variant(printing_id)
+                printing_id, variant = self.preferred_allocation(db, snapshot, key, printing_id, variant)
+                snapshot.validate_variant(printing_id, variant)
+                entry = next((e for e in document['entries'] if e['identity'] == key), None)
+                if entry is None:
+                    entry = dict(identity=key, quantity=0, allocations=[], name=record['card']['name'], category=record['card']['category'])
+                    document['entries'].append(entry)
+                allocation = next((a for a in entry['allocations'] if (a['printing_id'],a['variant']) == (printing_id,variant)), None)
+                if allocation is None:
+                    allocation = dict(printing_id=printing_id,variant=variant,quantity=0); entry['allocations'].append(allocation)
+                allocation['quantity'] += card['quantity']; entry['quantity'] += card['quantity']
+            check_allocations(document)
+            revision = row['revision'] + 1
+            db.execute('INSERT INTO saved_decks VALUES (?,?,?)', (document['id'],json.dumps(document),datetime.now(timezone.utc).isoformat()))
+            db.execute('UPDATE workspace SET revision=?,document=? WHERE id=1', (revision,json.dumps(document)))
+            # Response and normal validation happen before commit; any failure rolls back both writes.
+            return self.response(db,document,revision)
+
     def apply(self, command):
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE'); self.initialize(db)
@@ -241,11 +319,7 @@ class Decks:
                                    (key, command.printing_id, variant))
                     printing_id = command.printing_id
                     if not command.exact:
-                        preferred = db.execute('SELECT * FROM default_printings WHERE identity=?', (key,)).fetchone()
-                        if preferred and preferred['printing_id'] in snapshot.records:
-                            preferred_record = snapshot.records[preferred['printing_id']]
-                            if deck_identity(preferred_record) == key and preferred['variant'] in snapshot.variants(preferred['printing_id']):
-                                printing_id, variant = preferred['printing_id'], preferred['variant']
+                        printing_id, variant = self.preferred_allocation(db, snapshot, key, printing_id, variant)
                     if entry is None and command.delta == 1:
                         if len(document['entries']) >= 100: raise ValueError('Draft supports at most 100 functional entries.')
                         entry = dict(identity=key, quantity=0, allocations=[],

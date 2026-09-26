@@ -15,7 +15,7 @@ from .competitive import Competitive
 from .competitive_models import CompetitiveResearch
 from .research import Research
 from .research_models import ResearchSummary, CardStatistics, EvidencePage, TournamentDeck, Composite
-from .decks import Decks, DeckCommand, DeckConflict, deck_identity
+from .decks import Decks, DeckCommand, DeckConflict, ResearchCopy, deck_identity
 from .images import TCGdexImages
 from .library_identity import library_signature, basic_image_priority, REPRESENTATIVE_ORDER_SQL
 from .variation_families import variation_members
@@ -124,6 +124,19 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
     @app.get('/api/v1/research/tournament-decks/{key}',response_model=TournamentDeck)
     def tournament_deck(key:str):
         return research_read(lambda:research.tournament_deck(key))
+
+    @app.post('/api/v1/deck-workspace/copy-research')
+    def copy_research(body: ResearchCopy):
+        try:
+            return decks.copy_research(body, research)
+        except KeyError as error:
+            raise HTTPException(404, detail=str(error)) from None
+        except DeckConflict as error:
+            raise HTTPException(409, detail=str(error)) from None
+        except ValueError as error:
+            raise HTTPException(422, detail=str(error)) from None
+        except (sqlite3.Error, OSError):
+            raise HTTPException(503, detail='Copy failed. Reload the active deck before retrying; no partial deck was created.') from None
 
     @app.get('/api/v1/deck-workspace')
     def deck_workspace():

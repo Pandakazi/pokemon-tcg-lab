@@ -217,3 +217,4 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .evidence-list{list-style:none;padding:0}.evidence-list li{padding:12px 0;border-bottom:1px solid #ffffff12;display:flex;flex-direction:column;gap:5px}
 .research-page code{overflow-wrap:anywhere}.research-totals{color:#d6c5fb}.research-page details{margin:12px 0}
 .research-modes button{padding:6px 12px;border:1px solid #ffffff24;border-radius:6px;background:#151822}.research-modes button[aria-pressed=true]{background:#6d48a0}
+.research-copy{margin:12px 0}.research-copy button{padding:7px 12px;border:1px solid #ffffff24;border-radius:6px;background:#6d48a0;cursor:pointer}.research-copy button:disabled{opacity:.5;cursor:not-allowed}.research-copy button:focus-visible{outline:2px solid #c6a5ff;outline-offset:3px}

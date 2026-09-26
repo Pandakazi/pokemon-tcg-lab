@@ -201,6 +201,10 @@ Later work includes authentication before hosted private/paid use, Agent with me
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
 The Phase 5 certification tag remains unchanged. Phase 6 uses the same stored main-Limitless evidence; no new ingestion or Agent work is included.
 
+Post-Phase-6 integration: [Copy to Deck Builder](docs/research-copy.md) is implemented
+on `phase6-copy-to-deck-builder` for PM QA, not merged or certified. It creates a
+new editable saved deck from tournament evidence or an available composite.
+
 Non-blocking polish backlog:
 
 - Main Deck Builder Gallery +/- control alignment/centering.
