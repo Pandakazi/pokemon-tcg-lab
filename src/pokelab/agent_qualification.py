@@ -157,6 +157,8 @@ def run(selections, *, live=False, transport_factory=None):
                 elif response.status.startswith('http_'): category = 'HTTP_PROVIDER_FAILURE'
                 elif response.status == 'transport_or_response_error': category = 'TRANSPORT_OR_RESPONSE_FAILURE'
                 elif response.status == 'nonzero_cost_reported_stop': category = 'COST_POLICY_STOP'
+                elif response.status == 'incomplete_or_blocked_output' and response.finish_reason in ('length','max_tokens'):
+                    category = 'OUTPUT_TOKEN_LIMIT_REACHED'
                 record.update(qualification='NOT_EVALUATED',
                     failure_category=category,
                     output_valid=None, grounding_correct=None,

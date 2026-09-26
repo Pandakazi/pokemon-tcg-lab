@@ -1,5 +1,9 @@
 # Nemotron corrected-transport retry — termination diagnostics
 
+Subsequent PM Activity evidence established length termination at 1,200 output
+tokens; see [the confirmed result and ceiling proposal](nemotron-output-limit-pm-result.md).
+The uncertainty below records what was knowable before that evidence arrived.
+
 PM report: `nvidia/nemotron-3-super-120b-a12b:free`, status
 incomplete_or_blocked_output, latency 9340 ms, empty diagnostics, no recorded
 model/finish/usage/answer. NOT_EVALUATED remains correct. No model-quality failure.

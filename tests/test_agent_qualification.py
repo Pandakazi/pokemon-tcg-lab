@@ -208,12 +208,33 @@ def test_termination_diagnostics_without_partial_content(finish,content):
     report=q.run([selection('openrouter',model)],transport_factory=lambda s:httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
     record=report['records'][0]
     assert record['status']=='incomplete_or_blocked_output' and record['qualification']=='NOT_EVALUATED'
+    assert record['failure_category']==('OUTPUT_TOKEN_LIMIT_REACHED' if finish=='length' else 'RESPONSE_UNAVAILABLE_OR_EXECUTION_BLOCKED')
     assert record['diagnostics']['http_status']==200
     assert record['diagnostics']['finish_reason']==('other' if finish=='unexpected-private-value' else finish)
     assert record['input_tokens']==4700 and record['output_tokens']==1200 and record['reasoning_tokens']==1190
     assert record['reported_model']==model and record['diagnostics']['provider']=='Nvidia'
     assert record['answer'] is None
     assert 'partial private response' not in json.dumps(report) and 'unexpected-private-value' not in json.dumps(report)
+
+
+def test_pm_nemotron_length_metadata_never_grades_partial_answer(monkeypatch):
+    model='nvidia/nemotron-3-super-120b-a12b:free'
+    body=wire('partial output must not be graded',model=model,provider='Nvidia',
+        usage={'prompt_tokens':4824,'completion_tokens':1200})
+    body['choices'][0]['finish_reason']='length'
+    def forbidden(*args,**kwargs): raise AssertionError('Partial answer must not reach scoring')
+    monkeypatch.setattr(q,'assess',forbidden)
+    report=q.run([selection('openrouter',model)],transport_factory=lambda s:httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
+    record=report['records'][0]
+    assert record['failure_category']=='OUTPUT_TOKEN_LIMIT_REACHED'
+    assert record['qualification']=='NOT_EVALUATED'
+    assert record['finish_reason']=='length' and record['input_tokens']==4824 and record['output_tokens']==1200
+    assert record['reasoning_tokens'] is None and record['diagnostics']['http_status']==200
+    assert record['answer'] is None and record['output_valid'] is None
+    assert record['grounding_correct'] is None and record['rules_boundary_compliant'] is None
+    assert record['evidence_references_valid'] is None
+    assert report['input_hash']=='389165b46a93ce34ea62853b5d49beeaf7c45c4875a16bbcfb8fb46631719432'
+    assert 'partial output must not be graded' not in json.dumps(report)
 
 
 def test_empty_refusal_shape_and_absent_usage():
