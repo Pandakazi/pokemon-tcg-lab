@@ -1,9 +1,14 @@
 # Release verification — 0.1.1
 
-## Post-Phase-6 — Copy to Deck Builder integration candidate
+## Post-Phase-6 — Deck Builder integration PM acceptance closeout
 
-Not merged or certified. Base: `348a6968ebc5b25e49ac9ea82b77379a40fede25`.
-Focused verification only; no full-suite rerun:
+Mike manually passed and accepted Copy to Deck Builder and Deck Tray List/Gallery.
+Base: `348a6968ebc5b25e49ac9ea82b77379a40fede25`.
+Accepted Copy commit: `8396d3230b1aa317cea5b2c58d6e6c9b031d8b2a`.
+Accepted Gallery commit: `b098275afd2d6d15931d9b549aad586d65398aae`.
+Tag: `phase-6-deckbuilder-integration-2026-09-25`.
+The results below were already completed before acceptance; no broad suite rerun
+or production change was performed for this documentation/Git closeout.
 
 - 9 new backend copy tests passed; 42 existing research/deck/allocation boundary
   tests passed (51 cases across focused runs). Two existing dependency warnings.
@@ -11,6 +16,10 @@ Focused verification only; no full-suite rerun:
 - 13 real-browser checks passed: four new copy checks, three research checks and
   six existing Deck Builder checks. Mutation checks used isolated databases.
 - TypeScript and production build passed.
+- Copy fresh runtime verified schema 2 / revision 118.
+- Gallery: 10 frontend tests, five targeted browser checks and copy-to-Gallery
+  artwork verification passed; TypeScript/build passed. Frontend-only; permanent
+  QA workspace preserved at schema 2 / revision 129. PM manual QA passed both features.
 - Coverage includes preferred alternate printing/reverse finish, atomic rollback
   after writes, faithful invalid tournament copying, dirty/stale guards, source and
   ownership preservation, copied-deck reload/editing, and incomplete evidence refusal.

@@ -201,12 +201,16 @@ Later work includes authentication before hosted private/paid use, Agent with me
 cross-device persistence, PWA/mobile hardening, and private-alpha QA. Public beta is later.
 The Phase 5 certification tag remains unchanged. Phase 6 uses the same stored main-Limitless evidence; no new ingestion or Agent work is included.
 
-Post-Phase-6 integration: [Copy to Deck Builder](docs/research-copy.md) is implemented
-on `phase6-copy-to-deck-builder` for PM QA, not merged or certified. It creates a
-new editable saved deck from tournament evidence or an available composite.
+Post-Phase-6 integration: [Copy to Deck Builder and Deck Tray List/Gallery](docs/research-copy.md)
+are PM accepted (manual QA PASS). Tournament evidence and available composites copy
+to new saved editable decks. List/Gallery share the same active deck and controls.
+Tag: `phase-6-deckbuilder-integration-2026-09-25`. The original Phase 6 tag is unchanged.
 
 Non-blocking polish backlog:
 
+- Deck Tray Gallery sizing/density: explore larger cards, fewer columns, a wider or
+  resizable tray, an expandable deck panel, or other visual-density improvements.
+  Current sizing is accepted; this is future polish, not a certification blocker.
 - Main Deck Builder Gallery +/- control alignment/centering.
 - Further finish distinction, intensity, realism, masking, or artistic refinement;
   the current Holo/Reverse visualization and persistent shimmer are accepted.

@@ -1,9 +1,16 @@
 # Research → Copy to Deck Builder
 
-Post-Phase-6 integration for PM QA, not merged or certified. Branch
+Post-Phase-6 integration **PM ACCEPTED — manual QA PASS** for both Copy to Deck
+Builder and Deck Tray List/Gallery. Branch
 `phase6-copy-to-deck-builder`, based on certified main
 `348a6968ebc5b25e49ac9ea82b77379a40fede25`.
 The Phase 6 certification tag and its historical scope remain unchanged.
+
+Accepted commits: Copy `8396d3230b1aa317cea5b2c58d6e6c9b031d8b2a` and Gallery
+`b098275afd2d6d15931d9b549aad586d65398aae`. Closeout tag:
+`phase-6-deckbuilder-integration-2026-09-25` includes documentation acceptance.
+Reload resetting to List and representative artwork per functional entry are
+explicitly accepted. No behavior changes or broad suite reruns during closeout.
 
 ## Operation and safety
 
@@ -80,7 +87,7 @@ reload/editing, ownership/source immutability, cancellation, errors and unavaila
    source quantities. Format without configuration and partial lists cannot copy.
 
 Runtime verification is read-only against permanent PM data; mutation checks use
-isolated test data. The accepted Phase 6 tag is not modified. Final acceptance is Mike's.
+isolated test data. The accepted Phase 6 tag is not modified. Mike accepted both features.
 ## Final UX polish — tray List/Gallery
 
 Frontend-only presentation enhancement on the Copy-to-Deck-Builder branch. List
@@ -101,4 +108,9 @@ identical quantities, bidirectional +/- updates, navigation, hover boundary/timi
 non-mutating toggles and both copied source types retaining Gallery. No backend
 code changes or backend suite reruns. PM QA: toggle List/Gallery in the active tray,
 change quantities, inspect artwork, follow research links, copy either source type,
-and return to List to inspect exact allocations. Final acceptance remains Mike's.
+and return to List to inspect exact allocations. PM manual QA passed.
+
+Non-blocking future polish: current tray width/card sizing limits Gallery's visual
+benefit. Larger cards, fewer columns, a wider/resizable tray, an expandable deck
+panel or other visual-density improvements may be explored later. None is part
+of this closeout. No Phase 6.5, Rules/Interaction or Agent implementation occurred.
