@@ -1,11 +1,48 @@
 # Phase 6.5A/B/C/D — isolated rules/mechanics foundation
 
-Implementation for PM review, not merged, tagged or certified. Baseline:
+**Phase 6.5 — Rules & Interaction Foundation ✅ CERTIFIED** by Mike following
+manual PM QA PASS for A/B/C/D. Certification date: September 25, 2026. Baseline:
 `645bc3b3188995a9cbc51c20e17738413ddd99ca`. Branch: `phase6.5-rules-foundation`.
 A/B passed PM QA at `b17195a310564e35e92129aae517b56c44594ef5`.
 Pass C passed PM QA at `af6f58aa5c308d71e071331126fae748968eee7b`.
-Pass D adds only Rescue Board for PM review. No UI, public API, Agent or battle engine.
-Nothing is merged, tagged or certified by this pass.
+Pass D passed PM QA at `f57d06d8466de1c977fa53c4b5642021681ded0e`.
+Preservation tag: `phase-6.5-rules-foundation-certified-2026-09-25`, targeting the
+final documentation closeout/main commit. No UI, public API, Agent or battle engine.
+
+## Certification closeout
+
+Certified scope is a deterministic rules and interaction **foundation**, not a
+complete Pokémon TCG rules engine:
+
+- **A — contracts, authority and evidence:** reviewed profiles, exact fingerprints,
+  versioned interpretations/handlers, provenance, explicit support states and stale
+  invalidation; unsupported/insufficient information are first-class results.
+- **B — scenario and transitions:** unique gameplay instances, owner/controller/
+  location, revision/hash, pure evaluation, exact deltas, receipt-verified atomic
+  apply, stale/forged rejection; isolated Switch and non-executable Oddish preview.
+- **C — costs, choices, usage and privacy:** Ultra Ball's distinct two-card cost,
+  bounded search, selected-only reveal and explicit deterministic shuffle; Evidence
+  Gathering's private exchange, instance-scoped usage and external turn boundary.
+  Perspective-filtered serialization; no hidden randomness or partial application.
+- **D — persistent conditional derivation:** Rescue Board attachment, bounded reusable
+  modifier, remaining-HP condition, printed retreat derivation and zero floor;
+  remaining HP ≤30 sets zero. Unknown relevant effects block definitive answers.
+  No retreat execution, state mutation or derivation delta.
+
+Closeout changes documentation/Git only. Previously completed, PM-reviewed validation
+is **136 tests passed: 32 D + 81 A/B/C + 23 Deck Builder/research-copy regressions**.
+Fixture and real-cache demos passed; database hashes were unchanged. No broad suites
+were rerun for closeout and no new validation total is asserted.
+
+The next-phase boundary remains explicit: no Phase 7 Agent/Research Mode, Agent
+context/provider logic, AI integration, UI/API exposure or broader mechanics work.
+General setup/mulligan/turn/gameplay loops, universal legal actions, Item/Supporter/
+Ability timing, full Trainer/Tool legality, modifier stacking/order, Energy payment,
+attack/retreat execution, Weakness/Resistance, damage ordering, conditions, evolution,
+KO/prizes, Lost Zone behavior, comprehensive ruling corpus, broad card coverage,
+battle simulation and goldfish/self-play remain unsupported. Unknown relevant
+mechanics must be reported rather than guessed. No runtime semantics or database
+schema changed; certified collection, printing, deck and research systems are preserved.
 
 ## Actual architecture
 
@@ -345,8 +382,8 @@ Files: modified rules models/registry/evaluator/exports/perspective, prior C has
 compatibility test and this document; added `rules/modifiers.py`,
 `tests/test_rules_modifiers.py`, `examples/rules_modifier_demo.py`.
 
-Recommendation: the A/B/C/D foundation is ready for certification-closeout review
-**after Mike accepts D**. No certification, merge or tag is performed here. No actual
+The A/B/C/D foundation has passed Mike's final PM QA and is certified as recorded
+above. The following implementation exclusions remain unchanged. No actual
 retreat, Energy payment, retreat-use tracking, general Tool legality/removal/replacement,
 modifier stacking/order, attacks, damage/healing/KO/prizes, additional mechanic,
 Phase 7, Agent, UI/API or rules-corpus work was implemented. Certified deck, collection,

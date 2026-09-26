@@ -2,7 +2,12 @@
 
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
-Phases 1–6 are PM-certified. Phase 6 — Archetypes & Decklist Research was certified
+Phases 1–6 and Phase 6.5 are PM-certified. Phase 6.5 — Rules & Interaction Foundation
+was certified by Mike after A/B/C/D PM QA passed. This is a bounded deterministic
+foundation, not a complete Pokémon TCG rules engine. See the
+[certified foundation scope and boundaries](docs/phase-6.5-foundation.md).
+Phase 7 Agent / Research Mode is not implemented.
+Phase 6 — Archetypes & Decklist Research was certified
 by Mike on September 25, 2026 after manual PM QA passed. See
 [certified Phase 6 capabilities and methodology](docs/phase-6-research.md).
 Phase 5 Deck Builder was certified September 25, 2026,
@@ -205,6 +210,14 @@ Post-Phase-6 integration: [Copy to Deck Builder and Deck Tray List/Gallery](docs
 are PM accepted (manual QA PASS). Tournament evidence and available composites copy
 to new saved editable decks. List/Gallery share the same active deck and controls.
 Tag: `phase-6-deckbuilder-integration-2026-09-25`. The original Phase 6 tag is unchanged.
+
+Phase 6.5 — Rules & Interaction Foundation: ✅ **CERTIFIED** September 25, 2026.
+Reviewed authority/evidence, deterministic transitions, costs/choices/private usage,
+and persistent conditional derivation are proven through Switch, Oddish's printed
+preview, Ultra Ball, Evidence Gathering and Rescue Board. Preservation tag:
+`phase-6.5-rules-foundation-certified-2026-09-25`. No general gameplay loop, attack
+or retreat execution, comprehensive rules corpus, rules UI/API or Agent integration
+is claimed. Unknown relevant mechanics remain unsupported.
 
 Non-blocking polish backlog:
 
