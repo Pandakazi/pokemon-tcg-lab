@@ -1,7 +1,9 @@
-# Qualification suite v2 — ready, awaiting live authorization
+# Qualification suite v2 — current PM results
 
-PM approved a global 4,096-output-token quality-qualification benchmark. No live
-v2 call has been made. v1 remains the default bounded-synthesis benchmark at 1,200
+PM approved a global 4,096-output-token quality-qualification benchmark. Nemotron
+v2 now has a PM PASS; Gemini v2 remains indeterminate and NOT_EVALUATED. See the
+[current qualification status](../qualification/phase-7b-status-and-minimum-closeout.md).
+v1 remains the default bounded-synthesis benchmark at 1,200
 tokens. Existing result documents are unchanged and are not migrated to v2.
 
 ## Versioned comparison settings
@@ -52,8 +54,9 @@ eight transport formats at the same limit. Live execution still requires the
 existing PM authorization gate and free-tier controls. No automatic routing,
 retries/fallbacks, paid providers, model discovery or answer sharing.
 
-Gemini currently has a PM-reviewed v1 PASS; v2 is not run. Nemotron's v1 attempt
-remains NOT_EVALUATED / OUTPUT_TOKEN_LIMIT_REACHED; v2 is not run. Record future
+Gemini has a PM-reviewed v1 PASS; its historical v2 attempt is NOT_EVALUATED /
+INDETERMINATE_ASSESSMENT_FAILURE. Nemotron's v1 attempt remains NOT_EVALUATED /
+OUTPUT_TOKEN_LIMIT_REACHED; its v2 attempt has a PM-reviewed PASS. Record future
 results separately as bounded-synthesis (v1) and quality-qualification (v2).
 A v2 PASS never implies v1 PASS. Do not compare latency/output efficiency across
 versions as if they used the same limit. Existing historical records stay intact;
