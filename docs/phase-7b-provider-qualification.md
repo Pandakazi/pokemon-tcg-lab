@@ -10,6 +10,10 @@ OpenRouter attempt #2 returned 429 and is also NOT_EVALUATED. The
 [429 correction and bounded diagnostics](../qualification/openrouter-attempt-2-diagnosis.md)
 describe the general non-answer classification fix. Validation: 98 targeted
 provider/harness and 7A regression tests passed; no further live call was made.
+Nemotron attempt #3 also remains NOT_EVALUATED. The
+[shared-path audit](../qualification/openrouter-shared-path-diagnosis.md) records
+the HTTP-200 error-envelope fix, safe exception diagnostics, 107 passing tests,
+and proposed non-inference key check awaiting PM authorization.
 Branch: `phase7b-provider-qualification`. Certified 7A starting point:
 `3370ac76e440926becf2acf11b141ac2275d7173`.
 Mocked results alone do not qualify a model. Gemini's PM acceptance is limited

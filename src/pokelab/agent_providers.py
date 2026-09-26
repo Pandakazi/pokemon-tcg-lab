@@ -72,7 +72,9 @@ def error_diagnostics(response):
         for key, value in [('error_code', error.get('code')), ('provider_code', metadata.get('provider_code'))]:
             if type(value) is int and 100 <= value <= 599: result[key] = value
         allowed = {
-            'error_type': {'rate_limit_exceeded'},
+            'error_type': {'rate_limit_exceeded','provider_unavailable','authentication',
+                'permission_denied','payment_required','server','timeout','unmapped',
+                'context_length_exceeded','max_tokens_exceeded','token_limit_exceeded'},
             'limit_source': {'openrouter_in_flight_budget','openrouter_key_limit','openrouter_credits'},
             'reason': {'in_flight_budget_exhausted','weight_exceeds_budget'},
         }
@@ -148,27 +150,43 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
     # Prevent HTTP debug logging from emitting headers/body. No raw response/request is returned.
     previous=logging.root.manager.disable
     logging.disable(logging.CRITICAL)
+    stage = 'client_setup'
+    http_status = None
     try:
         with httpx.Client(transport=transport,timeout=90,follow_redirects=False,trust_env=False) as client:
+            stage = 'request'
             with client.stream('POST',provider.endpoint,json=payload,headers=headers) as response:
+                http_status = response.status_code
                 if response.status_code!=200:
                     diagnostics = error_diagnostics(response) if selection.provider == 'openrouter' else {}
                     return failed('http_'+str(response.status_code)).model_copy(update={'diagnostics':diagnostics})
                 chunks=[]; length=0
+                stage = 'read_body'
                 for chunk in response.iter_bytes():
                     length+=len(chunk)
                     if length>131072: return failed('response_too_large')
                     chunks.append(chunk)
+                stage = 'decode_body'
                 raw=b''.join(chunks).decode('utf-8')
         if secret_present(raw): return failed('secret_response_quarantined')
+        stage = 'parse_json'
         data=json.loads(raw)
         if secret_present(json.dumps(data,ensure_ascii=False)): return failed('secret_response_quarantined')
+        stage = 'response_envelope'
+        if selection.provider == 'openrouter' and isinstance(data,dict) and 'error' in data:
+            diagnostics=error_diagnostics(httpx.Response(200,content=raw.encode()))
+            diagnostics.update(stage=stage,http_status=200)
+            return failed('provider_error').model_copy(update={'diagnostics':diagnostics})
         if provider.anthropic:
             if any(c.get('type')=='tool_use' for c in data.get('content',[])): return failed('tool_output_rejected')
             text='\n'.join(c['text'] for c in data['content'] if c.get('type')=='text')
             finish=data.get('stop_reason')
         else:
             choice=data['choices'][0]; message=choice['message']
+            if selection.provider == 'openrouter' and 'error' in choice:
+                diagnostics=error_diagnostics(httpx.Response(200,json={'error':choice['error']}))
+                diagnostics.update(stage=stage,http_status=200)
+                return failed('provider_error').model_copy(update={'diagnostics':diagnostics})
             if message.get('tool_calls') or message.get('function_call'): return failed('tool_output_rejected')
             text=message.get('content'); finish=choice.get('finish_reason')
         if finish not in (None,'stop','end_turn'): return failed('incomplete_or_blocked_output')
@@ -190,8 +208,20 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
             output_tokens=count('output_tokens' if provider.anthropic else 'completion_tokens'),reasoning_tokens=reasoning,
             estimated_cost_usd=0 if not fake else None,actual_cost_usd=cost,
             cost_basis='mock-no-charge' if fake else 'provider-reported' if cost is not None else 'zero-cost-policy; actual billing unreported')
-    except Exception:
+    except Exception as exc:
         # Never propagate provider bodies, request/header objects or exception text.
-        return failed('transport_or_response_error')
+        kind = 'internal_error'
+        for cls,label in ((httpx.TimeoutException,'timeout'),(httpx.ConnectError,'connection_error'),
+            (httpx.ProtocolError,'protocol_error'),(httpx.TransportError,'transport_error'),
+            (UnicodeError,'text_decode_error'),(json.JSONDecodeError,'invalid_json'),
+            (KeyError,'invalid_response_shape'),(IndexError,'invalid_response_shape'),
+            (TypeError,'invalid_response_shape'),(AttributeError,'invalid_response_shape'),
+            (ValueError,'invalid_value')):
+            if isinstance(exc,cls):
+                kind=label
+                break
+        diagnostics={'stage':stage,'error_kind':kind}
+        if http_status is not None: diagnostics['http_status']=http_status
+        return failed('transport_or_response_error').model_copy(update={'diagnostics':diagnostics})
     finally:
         logging.disable(previous)

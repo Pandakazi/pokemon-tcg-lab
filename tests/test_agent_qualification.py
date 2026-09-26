@@ -198,6 +198,56 @@ def test_unknown_usage_is_not_zero():
     assert response.input_tokens is None and response.output_tokens is None and response.reasoning_tokens is None
 
 
+@pytest.mark.parametrize('nested',[False,True])
+def test_openrouter_http200_error_not_generic(nested):
+    error={'code':502,'message':'private upstream message','metadata':{'error_type':'provider_unavailable'}}
+    body={'choices':[{'message':{'content':'partial'},'error':error}]} if nested else {'error':error}
+    report=q.run([selection('openrouter','nvidia/nemotron-3-super-120b-a12b:free')],
+        transport_factory=lambda s:httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
+    record=report['records'][0]
+    assert record['status']=='provider_error' and record['qualification']=='NOT_EVALUATED'
+    assert record['diagnostics']=={'error_code':502,'error_type':'provider_unavailable','stage':'response_envelope','http_status':200}
+    assert 'private upstream' not in json.dumps(report)
+
+
+@pytest.mark.parametrize('body,kind,stage',[(b'not json','invalid_json','parse_json'),
+    (b'{}','invalid_response_shape','response_envelope'),(b'\xff','text_decode_error','decode_body')])
+def test_response_stage_diagnostics(body,kind,stage):
+    response=p.complete(selection('openrouter'),'s','u',transport=httpx.MockTransport(lambda r:httpx.Response(200,content=body)))
+    assert response.diagnostics=={'stage':stage,'error_kind':kind,'http_status':200}
+
+
+@pytest.mark.parametrize('error,kind',[(httpx.ConnectError,'connection_error'),(httpx.ReadTimeout,'timeout'),
+    (httpx.RemoteProtocolError,'protocol_error')])
+def test_transport_stage_diagnostics(error,kind):
+    def respond(request): raise error('private exception text',request=request)
+    response=p.complete(selection('openrouter'),'s','u',transport=httpx.MockTransport(respond))
+    assert response.diagnostics=={'stage':'request','error_kind':kind}
+    assert 'private' not in response.model_dump_json()
+
+
+def test_openrouter_environment_auth_and_client_options_with_mock_client(monkeypatch):
+    marker='synthetic-auth-marker-only'
+    monkeypatch.setenv('POKELAB_OPENROUTER_API_KEY',marker)
+    monkeypatch.setenv('OPENROUTER_API_KEY','wrong-variable-marker')
+    monkeypatch.setenv('POKELAB_7B_LIVE_AUTHORIZATION','PM_APPROVED_ZERO_COST')
+    original=httpx.Client; seen=[]
+    def respond(request):
+        seen.append(1)
+        assert request.headers['authorization']=='Bearer '+marker
+        assert request.headers['content-type']=='application/json'
+        assert str(request.url)=='https://openrouter.ai/api/v1/chat/completions'
+        return httpx.Response(200,json=wire())
+    def client(**kwargs):
+        assert kwargs=={'transport':None,'timeout':90,'follow_redirects':False,'trust_env':False}
+        kwargs['transport']=httpx.MockTransport(respond)
+        return original(**kwargs)
+    monkeypatch.setattr(p.httpx,'Client',client)
+    response=p.complete(selection('openrouter','nvidia/nemotron-3-super-120b-a12b:free'),'s','u')
+    assert response.status=='ok' and seen==[1]
+    assert marker not in response.model_dump_json()
+
+
 @pytest.mark.parametrize('status',['http_400','http_401','http_402','http_403','http_404','http_429',
     'http_500','http_502','http_503','transport_or_response_error','secret_response_quarantined',
     'missing_credential','live_not_authorized','empty_output','incomplete_or_blocked_output','nonzero_cost_reported_stop'])
