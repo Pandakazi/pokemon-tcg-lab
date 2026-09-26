@@ -243,6 +243,27 @@ def test_404_not_a_model_qualification_failure():
     assert 'private provider error' not in json.dumps(report)
 
 
+def test_openrouter_attempt2_exact_request_preserves_frozen_contract():
+    packet=q.load_case(); calls=[]
+    delegate=q.mock_transport(packet,'openrouter')
+    def respond(request):
+        calls.append(1)
+        assert request.method=='POST'
+        assert str(request.url)=='https://openrouter.ai/api/v1/chat/completions'
+        data=json.loads(request.content)
+        assert data['model']=='qwen/qwen3.8-27b:free'
+        assert data['provider']=={'allow_fallbacks':False,'max_price':{'prompt':0,'completion':0,'request':0}}
+        assert data['max_tokens']==1200 and data['stream'] is False
+        assert set(data)=={'model','messages','provider','max_tokens','stream'}
+        system,user,hashed=q.inputs(packet)
+        assert hashed=='389165b46a93ce34ea62853b5d49beeaf7c45c4875a16bbcfb8fb46631719432'
+        assert data['messages']==[{'role':'system','content':system},{'role':'user','content':user}]
+        return delegate.handle_request(request)
+    report=q.run([selection('openrouter','qwen/qwen3.8-27b:free')],
+        transport_factory=lambda s:httpx.MockTransport(respond))
+    assert len(calls)==1 and report['records'][0]['status']=='ok'
+
+
 def test_cli_mock_and_secret_configuration(monkeypatch,capsys):
     monkeypatch.setattr(sys,'argv',['qualification'])
     assert q.main()==0

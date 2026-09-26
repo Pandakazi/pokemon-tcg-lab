@@ -4,6 +4,8 @@ Gemini `gemini-3.5-flash-lite` passed `ultra-ball-v1` in Mike's PM review.
 See the [preserved case result](../qualification/ultra-ball-v1-gemini-pm-review.md)
 for metrics, scope and the proposed OpenRouter comparison awaiting authorization.
 The earlier Gemini attempt #1 returned HTTP 404 in 428 ms and was not evaluated.
+OpenRouter attempt #1 also returned 404 and remains NOT_EVALUATED. See the
+[endpoint diagnosis and proposed attempt #2](../qualification/openrouter-attempt-1-diagnosis.md).
 Branch: `phase7b-provider-qualification`. Certified 7A starting point:
 `3370ac76e440926becf2acf11b141ac2275d7173`.
 Mocked results alone do not qualify a model. Gemini's PM acceptance is limited
