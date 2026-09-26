@@ -12,6 +12,7 @@ from .agent_context import canonical
 from .agent_context_models import Frozen, Packet
 from .agent_providers import PROVIDERS, Selection, complete, secret_present
 from .rules.models import digest
+from .agent_qualification_config import configuration, V2_CANDIDATES
 
 PACKET_HASH = 'a98e533dc169fa6d7aa559181622ade13d11508c0b87906ef349b00491eaac3e'
 INPUT_HASH = '389165b46a93ce34ea62853b5d49beeaf7c45c4875a16bbcfb8fb46631719432'
@@ -130,21 +131,30 @@ def mock_transport(packet, provider):
     return httpx.MockTransport(respond)
 
 
-def run(selections, *, live=False, transport_factory=None):
+def run(selections, *, live=False, transport_factory=None, suite='v1'):
     """One synchronous request at a time; other runs in this process wait."""
     with _SERIAL:
+        config = configuration(suite)
+        config_hash = digest(config)
         packet = load_case()
         system, user, input_hash = inputs(packet)
+        suite_hash = digest(dict(configuration_hash=config_hash, input_hash=input_hash, packet_hash=PACKET_HASH))
         choices = tuple(selections)
-        if not 1 <= len(choices) <= 8: raise ValueError('selection_count_out_of_bounds')
+        if not 1 <= len(choices) <= config['max_selections']: raise ValueError('selection_count_out_of_bounds')
         if secret_present(json.dumps([s.model_dump() for s in choices])): raise ValueError('secret_selection_rejected')
         if live and transport_factory is not None: raise ValueError('live_transport_override_forbidden')
+        if live and suite == 'v2':
+            selected = [(s.provider,s.model) for s in choices]
+            if len(set(selected)) != len(selected) or any(s not in V2_CANDIDATES for s in selected):
+                raise ValueError('v2_candidate_not_prepared')
         records = []
         for selection in choices:
             transport = None if live else (transport_factory or (lambda s: mock_transport(packet, s.provider)))(selection)
             if not live and not isinstance(transport, httpx.MockTransport): raise ValueError('mock_transport_required')
-            response = complete(selection, system, user, transport=transport)
+            response = complete(selection, system, user, transport=transport,max_output=config['max_output_tokens'])
             record = dict(provider=selection.provider, model=selection.model, input_hash=input_hash,
+                suite=config['suite'], benchmark_dimension=config['dimension'],
+                configuration_hash=config_hash,suite_hash=suite_hash,max_output_tokens=config['max_output_tokens'],
                 **response.model_dump(exclude={'text'}))
             if response.status == 'ok':
                 record.update(assess(response.text, packet))
@@ -167,7 +177,8 @@ def run(selections, *, live=False, transport_factory=None):
                     usefulness='NOT_EVALUATED', answer=None)
             records.append(record)
             if live and response.status != 'ok': break  # No retry, fallback or next-model spend after failure.
-        report = dict(harness='pokelab-qualification-v1', mode='LIVE' if live else 'MOCK_NOT_QUALIFICATION',
+        report = dict(harness=config['suite'], configuration=config,configuration_hash=config_hash,suite_hash=suite_hash,
+            mode='LIVE' if live else 'MOCK_NOT_QUALIFICATION',
             certified_base='3370ac76e440926becf2acf11b141ac2275d7173', packet_hash=PACKET_HASH,
             input_hash=input_hash, serial=True, records=records,
             review_required='PM must assess every prose claim, citation entailment, unsupported claims/hallucinations and usefulness; structured passes alone never qualify a model.')
@@ -179,11 +190,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true', help='Requires separate PM authorization environment gate')
     parser.add_argument('--provider', action='append', choices=list(PROVIDERS))
+    parser.add_argument('--suite', choices=('v1','v2'), default='v1')
     args = parser.parse_args()
     try:
-        providers = args.provider or ([] if args.live else list(PROVIDERS))
-        selections = [Selection(provider=p, model=os.environ.get('POKELAB_'+p.upper()+'_MODEL','') if args.live else 'fixture-model') for p in providers]
-        report = run(selections, live=args.live)
+        providers = args.provider or ([] if args.live else [p for p,m in V2_CANDIDATES] if args.suite=='v2' else list(PROVIDERS))
+        selections = [Selection(provider=p, model=os.environ.get('POKELAB_'+p.upper()+'_MODEL','') if args.live else dict(V2_CANDIDATES).get(p,'fixture-model') if args.suite=='v2' else 'fixture-model') for p in providers]
+        report = run(selections, live=args.live,suite=args.suite)
         print(json.dumps(report, indent=2, ensure_ascii=False))
         return 0 if all(r['status']=='ok' and r['qualification']!='FAIL' for r in report['records']) else 1
     except Exception:

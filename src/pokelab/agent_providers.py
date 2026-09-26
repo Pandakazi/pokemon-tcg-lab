@@ -10,6 +10,7 @@ from urllib.parse import quote
 import httpx
 
 from .agent_context_models import Frozen
+from .agent_qualification_config import INPUT_BYTES, RESPONSE_BYTES, OUTPUT_BYTES, TIMEOUT_SECONDS
 from pydantic import Field
 from typing import Literal
 
@@ -127,7 +128,7 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
     def failed(status): return Response(status=status,latency_ms=round((time.monotonic()-started)*1000))
     if transport is not None and not fake: return failed('unsupported_transport')
     if secret_present(system+user+selection.model): return failed('secret_input_rejected')
-    if len((system+user).encode())>32768 or not 1<=max_output<=1600: return failed('request_budget_exceeded')
+    if len((system+user).encode())>INPUT_BYTES or type(max_output) is not int or not 1<=max_output<=4096: return failed('request_budget_exceeded')
     if not fake:
         blocked=live_gate(selection)
         if blocked: return failed(blocked)
@@ -153,7 +154,7 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
     stage = 'client_setup'
     http_status = None
     try:
-        with httpx.Client(transport=transport,timeout=90,follow_redirects=False,trust_env=False) as client:
+        with httpx.Client(transport=transport,timeout=TIMEOUT_SECONDS,follow_redirects=False,trust_env=False) as client:
             stage = 'request'
             with client.stream('POST',provider.endpoint,json=payload,headers=headers) as response:
                 http_status = response.status_code
@@ -164,7 +165,7 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
                 stage = 'read_body'
                 for chunk in response.iter_bytes():
                     length+=len(chunk)
-                    if length>131072: return failed('response_too_large')
+                    if length>RESPONSE_BYTES: return failed('response_too_large')
                     chunks.append(chunk)
                 stage = 'decode_body'
                 raw=b''.join(chunks).decode('utf-8')
@@ -221,7 +222,7 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
                 'reasoning_tokens':safe_count(details,'reasoning_tokens')})
             if secret_present(result.model_dump_json()): return failed('secret_response_quarantined')
             return result
-        if len(text.encode())>16384: return failed('output_too_large')
+        if len(text.encode())>OUTPUT_BYTES: return failed('output_too_large')
         usage=data.get('usage') or {}
         def count(key):
             value=usage.get(key)

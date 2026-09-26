@@ -11,6 +11,7 @@ import pytest
 
 from pokelab import agent_providers as p
 from pokelab import agent_qualification as q
+from pokelab.agent_qualification_config import configuration, configuration_hash, V2_CANDIDATES
 
 
 @pytest.fixture(autouse=True)
@@ -196,6 +197,76 @@ def test_no_live_transport_override_and_stop(monkeypatch):
 def test_unknown_usage_is_not_zero():
     response=p.complete(selection(),'s','u',transport=httpx.MockTransport(lambda r:httpx.Response(200,json=wire())))
     assert response.input_tokens is None and response.output_tokens is None and response.reasoning_tokens is None
+
+
+@pytest.mark.parametrize('suite,limit',[('v1',1200),('v2',4096)])
+def test_suite_global_budget_and_identical_inputs_all_providers(suite,limit):
+    packet=q.load_case(); seen=[]
+    def factory(s):
+        delegate=q.mock_transport(packet,s.provider)
+        def respond(request):
+            body=json.loads(request.content)
+            assert body.get('max_completion_tokens',body.get('max_tokens'))==limit
+            messages=body['messages']
+            seen.append((body.get('system',messages[0]['content']),messages[-1]['content']))
+            return delegate.handle_request(request)
+        return httpx.MockTransport(respond)
+    report=q.run([selection(provider,'fixture-model') for provider in p.PROVIDERS],suite=suite,transport_factory=factory)
+    assert len(seen)==8 and len(set(seen))==1 and seen[0]==q.inputs(packet)[:2]
+    assert report['configuration_hash']==configuration_hash(suite)
+    assert report['harness']=='pokelab-qualification-'+suite
+    assert all(r['max_output_tokens']==limit and r['suite_hash']==report['suite_hash'] for r in report['records'])
+
+
+def test_configuration_version_is_separate_from_frozen_inputs():
+    assert configuration_hash('v1')=='4a10d3b66b6d264bb89f3e85cd64531d30d4351f61a1a4fdeaed3b7b373ff850'
+    assert configuration_hash('v2')=='89dc98941ecc34d707cb9e63e8079e9ae2b3325ca5d14ca7d5dfb0b5b0e14323'
+    before=configuration('v1'); after=configuration('v2')
+    assert {k for k in before if before[k]!=after[k]}=={'suite','dimension','max_output_tokens'}
+    before['max_output_tokens']=999
+    assert configuration('v1')['max_output_tokens']==1200
+    reports=[q.run([selection()],suite=v) for v in ('v1','v2')]
+    assert reports[0]['input_hash']==reports[1]['input_hash']==q.INPUT_HASH
+    assert reports[0]['packet_hash']==reports[1]['packet_hash']==q.PACKET_HASH
+    assert reports[0]['configuration_hash']!=reports[1]['configuration_hash']
+    assert reports[0]['suite_hash']!=reports[1]['suite_hash']
+    assert reports[1]['suite_hash']=='ccb078a574f14c42b74ff07ea9993412009cf4866214c1be02b4bf8e621c4ee2'
+    with pytest.raises(ValueError,match='unknown_suite'): q.run([selection()],suite='v3')
+
+
+@pytest.mark.parametrize('provider,model',V2_CANDIDATES)
+def test_v2_length_is_not_evaluated(provider,model,monkeypatch):
+    body=wire('ungraded partial answer',model=model,usage={'prompt_tokens':4824,'completion_tokens':4096})
+    body['choices'][0]['finish_reason']='length'
+    def forbidden(*a,**k): raise AssertionError('No partial grading')
+    monkeypatch.setattr(q,'assess',forbidden)
+    report=q.run([selection(provider,model)],suite='v2',transport_factory=lambda s:httpx.MockTransport(lambda r:httpx.Response(200,json=body)))
+    record=report['records'][0]
+    assert record['qualification']=='NOT_EVALUATED' and record['failure_category']=='OUTPUT_TOKEN_LIMIT_REACHED'
+    assert record['output_tokens']==4096 and record['finish_reason']=='length' and record['answer'] is None
+
+
+def test_v2_prepared_candidates_only_and_live_gate(monkeypatch):
+    for provider,model in V2_CANDIDATES:
+        record=q.run([selection(provider,model)],suite='v2',live=True)['records'][0]
+        assert record['status']=='live_not_authorized'
+    with pytest.raises(ValueError,match='v2_candidate_not_prepared'):
+        q.run([selection('openrouter','qwen/qwen3.8-27b:free')],suite='v2',live=True)
+    with pytest.raises(ValueError,match='v2_candidate_not_prepared'):
+        q.run([selection(),selection()],suite='v2',live=True)
+
+
+def test_v2_mock_cli_prepares_exactly_two(monkeypatch,capsys):
+    monkeypatch.setattr(sys,'argv',['qualification','--suite','v2'])
+    assert q.main()==0
+    report=json.loads(capsys.readouterr().out)
+    assert [(r['provider'],r['model']) for r in report['records']]==list(V2_CANDIDATES)
+    assert report['harness']=='pokelab-qualification-v2'
+    assert report['configuration']['max_output_tokens']==4096
+
+
+def test_transport_rejects_output_budget_above_v2():
+    assert p.complete(selection(),'s','u',max_output=4097).status=='request_budget_exceeded'
 
 
 @pytest.mark.parametrize('finish',['length','content_filter','error','unexpected-private-value'])
