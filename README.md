@@ -221,6 +221,10 @@ is claimed. Unknown relevant mechanics remain unsupported.
 
 Non-blocking polish backlog:
 
+- Competitive hover hierarchy: Card Name → Card Info / exact printed text → Owned
+  → Statistics. Use deterministic card data, not AI summaries. Documented for later
+  polish; Phase 7A does not change hover behavior.
+
 - Deck Tray Gallery sizing/density: explore larger cards, fewer columns, a wider or
   resizable tray, an expandable deck panel, or other visual-density improvements.
   Current sizing is accepted; this is future polish, not a certification blocker.
