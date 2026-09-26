@@ -199,6 +199,65 @@ def test_unknown_usage_is_not_zero():
     assert response.input_tokens is None and response.output_tokens is None and response.reasoning_tokens is None
 
 
+@pytest.mark.parametrize('mutation,path,condition',[
+    ('missing_summary',['summary'],'missing'),
+    ('wrong_count',['facts','sample_size'],'int_type'),
+    ('wrong_boolean',['rules','execution_authorized'],'bool_type'),
+    ('short_summary',['summary'],'string_too_short'),
+    ('bad_citations',['citations','rules'],'tuple_type'),
+    ('extra',['<unrecognized_key>'],'extra_forbidden'),
+])
+def test_contract_failure_structural_diagnostics(mutation,path,condition):
+    packet=q.load_case()
+    data=json.loads(p.complete(selection(),'s','u',transport=q.mock_transport(packet,'gemini')).text)
+    if mutation=='missing_summary': del data['summary']
+    elif mutation=='wrong_count': data['facts']['sample_size']='734'
+    elif mutation=='wrong_boolean': data['rules']['execution_authorized']='false'
+    elif mutation=='short_summary': data['summary']=''
+    elif mutation=='bad_citations': data['citations']['rules']='private-citation-value'
+    else: data['private-extra-key']='private-extra-value'
+    result=q.assess(json.dumps(data),packet)
+    diag=result['contract_diagnostics']
+    assert result['qualification']=='FAIL' and result['answer'] is None
+    assert diag['json_parsed'] is True and diag['schema_valid'] is False
+    assert {'path':path,'condition':condition} in diag['errors']
+    assert 'private' not in json.dumps(diag)
+
+
+@pytest.mark.parametrize('text,parsed,condition',[
+    ('```json\n{}\n```',False,'json_syntax'),
+    ('A prose answer',False,'json_syntax'),
+    ('{"summary":"first","summary":"second"}',True,'duplicate_json_key'),
+    ('[]',True,'schema_validation'),
+    ('{"answer":{"summary":"private prose"}}',True,'schema_validation'),
+])
+def test_wrapper_json_diagnostics(text,parsed,condition):
+    result=q.assess(text,q.load_case())
+    assert result['contract_diagnostics']['json_parsed'] is parsed
+    assert result['contract_diagnostics']['condition']==condition
+    assert result['answer'] is None and 'private prose' not in json.dumps(result)
+
+
+def test_assessment_internal_failure_distinguishable(monkeypatch):
+    packet=q.load_case()
+    text=p.complete(selection(),'s','u',transport=q.mock_transport(packet,'gemini')).text
+    def broken(*a): raise RuntimeError('private internal exception')
+    monkeypatch.setattr(q,'expected',broken)
+    result=q.assess(text,packet)
+    assert result['contract_diagnostics']['schema_valid'] is True
+    assert result['contract_diagnostics']['condition']=='schema_valid_assessment_failed'
+    assert 'private internal' not in json.dumps(result)
+
+
+def test_contract_diagnostics_secret_and_bounds(monkeypatch):
+    marker='synthetic-contract-secret'
+    monkeypatch.setenv('POKELAB_GEMINI_API_KEY',marker)
+    assert q.contract_diagnostics(json.dumps({marker:'value'}))['condition']=='secret_quarantined'
+    diag=q.contract_diagnostics(json.dumps({'untrusted-key-'+str(i):'private value' for i in range(100)}))
+    assert len(diag['errors'])==12 and diag['error_count']>12
+    assert 'untrusted-key' not in json.dumps(diag) and 'private value' not in json.dumps(diag)
+
+
 @pytest.mark.parametrize('suite,limit',[('v1',1200),('v2',4096)])
 def test_suite_global_budget_and_identical_inputs_all_providers(suite,limit):
     packet=q.load_case(); seen=[]

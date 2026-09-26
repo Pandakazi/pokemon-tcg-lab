@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import Lock
 
 import httpx
-from pydantic import Field, StrictBool, StrictInt, StrictStr
+from pydantic import Field, StrictBool, StrictInt, StrictStr, ValidationError
 
 from .agent_context import canonical
 from .agent_context_models import Frozen, Packet
@@ -86,6 +86,56 @@ def expected(packet):
         result_type=p['rules'].result_type, execution_authorized=p['rules'].execution_authorized)
 
 
+def contract_diagnostics(text):
+    """Structural facts only. Never return provider keys, values, prose or errors."""
+    result = dict(json_parsed=False, schema_valid=None, condition='unknown',
+        nonempty_text=bool(text.strip()), markdown_fence_prefix=text.lstrip().startswith('```'))
+    if secret_present(text):
+        result['condition']='secret_quarantined'
+        return result
+    try:
+        parsed=json.loads(text)
+    except json.JSONDecodeError as exc:
+        result.update(condition='json_syntax', line=exc.lineno, column=exc.colno)
+        return result
+    except Exception:
+        result['condition']='diagnostic_unavailable'
+        return result
+    result.update(json_parsed=True, root_type='object' if isinstance(parsed,dict) else
+        'array' if isinstance(parsed,list) else 'string' if isinstance(parsed,str) else
+        'null' if parsed is None else 'boolean' if isinstance(parsed,bool) else 'number')
+    result['summary_string_present']=isinstance(parsed,dict) and isinstance(parsed.get('summary'),str)
+    duplicate=False
+    def unique(pairs):
+        nonlocal duplicate
+        values=dict(pairs)
+        if len(values)!=len(pairs): duplicate=True
+        return values
+    json.loads(text,object_pairs_hook=unique)
+    if duplicate:
+        result.update(condition='duplicate_json_key',schema_valid=False)
+        return result
+    try:
+        Answer.model_validate(parsed)
+        result.update(condition='schema_valid_assessment_failed',schema_valid=True)
+    except ValidationError as exc:
+        # Never serialize Pydantic's input/msg/ctx/url or arbitrary loc keys.
+        known=set(Answer.model_fields)|set(Facts.model_fields)|set(Rules.model_fields)|{
+            'competitive','deck','ownership','observation','rules','card'}
+        kinds={'missing','extra_forbidden','model_type','model_attributes_type','string_type',
+            'string_too_short','string_too_long','int_type','bool_type','dict_type','tuple_type',
+            'too_short','too_long','string_unicode','invalid_key'}
+        errors=exc.errors(include_url=False,include_context=False,include_input=False)
+        result.update(condition='schema_validation',schema_valid=False,error_count=len(errors),
+            errors=[dict(path=[part if isinstance(part,str) and part in known else
+                '<item>' if type(part) is int else '<unrecognized_key>' for part in error['loc'][:6]],
+                condition=error['type'] if error['type'] in kinds else 'validation_error') for error in errors[:12]])
+    except Exception:
+        result['condition']='diagnostic_unavailable'
+    if secret_present(json.dumps(result)): return {'condition':'secret_quarantined'}
+    return result
+
+
 def assess(text, packet):
     result = dict(output_valid=False, grounding_correct=False, evidence_references_valid=False,
         rules_boundary_compliant=False, unsupported_claims=['unassessed'],
@@ -113,6 +163,7 @@ def assess(text, packet):
     except Exception:
         result['qualification'] = 'FAIL'
         result['unsupported_claims'] = ['invalid_output_contract']
+        result['contract_diagnostics'] = contract_diagnostics(text)
     # These deterministic checks do NOT certify the free-form prose. PM must review it.
     return result
 
