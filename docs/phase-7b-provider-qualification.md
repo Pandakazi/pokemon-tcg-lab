@@ -1,5 +1,11 @@
 # Phase 7B — provider transport and frozen qualification
 
+**Phase 7B — Provider Layer + Read-Only Agent qualification infrastructure is
+PM CERTIFIED**, September 26, 2026. Accepted final implementation:
+`f5aab72d8a4d6e8bdae70c7783d1af432adae8e3`. See the
+[certification record](phase-7b-certification.md) for scope, preserved results,
+hashes and verification. The attempt history below remains contextual evidence.
+
 Gemini `gemini-3.5-flash-lite` passed `ultra-ball-v1` in Mike's PM review.
 See the [preserved case result](../qualification/ultra-ball-v1-gemini-pm-review.md)
 for metrics, scope and the proposed OpenRouter comparison awaiting authorization.
@@ -17,9 +23,9 @@ and proposed non-inference key check awaiting PM authorization.
 Branch: `phase7b-provider-qualification`. Certified 7A starting point:
 `3370ac76e440926becf2acf11b141ac2275d7173`.
 Mocked results alone do not qualify a model. Gemini's PM acceptance is limited
-to this case; Phase 7B is not certified.
+to this case; the infrastructure certification has the bounded scope recorded above.
 No UI, Research Mode, memory, actions, tools, automatic model routing, selection
-policy, database writes, 7C work, merge or certification is included.
+policy, database writes or 7C implementation is included in the certified scope.
 
 ## Transport and zero-dollar boundary
 
