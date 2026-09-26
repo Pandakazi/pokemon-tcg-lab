@@ -1,13 +1,15 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
-import { finishLabel, type Card, type Ownership } from './api'
+import { finishLabel, loadDetail, type Card, type Ownership } from './api'
+import { CardImage } from './CardTile'
+import { useCompetitiveHover, CompetitivePopup } from './Competitive'
 
 type Allocation = {printing_id:string;variant:string;quantity:number;available:boolean;owned:Ownership|null}
 type Entry = {identity:string;quantity:number;allocations:Allocation[];printing_id:string;variant:string;name:string;category:string;presentation_available:boolean;owned:Ownership|null}
 export type Workspace = {schema_version:2;runtime_revision?:string;defaults:Record<string,{printing_id:string;variant:string;available:boolean}>;revision:number;deck:{id:string;name:string;format:string;entries:Entry[];has_saved:boolean;dirty:boolean};validation:{state:'EMPTY'|'IN PROGRESS'|'VALID'|'INVALID';total:number;categories:Record<string,number>;reasons:string[];unknown:string[];limitations:string[]};saved:{id:string;name:string;updated_at:string}[]}
 type Command = {action:'quantity'|'remove'|'default_printing'|'rename'|'save'|'new'|'open';printing_id?:string;variant?:string;identity?:string;delta?:number;name?:string;deck_id?:string;discard?:boolean;exact?:boolean}
 export type CopySource = {source:'tournament'|'composite';key:string;window:string}
-type Context = {data:Workspace|null;error:string;pending:number;send:(command:Command)=>void;copyResearch:(source:CopySource,discard:boolean)=>Promise<void>;reload:()=>void;active:boolean}
+type Context = {trayView:'list'|'gallery';setTrayView:(view:'list'|'gallery')=>void;data:Workspace|null;error:string;pending:number;send:(command:Command)=>void;copyResearch:(source:CopySource,discard:boolean)=>Promise<void>;reload:()=>void;active:boolean}
 const DeckContext=createContext<Context|null>(null)
 export const useDeck=()=>useContext(DeckContext)
 export const useBuilder=()=>{const context=useDeck();return context?.active?context:null}
@@ -25,6 +27,7 @@ export function DeckProvider({children}:{children:ReactNode}) {
  const [data,setData]=useState<Workspace|null>(null),[error,setError]=useState(''),[pending,setPending]=useState(0)
  const current=useRef<Workspace|null>(null),queue=useRef(Promise.resolve()),blocked=useRef(false),loading=useRef(false)
  const copying=useRef(false)
+ const [trayView,setTrayView]=useState<'list'|'gallery'>('list')
  const apply=(value:Workspace)=>{current.current=value;setData(value)}
  const reload=()=>{
   if(loading.current)return
@@ -55,7 +58,7 @@ export function DeckProvider({children}:{children:ReactNode}) {
    apply(result)
   } finally {copying.current=false;setPending(n=>n-1)}
  }
- return <DeckContext.Provider value={{data,error,pending,send,copyResearch,reload,active}}>{children}</DeckContext.Provider>
+ return <DeckContext.Provider value={{trayView,setTrayView,data,error,pending,send,copyResearch,reload,active}}>{children}</DeckContext.Provider>
 }
 
 export function ReadOnlyOwnership({card,detail=false}:{card:Card;detail?:boolean}) {
@@ -82,11 +85,23 @@ export function DeckControls({card,exact=false,detail=false}:{card:Card;exact?:b
  </div>
 }
 
+function TrayArtwork({entry}:{entry:Entry}) {
+ const [card,setCard]=useState<Card|null>(null),location=useLocation(),hover=useCompetitiveHover(entry.presentation_available)
+ useEffect(()=>{const abort=new AbortController();setCard(null)
+  loadDetail(entry.printing_id,abort.signal,entry.variant).then(r=>{if(!abort.signal.aborted)setCard(r.card)}).catch(()=>{})
+  return()=>abort.abort()
+ },[entry.printing_id,entry.variant])
+ return <><Link className="tray-art-link" to={`${detailPath(entry.printing_id,true)}?variant=${encodeURIComponent(entry.variant)}`} state={{library:location.pathname+location.search,libraryState:location.state}} aria-label={`Inspect ${entry.name} from tray`}>
+  {card?<CardImage card={card} finish={entry.variant} artworkEvents={{onPointerEnter:e=>hover.enter(e.currentTarget),onPointerLeave:hover.leave}}/>:<div className="tray-art-fallback">{entry.name}<small>Artwork unavailable</small></div>}
+ </Link><strong className="tray-count" aria-label={`${entry.name} tray quantity`}>×{entry.quantity}</strong>
+ <CompetitivePopup id={entry.printing_id} name={entry.name} deckIdentity={entry.identity} hover={hover}/></>
+}
+
 export function DeckTray() {
  const builder=useBuilder(),location=useLocation()
  const [opening,setOpening]=useState(false),[renaming,setRenaming]=useState(false),[name,setName]=useState('')
  if(!builder)return null
- const {data,error,pending,send,reload}=builder
+ const {data,error,pending,send,reload,trayView,setTrayView}=builder
  const switchDeck=(action:'new'|'open',deck_id?:string)=>{
   if(data?.deck.dirty&&!window.confirm('Discard changes to the active draft? Cancel to save it first.'))return
   send({action,deck_id,discard:!!data?.deck.dirty});setOpening(false)
@@ -110,12 +125,14 @@ export function DeckTray() {
    {!!data.validation.unknown.length&&<details open><summary>Legality needs verification</summary><ul>{data.validation.unknown.map(r=><li key={r}>{r}</li>)}</ul></details>}
    {!!data.validation.limitations.length&&<details><summary>Supported checks</summary>{data.validation.limitations.map(r=><p key={r}>{r}</p>)}</details>}
   </section>
-  <div className="deck-entries">{!data.deck.entries.length&&<p>Choose cards from the Library to begin.</p>}
+  <div className="research-modes tray-modes" role="group" aria-label="Deck tray view">{(['list','gallery'] as const).map(view=><button key={view} aria-label={`${view==='list'?'List':'Gallery'} tray view`} aria-pressed={trayView===view} onClick={()=>setTrayView(view)}>{view==='list'?'List':'Gallery'}</button>)}</div>
+  <div className={`deck-entries ${trayView==='gallery'?'tray-gallery':''}`}>{!data.deck.entries.length&&<p>Choose cards from the Library to begin.</p>}
    {['Pokemon','Trainer','Energy'].map(category=>{const entries=data.deck.entries.filter(e=>e.category===category);return entries.length?<section key={category}><h3>{category==='Pokemon'?'Pokémon':category}</h3>{entries.map(entry=><article key={entry.identity}>
+    {trayView==='gallery'&&<TrayArtwork entry={entry}/>}
     <Link to={`${detailPath(entry.printing_id,true)}?variant=${encodeURIComponent(entry.variant)}`} state={{library:location.pathname==='/deck-builder'?location.pathname+location.search:location.state?.library||'/deck-builder'}} title={entry.name}>{entry.name}</Link>
-    {entry.allocations.map(a=><small key={`${a.printing_id}:${a.variant}`}><Link to={`${detailPath(a.printing_id,true)}?variant=${encodeURIComponent(a.variant)}`} state={{library:location.state?.library||'/deck-builder'}}>{a.printing_id} · {finishLabel(a.variant)}</Link> ×{a.quantity}{!a.available?' · Presentation unavailable':''}</small>)}
+    {trayView==='list'&&entry.allocations.map(a=><small key={`${a.printing_id}:${a.variant}`}><Link to={`${detailPath(a.printing_id,true)}?variant=${encodeURIComponent(a.variant)}`} state={{library:location.state?.library||'/deck-builder'}}>{a.printing_id} · {finishLabel(a.variant)}</Link> ×{a.quantity}{!a.available?' · Presentation unavailable':''}</small>)}
     <div className="deck-stepper"><button disabled={!!error||!entry.presentation_available} aria-label={`Decrease ${entry.name} in tray`} onClick={()=>send({action:'quantity',printing_id:entry.printing_id,variant:entry.variant,delta:-1})}>−</button><output>{entry.quantity}</output><button disabled={!!error||!entry.presentation_available} aria-label={`Increase ${entry.name} in tray`} onClick={()=>send({action:'quantity',printing_id:entry.printing_id,variant:entry.variant,delta:1})}>+</button><button disabled={!!error} aria-label={`Remove all ${entry.name}`} onClick={()=>send({action:'remove',identity:entry.identity})}>Remove</button></div>
-    <small>Owned (function): {entry.owned?.functional_total??'unknown'} · Ownership does not limit deck building</small>
+    {trayView==='list'&&<small>Owned (function): {entry.owned?.functional_total??'unknown'} · Ownership does not limit deck building</small>}
    </article>)}</section>:null})}
   </div><footer role="status">{pending?'Storing changes…':data.deck.dirty?'Draft stored · changes not saved to named deck':data.deck.has_saved?'Saved':'New draft'}<button disabled={!!pending} onClick={reload} aria-label="Refresh active deck">↻</button></footer></>}
  </aside>

@@ -16,7 +16,9 @@ for(const kind of ['tournament','composite'] as const)test(`${kind} copy opens a
  const anchor=source.cards.find((c:any)=>c.card?.id)
  const ownershipURL=`/api/v1/cards/${anchor.card.id}/ownership`
  const ownership=await(await request.get(ownershipURL)).json()
- await page.goto(route)
+ await page.goto('/deck-builder')
+ await page.getByRole('button',{name:'Gallery tray view'}).click()
+ await page.evaluate(route=>{window.history.pushState({},'',route);window.dispatchEvent(new PopStateEvent('popstate'))},route)
  const button=page.getByRole('button',{name:kind==='tournament'?'Copy to Deck Builder':'Copy Composite to Deck Builder',exact:true})
  await expect(button).toBeEnabled()
  await page.screenshot({path:info.outputPath(`${kind}-copy-action.png`)})
@@ -25,12 +27,17 @@ for(const kind of ['tournament','composite'] as const)test(`${kind} copy opens a
  const tray=page.getByRole('complementary',{name:'Active deck'})
  await expect(tray).toContainText('60 / 60')
  const copied=await current(request)
+ await expect(tray.getByRole('button',{name:'Gallery tray view'})).toHaveAttribute('aria-pressed','true')
+ await expect(tray.locator('.tray-count')).toHaveCount(copied.deck.entries.length)
  expect(copied.deck.id).not.toBe(old.deck.id)
  expect(copied.deck.has_saved).toBe(true)
  expect(copied.saved).toContainEqual(old.saved.find((d:any)=>d.id===old.deck.id))
  const expected:Record<string,number>={}
  for(const c of source.cards)expected[c.card.deck_identity]=(expected[c.card.deck_identity]||0)+c.quantity
  expect(Object.fromEntries(copied.deck.entries.map((e:any)=>[e.identity,e.quantity]))).toEqual(expected)
+ await expect(tray.locator('.tray-art-link img').first()).toBeVisible()
+ await expect.poll(()=>tray.locator('.tray-art-link img').first().evaluate((img:HTMLImageElement)=>img.naturalWidth)).toBeGreaterThan(0)
+ await page.screenshot({path:info.outputPath(`${kind}-gallery.png`)})
  await page.reload();await expect(tray).toContainText('60 / 60')
  expect((await current(request)).deck).toEqual(copied.deck)
  await tray.getByRole('button',{name:/Decrease .* in tray/}).first().click()

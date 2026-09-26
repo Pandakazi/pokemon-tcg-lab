@@ -81,3 +81,24 @@ reload/editing, ownership/source immutability, cancellation, errors and unavaila
 
 Runtime verification is read-only against permanent PM data; mutation checks use
 isolated test data. The accepted Phase 6 tag is not modified. Final acceptance is Mike's.
+## Final UX polish — tray List/Gallery
+
+Frontend-only presentation enhancement on the Copy-to-Deck-Builder branch. List
+remains the default and keeps its existing controls and metadata. Gallery displays
+one artwork tile per functional entry using the existing resolved allocation anchor,
+with total quantity and the same +/- and Remove commands. Mixed exact allocations
+remain intact and inspectable in List. Images reuse CardImage/FinishImage and the
+existing 500 ms, image-bounds-only competitive popup with active-deck counts.
+
+Tray view lives in DeckProvider presentation state, survives in-app Card Detail and
+research navigation and carries over to newly copied decks. Reload/restart resets
+to List; no new preference store was introduced. Switching views never writes deck,
+collection, preferences or validation data. Missing artwork has a readable fallback.
+
+Focused verification: 10 existing frontend tests, five targeted browser checks,
+TypeScript and production build passed. Browser coverage checks view toggling,
+identical quantities, bidirectional +/- updates, navigation, hover boundary/timing,
+non-mutating toggles and both copied source types retaining Gallery. No backend
+code changes or backend suite reruns. PM QA: toggle List/Gallery in the active tray,
+change quantities, inspect artwork, follow research links, copy either source type,
+and return to List to inspect exact allocations. Final acceptance remains Mike's.
