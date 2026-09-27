@@ -86,16 +86,45 @@ Retain competitive population, time window, denominator and small-sample caveats
 global statistics are not archetype-specific. Never propose replacements, compare
 whole decks/composites, execute actions, or answer unrelated questions. Mark these
 unsupported_question. Missing evidence is unknown, not zero. Describe limitations.
-Return only one JSON object, no markdown fences, with exactly these fields:
-{"version":"pokelab-research-answer-v1","outcome":"answered|insufficient_evidence|unsupported_question",
-"facts":[{"text":"supported factual statement","evidence":["evidence ID"]}],
-"interpretation":[{"text":"A plausible role ...","evidence":["evidence ID"]}],
-"limitations":["what cannot be established"]}.
-Use actual ev-* IDs from packet.evidence or active-deck. Every fact and
-interpretation requires evidence. Maximum 8 facts, 5 interpretations, 8 limitations;
-each statement at most 1600 characters and each limitation at most 800 characters.
-For unsupported_question return empty facts and interpretation. For answered,
-include at least one fact or interpretation. Do not claim creator intent.
+Return only one JSON object, no markdown fences or prose outside that object.
+Exactly five top-level fields are required: version, outcome, facts,
+interpretation, limitations. None may be omitted or null. No additional fields.
+version must be the exact string "pokelab-research-answer-v1".
+outcome must be exactly one of these three strings:
+- "answered": at least one statement across facts and interpretation combined.
+- "insufficient_evidence": the question is in scope but evidence cannot support
+  a full answer. Include only supported partial claims, or no claims at all.
+  Either or both claim arrays may be empty. Explain the gap in limitations.
+- "unsupported_question": both facts and interpretation must be empty arrays.
+  Explain the scope boundary in limitations.
+facts is an array of 0-8 evidence-backed factual statement objects.
+interpretation is an array of 0-5 plausible interpretive statement objects.
+Use [] for an empty array, never null or an omitted field. For answered, either
+array may be empty individually, but they must not both be empty.
+Each statement object has exactly two required fields: text and evidence.
+text is a nonblank string of 1-1600 characters, not whitespace-only.
+evidence is that statement's own array of 1-12 strings, never a single string.
+Valid citation targets are ONLY exact packet.evidence[*].id values present in
+this envelope, plus the literal string "active-deck" for the deck supplement.
+Copy IDs exactly; a plausible-looking ev-* ID is not enough. Provenance/source
+ref-* IDs, printing IDs, functional identities, URLs, hashes and similar
+identifiers are NOT valid answer citations. Evidence items link to provenance;
+cite the evidence item, not its source references. Put citations in each
+statement's evidence array; citations in prose cannot substitute for this array.
+Every cited item must actually support the corresponding statement.
+limitations is required: an array of 1-8 nonblank strings, each 1-800 characters,
+not whitespace-only. Describe uncertainty, missing evidence and authority/scope
+boundaries. Do not smuggle uncited positive claims into limitations. There is no
+separate "cannot establish" field; express those boundaries in limitations.
+Rules-boundary information belongs inside existing statement text (with its
+evidence citations), not additional top-level fields or a separate rules object.
+Do not claim creator intent.
+The entire returned JSON answer must fit within 16,384 UTF-8 bytes, including
+syntax and escaping. Prefer concise answers well below that ceiling. Per-field
+maxima are individual limits, not a guarantee their combined maxima will fit.
+Minimal valid structure example for an in-scope question lacking enough evidence
+(illustrative only; choose the outcome and content for the actual evidence):
+{"version":"pokelab-research-answer-v1","outcome":"insufficient_evidence","facts":[],"interpretation":[],"limitations":["The supplied evidence is insufficient to establish the requested conclusion."]}
 """
 
 
