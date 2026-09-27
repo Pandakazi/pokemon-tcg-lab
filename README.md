@@ -10,7 +10,14 @@ Phase 7A — Deterministic Agent Evidence Packet is PM-certified September 26, 2
 It provides backend-only read-only evidence assembly without an LLM, provider,
 Agent UI, actions or memory. See [certified Phase 7A scope and QA](docs/phase-7a-agent-context.md).
 Tag: `phase-7a-agent-context-certified-2026-09-26`.
-Phase 7B and the broader Agent / Research Mode remain unimplemented.
+Phase 7B — Provider Layer and read-only qualification infrastructure is PM-certified.
+See [Phase 7B certification](docs/phase-7b-certification.md).
+Phase 7C.1 — Selected-Card Research is **CERTIFIED / PM PASS**, September 26, 2026.
+It provides read-only, evidence-grounded answers in active-deck context using an
+explicit provider/model and strict local validation. See
+[certified scope, live QA and exclusions](docs/phase-7c1-certification.md).
+Deck-level/archetype research (7C.2), alternative-card research (7C.3), and
+proposed actions/research memory (7D) remain outside this certification.
 Phase 6 — Archetypes & Decklist Research was certified
 by Mike on September 25, 2026 after manual PM QA passed. See
 [certified Phase 6 capabilities and methodology](docs/phase-6-research.md).
