@@ -187,15 +187,52 @@ def make_envelope(request, sources, today=None):
 
 
 class ContractError(Exception):
-    pass
+    def __init__(self, condition, diagnostics=None):
+        self.diagnostics = diagnostics or dict(condition=condition, json_parsed=True, schema_valid=True)
+
+
+def schema_diagnostics(text, error):
+    """Allowlisted structure only: never include output, keys, values or error prose."""
+    result = dict(condition='schema_validation', json_parsed=None, schema_valid=False,
+        markdown_fence_prefix=text.lstrip().startswith('```'))
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        result.update(condition='json_syntax', json_parsed=False)
+    else:
+        result.update(json_parsed=True, root_type='object' if isinstance(parsed, dict) else
+            'array' if isinstance(parsed, list) else 'string' if isinstance(parsed, str) else
+            'null' if parsed is None else 'boolean' if isinstance(parsed, bool) else 'number')
+        # Presence, not contents. Prose in arbitrary unknown fields is not inspected.
+        result['statement_text_present'] = isinstance(parsed, dict) and any(
+            isinstance(item, dict) and isinstance(item.get('text'), str) and bool(item['text'].strip())
+            for field in ('facts', 'interpretation')
+            for item in (parsed.get(field) if isinstance(parsed.get(field), list) else []))
+    known = set(Answer.model_fields) | set(Statement.model_fields)
+    allowed = {'json_invalid', 'model_type', 'missing', 'extra_forbidden', 'literal_error',
+        'tuple_type', 'string_type', 'string_too_short', 'string_too_long', 'too_short', 'too_long'}
+    errors = error.errors(include_input=False, include_context=False, include_url=False)
+    result.update(error_count=len(errors), errors=[dict(
+        path=[part if isinstance(part, str) and part in known else '<item>' if type(part) is int
+              else '<unknown_field>' for part in e['loc'][:5]],
+        condition=e['type'] if e['type'] in allowed else 'validation_error') for e in errors[:8]])
+    return result
 
 
 def assess(text, envelope):
     """Structural integrity only; no claim that citation entailment is proven."""
-    answer = Answer.model_validate_json(text)
+    try:
+        answer = Answer.model_validate_json(text)
+    except ValidationError as exc:
+        # Only validation at this exact model-output boundary establishes a
+        # contract rejection. A later/internal ValidationError is not one.
+        raise ContractError('schema_validation', schema_diagnostics(text, exc)) from None
     known = {e.id for e in envelope.packet.evidence} | {'active-deck'}
     if any(not set(s.evidence) <= known for s in (*answer.facts, *answer.interpretation)):
-        raise ContractError('invalid_reference')
+        unknown = [ref for s in (*answer.facts, *answer.interpretation) for ref in s.evidence if ref not in known]
+        raise ContractError('invalid_reference', dict(condition='invalid_reference', json_parsed=True,
+            schema_valid=True, unknown_reference_count=len(unknown),
+            source_reference_id_count=sum(ref.startswith('ref-') for ref in unknown)))
     if any(not s.strip() or len(s) > 800 for s in answer.limitations):
         raise ContractError('invalid_limitations')
     if any(not s.text.strip() for s in (*answer.facts, *answer.interpretation)):
@@ -273,8 +310,12 @@ class ResearchService:
             return dict(response, status='provider_failure', reason='completion_not_confirmed')
         try:
             answer = assess(result.text, envelope)
-        except (ValidationError, ContractError):
-            return dict(response, status='invalid_answer_contract')
+        except ContractError as exc:
+            diagnostics = exc.diagnostics
+            if providers.secret_present(canonical(diagnostics)):
+                diagnostics = {'condition': 'secret_quarantined'}
+            return dict(response, status='invalid_answer_contract', contract_diagnostics=diagnostics)
         except Exception:
-            return dict(response, status='internal_assessment_failure')
+            return dict(response, status='internal_assessment_failure',
+                contract_diagnostics={'condition': 'internal_assessment_error'})
         return dict(response, status=answer.outcome, answer=answer.model_dump(mode='json'))

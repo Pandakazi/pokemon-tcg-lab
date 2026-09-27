@@ -232,3 +232,107 @@ def test_timeout_retains_single_flight_until_worker_exits(setup,monkeypatch):
             assert entered.is_set() and result=={'status':'request_timeout','answer':None}
             assert client.post('/api/v1/agent/research',json=query().model_dump()).json()['status']=='busy'
         finally: release.set()
+
+
+@pytest.mark.parametrize('case,condition', [
+    ('fenced','json_syntax'), ('malformed','json_syntax'),
+    ('missing','schema_validation'), ('wrong_type','schema_validation'),
+    ('invalid_enum','schema_validation'), ('unknown_field','schema_validation'),
+    ('reference_shape','schema_validation'), ('missing_reference','schema_validation'),
+    ('source_reference','invalid_reference'), ('unknown_evidence','invalid_reference'),
+    ('empty_limitations','schema_validation'), ('blank_limitation','invalid_limitations'),
+    ('empty_statement','empty_statement'), ('empty_answer','empty_answer'),
+    ('unsupported_claims','unsupported_with_claims'),
+])
+def test_bounded_contract_diagnostics_distinguish_rejections(setup,case,condition):
+    def reply(e):
+        a=good(e)
+        if case=='missing': del a['version']
+        if case=='wrong_type': a['facts']='PRIVATE_PROVIDER_PROSE'
+        if case=='invalid_enum': a['outcome']='PRIVATE_INVALID_ENUM'
+        if case=='unknown_field': a['PRIVATE_UNKNOWN_KEY']='PRIVATE_VALUE'
+        if case=='reference_shape': a['facts'][0]['evidence']='PRIVATE_REFERENCE'
+        if case=='missing_reference': del a['facts'][0]['evidence']
+        if case=='source_reference': a['facts'][0]['evidence']=[e['packet']['references'][0]['id']]
+        if case=='unknown_evidence': a['facts'][0]['evidence']=['ev-PRIVATE_UNKNOWN_ID']
+        if case=='empty_limitations': a['limitations']=[]
+        if case=='blank_limitation': a['limitations']=[' ']
+        if case=='empty_statement': a['facts'][0]['text']=' '
+        if case=='empty_answer': a.update(facts=[],interpretation=[])
+        if case=='unsupported_claims': a['outcome']='unsupported_question'
+        text=json.dumps(a)
+        if case=='fenced': text='```json\n'+text+'\n```'
+        if case=='malformed': text='{"PRIVATE_INCOMPLETE":'
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}],
+            'usage':{'prompt_tokens':100,'completion_tokens':50}})
+    result=service(setup[0],reply).run(query())
+    assert result['status']=='invalid_answer_contract' and result['answer'] is None
+    d=result['contract_diagnostics'];assert d['condition']==condition
+    assert 'PRIVATE' not in json.dumps(d) and len(json.dumps(d))<2000
+    assert result['execution']['finish_reason']=='stop' and result['execution']['output_tokens']==50
+    if case=='fenced': assert d['markdown_fence_prefix'] and d['json_parsed'] is False
+    if case=='unknown_field':
+        assert d['json_parsed'] and d['statement_text_present'] and not d['schema_valid']
+        assert d['errors'][0]=={'path':['<unknown_field>'],'condition':'extra_forbidden'}
+    if case=='reference_shape': assert d['errors'][0]['path']==['facts','<item>','evidence']
+    if case=='source_reference': assert d['source_reference_id_count']==1
+    if condition=='invalid_reference': assert d['json_parsed'] and d['schema_valid']
+
+
+def test_internal_pydantic_exception_is_not_output_contract_rejection(setup,monkeypatch):
+    def internal_error(*args):
+        agent.ResearchRequest.model_validate({'PRIVATE_INTERNAL_FIELD':'PRIVATE_INTERNAL_VALUE'})
+    monkeypatch.setattr(agent,'assess',internal_error)
+    result=service(setup[0]).run(query())
+    assert result['status']=='internal_assessment_failure' and result['answer'] is None
+    assert result['contract_diagnostics']=={'condition':'internal_assessment_error'}
+    assert result['execution']['output_tokens']==50 and 'PRIVATE' not in json.dumps(result)
+
+
+def test_diagnostic_failure_cannot_escape_or_become_model_rejection(setup,monkeypatch):
+    def fail(*args): raise RuntimeError('PRIVATE exception text')
+    monkeypatch.setattr(agent,'schema_diagnostics',fail)
+    result=service(setup[0],lambda e:response({})).run(query())
+    assert result['status']=='internal_assessment_failure' and 'PRIVATE' not in json.dumps(result)
+
+
+def test_schema_diagnostics_bound_unknown_fields(setup):
+    result=service(setup[0],lambda e:response({**good(e),**{f'PRIVATE_{i}':'PRIVATE' for i in range(30)}})).run(query())
+    d=result['contract_diagnostics']
+    assert d['error_count']==30 and len(d['errors'])==8
+    assert 'PRIVATE' not in json.dumps(d)
+
+
+@pytest.mark.parametrize('case,expected', [
+    ('valid','answered'), ('fenced','json_syntax'), ('schema','schema_validation'),
+    ('source_reference','invalid_reference'), ('internal','internal_assessment_error'),
+])
+def test_reconstructed_budew_revision157_regression(setup,monkeypatch,case,expected):
+    from pathlib import Path
+    envelope=agent.Envelope.model_validate_json((Path(__file__).parent/'fixtures/agent_research_budew_revision157.json').read_text(encoding='utf-8'))
+    assert envelope.content_hash=='991a77f9439050275916f1933a169b7a5d886a4b1874c601e3381d9a2eb819f1'
+    assert digest(envelope.model_dump(mode='json',exclude={'content_hash'}))==envelope.content_hash
+    assert digest(envelope.packet.model_dump(mode='json',exclude={'content_hash'}))==envelope.packet.content_hash
+    assert len(agent.canonical(envelope).encode())==17173
+    request=envelope.packet.request
+    assert (request.printing,request.variant,request.window,str(request.as_of))==('me02.5-221','holo','30','2026-09-26')
+    assert envelope.active_deck.revision==157
+    assert sum(e.quantity for e in envelope.active_deck.entries if e.name=='Budew')==2
+    monkeypatch.setattr(agent,'make_envelope',lambda *a,**k:envelope)
+    if case=='internal':
+        def broken(*args): agent.ResearchRequest.model_validate({})
+        monkeypatch.setattr(agent,'assess',broken)
+    def reply(e):
+        answer=good(e)
+        if case=='schema': del answer['version']
+        if case=='source_reference': answer['facts'][0]['evidence']=[e['packet']['references'][0]['id']]
+        text=json.dumps(answer)
+        if case=='fenced': text='```json\n'+text+'\n```'
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}],
+            'usage':{'prompt_tokens':100,'completion_tokens':50}})
+    result=service(setup[0],reply).run(agent.ResearchRequest(question=request.question,printing=request.printing,variant=request.variant,window=request.window,revision=157))
+    if case=='valid': assert result['status']=='answered' and result['answer'] is not None
+    else:
+        assert result['answer'] is None and result['contract_diagnostics']['condition']==expected
+        assert result['status']==('internal_assessment_failure' if case=='internal' else 'invalid_answer_contract')
+    assert result['execution']['output_tokens']==50
