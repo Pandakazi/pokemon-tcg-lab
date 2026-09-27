@@ -20,6 +20,7 @@ from .rules.models import digest
 EVIDENCE_BYTES = 24 * 1024
 FUTURE_ENVELOPE_BYTES = 32 * 1024  # Reserved; no provider envelope in Pass 1.
 CORE_PERCENT, COMMON_PERCENT, UNCOMMON_PERCENT = 80, 50, 25
+TYPICAL_MASS_PERCENT = 80
 CORE_ORIENTATION_CAP = 3
 CAPS = (('composition', 12), ('mechanics', 6), ('comparison', 10), ('deviation', 10))
 INTENTS = ('DECK_OVERVIEW', 'ARCHETYPE_COMPARISON', 'CARD_ROLE', 'CARD_QUANTITY',
@@ -59,6 +60,7 @@ class Comparison(Frozen):
     median_quantity_when_included: float | None
     modes: tuple[int, ...]
     typical_range: tuple[int, int] | None
+    observed_range: tuple[int, int] | None
     distribution: tuple[Bucket, ...]
     characteristics: tuple[str, ...]
 
@@ -78,6 +80,11 @@ class Population(Frozen):
     eligible_lists: int = 0
     excluded_unmapped: int = 0
     excluded_current_identity: int = 0
+    self_comparison: Literal['excluded_exactly', 'not_present', 'unavailable'] = 'unavailable'
+    self_comparison_reason: str = 'source-list-identity-not-retained'
+    active_observation: str | None = None
+    excluded_self: int = 0
+    excluded_self_reference: Reference | None = None
     results_without_lists: int = 0
     results_without_lists_scope: str = 'All cached tournaments in the window; not archetype-specific.'
     snapshot_hash: str
@@ -130,9 +137,11 @@ class Packet(Frozen):
 
 
 def configuration():
-    return dict(version=1, core_percent=CORE_PERCENT, common_percent=COMMON_PERCENT,
+    return dict(version=2, core_percent=CORE_PERCENT, common_percent=COMMON_PERCENT,
                 uncommon_percent=UNCOMMON_PERCENT, confidence_min=ARCHETYPE_PREVALENCE_MIN_DECKS,
-                quantity_rule='outside-included-observed-min-max;positive-active-only',
+                quantity_rule='outside-included-equal-tail-nearest-rank-band;positive-active-only',
+                typical_mass_percent=TYPICAL_MASS_PERCENT,
+                self_exclusion='validated-explicit-observation-id-and-exact-vector',
                 caps=CAPS, core_orientation_cap=CORE_ORIENTATION_CAP,
                 evidence_bytes=EVIDENCE_BYTES, ranking='intent-priority-then-identity-v1')
 
@@ -146,6 +155,10 @@ def compare(identity, name, active, counts, confident=True):
     n = len(counts); buckets = Counter(counts); included = sorted(q for q in counts if q > 0)
     k = len(included); frequency = Counter(included)
     modes = tuple(sorted(q for q, count in frequency.items() if count == max(frequency.values()))) if k else ()
+    # Empirical inverse CDF, nearest ranks: ceil(n*10/100), ceil(n*90/100).
+    # Integer arithmetic, no interpolation; ties retain their entire quantity value.
+    tail = (100-TYPICAL_MASS_PERCENT)//2
+    band = (included[max(1,(k*tail+99)//100)-1], included[(k*(100-tail)+99)//100-1]) if k else None
     labels = []
     if n and confident:
         if 100*k >= CORE_PERCENT*n: labels.append('ARCHETYPE_CORE')
@@ -153,18 +166,18 @@ def compare(identity, name, active, counts, confident=True):
         if active and 100*k < UNCOMMON_PERCENT*n: labels.append('UNCOMMON_PRESENT')
         if not active and 100*k >= COMMON_PERCENT*n: labels.append('COMMON_ABSENT')
         if active and k:
-            if active > included[-1]: labels.append('ABOVE_TYPICAL_QUANTITY')
-            if active < included[0]: labels.append('BELOW_TYPICAL_QUANTITY')
+            if active > band[1]: labels.append('ABOVE_TYPICAL_QUANTITY')
+            if active < band[0]: labels.append('BELOW_TYPICAL_QUANTITY')
     return Comparison(identity=identity, name=name, active_quantity=active, eligible_lists=n,
         lists_including=k, inclusion_rate=k/n if n and confident else None,
         mean_quantity_when_included=sum(included)/k if k else None,
         median_quantity_when_included=median(included) if k else None, modes=modes,
-        typical_range=(included[0], included[-1]) if k else None,
+        typical_range=band, observed_range=(included[0], included[-1]) if k else None,
         distribution=tuple(Bucket(quantity=q, lists=c) for q,c in sorted(buckets.items())),
         characteristics=tuple(labels))
 
 
-def build_profile(sources, *, revision, as_of, archetype=None, window='30'):
+def build_profile(sources, *, revision, as_of, archetype=None, window='30', active_observation=None):
     """Explicit as-of/archetype inputs; never infer archetype or creator from a name."""
     if window not in ('7', '30', '90', 'format'): raise ValueError('Unsupported window')
     with sources.snapshot() as (dbs, errors):
@@ -205,6 +218,27 @@ def build_profile(sources, *, revision, as_of, archetype=None, window='30'):
                         event_date=observation['date'], content_hash=digest(dict(observation=observation,cards=dict(vector),raw=deck['raw']))))
                     # Exact vector equality is an observation match, never proof of copy provenance/intent.
                     if vector == active: matches.append(FieldValue(field=observation['id'],value=canonical(observation)))
+        self_state='unavailable'; self_reason='source-list-identity-not-retained'; excluded_ref=None
+        if active_observation:
+            self_reason='source-list-identity-unverifiable'
+            if header:
+                try:
+                    source=research.tournament_deck(active_observation)
+                    source_vector=Counter()
+                    for item in source['cards']:
+                        ids=functions.get(item['functional_id'],())
+                        if not ids: raise KeyError('unmapped')
+                        source_vector[deck_identity(records[sorted(ids)[0]])]+=item['quantity']
+                    if source['observation']['mapped'] and source_vector==active:
+                        positions=[i for i,r in enumerate(refs) if r.resource==active_observation]
+                        if len(positions)==1:
+                            index=positions[0]; excluded_ref=refs.pop(index); vectors.pop(index)
+                            self_state='excluded_exactly'; self_reason='validated-source-identity-and-vector'
+                        elif not positions:
+                            self_state='not_present'; self_reason='validated-source-not-in-eligible-population'
+                    else: self_reason='source-composition-does-not-match-active-deck'
+                except KeyError: pass
+        if self_state=='unavailable': unavailable.append('self-exclusion:'+self_reason)
         if not header: unavailable.append('comparison_population')
         if header and header['source_error']: unavailable.append('competitive-cache-source-error')
         n = len(vectors)
@@ -217,8 +251,12 @@ def build_profile(sources, *, revision, as_of, archetype=None, window='30'):
             period_start=header['period_start'] if header else None, period_end=as_of.isoformat(),
             published_lists=header['published_decks'] if header else 0, eligible_lists=n,
             excluded_unmapped=header['excluded_unmapped'] if header else 0, excluded_current_identity=excluded,
+            self_comparison=self_state,self_comparison_reason=self_reason,active_observation=active_observation,
+            excluded_self=int(excluded_ref is not None),excluded_self_reference=excluded_ref,
             results_without_lists=header['results_without_lists'] if header else 0,
-            snapshot_hash=digest(dict(header=header,vectors=vectors,references=[r.model_dump() for r in refs])), references=tuple(refs))
+            snapshot_hash=digest(dict(header=header,vectors=vectors,references=[r.model_dump() for r in refs],
+                active_observation=active_observation,self_comparison=self_state,self_reason=self_reason,
+                excluded_reference=excluded_ref.model_dump() if excluded_ref else None)), references=tuple(refs))
         identities = sorted(set(active) | {fid for v in vectors for fid in v})
         output = []
         for fid in identities:

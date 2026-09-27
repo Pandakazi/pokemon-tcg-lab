@@ -34,6 +34,20 @@ representative profile; the compact packet carries a population snapshot referen
 and the profile hash for resolution. Pass 2 must retain a way to inspect that
 profile rather than treating the population hash as explanatory evidence alone.
 
+Self-comparison: the current workspace/copy path does not retain a tournament-list
+origin ID; local deck UUIDs and names are not source identities. An optional trusted
+internal `active_observation` accepts the existing event/rank-derived research key.
+It must resolve to a mapped local tournament observation with the exact active
+functional count vector. If that validated identity occurs in the eligible
+population, remove exactly that list and retain its excluded reference. If it is
+outside the eligible population, report `not_present`. Without a verifiable ID or
+when the active vector differs, retain all lists and report `unavailable` with a
+reason. Identical compositions, even a unique match, do not prove origin identity.
+No fuzzy matching or copy-persistence changes were added. Profile metadata records
+the supplied ID, state, reason and excluded count; statistics/confidence use the
+post-exclusion denominator. The representative snapshot has nine vector matches
+but no retained source ID: self-exclusion is unavailable, population remains 159.
+
 Each card comparison includes zero-inclusive quantity buckets, active quantity,
 eligible/included counts, positive-only mean/median, all tied modes and the
 positive-only observed minimum/maximum. Full-precision ratios follow existing
@@ -44,10 +58,21 @@ raw counts/distributions remain inspectable. Small samples do not become prevale
 Research heuristics, not universal Pokemon truths: CORE >=80%; COMMON_PRESENT
 active>0 and >=50%; UNCOMMON_PRESENT active>0 and <25%; COMMON_ABSENT active=0
 and >=50%. Labels may overlap. Quantity deviations require a positive active count
-strictly outside the included-list observed min/max. Equality is not a deviation;
+strictly outside the included-list typical band. Equality is not a deviation;
 absence is not BELOW_TYPICAL_QUANTITY. An unseen card has no typical range. This
-conservative rule deliberately misses within-range differences, even if they differ
-from the mean/mode. The complete statistics stay available for later bounded reasoning.
+band is defined by `TYPICAL_MASS_PERCENT=80`: sort the n positive observations,
+take one-based ranks max(1, ceil(10*n/100)) and ceil(90*n/100), and use those
+observed quantities as inclusive lower/upper bounds. Integer arithmetic avoids
+rounding drift; there is no interpolation or tie-breaking between equally common
+quantities. Entire endpoint quantity buckets remain included, so actual coverage
+can exceed 80% for discrete distributions. Sparse populations can legitimately
+yield the full observed range, but it is not used as the definition of typical.
+Observed min/max is preserved separately in `observed_range`; mean, median, tied
+modes and full zero-inclusive distribution remain unchanged. Full extrema are no
+longer the deviation rule because rare tails (including the active list itself)
+can mask non-typical counts. Configuration version/hash advances to 2; prior-phase
+contracts/hashes are unchanged. The representative deck still has no quantity
+deviations under the corrected rule; none are manufactured.
 
 ## Question selection and budget
 
@@ -97,8 +122,11 @@ answer pipeline under separate approval. Do not infer that selecting a compariso
 population proves the active deck belongs to it. No Pass 2, 7C.3, 7D, memory,
 simulation, unrestricted research, new rules authority or provider routing is here.
 
-Verification: 26 focused tests passed; one final established network-blocked
-backend regression gate passed all 576 tests (the prior 550 plus 26 foundation
-tests), with two existing dependency deprecation warnings. No frontend/browser,
+Original Pass 1 verification: 26 focused tests and the 576-test backend gate passed.
+Quantity correction: 35 focused tests passed, including tails, ties, sparse data,
+zero-copy absence, exact exclusion, unavailable/changed identity and not-present
+identity. One final network-blocked correction gate passed all 585 tests, with
+two existing dependency deprecation warnings; `git diff --check` passed.
+No frontend/browser,
 live API/provider or network calls. `git diff --check` passed. Prior frozen
 contracts/artifacts and retained evidence fixtures remain unchanged.

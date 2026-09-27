@@ -229,8 +229,9 @@ def test_frozen_dragapult_profile_packet_replay(monkeypatch):
     assert p.content_hash==digest(p.model_dump(mode='json',exclude={'content_hash'}))
     replay=d.select_evidence(p,stored.question)
     assert replay==stored and canonical(replay)==(root/'packet.json').read_text(encoding='utf-8').strip()
-    assert replay.content_hash=='83b2826ab9483495f98f573a7417ceef6e815b728a3e88c43351338253e39fce'
-    assert replay.serialized_bytes==12648
+    assert replay.content_hash=='1769e01b75df6d81f20d35e85367e2555852b5821696e2baac2132dd889120e3'
+    assert replay.serialized_bytes==13556
+    assert p.population.self_comparison=='unavailable' and p.population.excluded_self==0
     assert len([e for e in replay.evidence if e.kind=='comparison'])==d.CORE_ORIENTATION_CAP
     assert 'rank/core-orientation:18' in replay.coverage.omitted
     assert next(c for c in p.comparisons if c.name=='Risky Ruins').lists_including==138
@@ -248,3 +249,57 @@ def test_question_bounds_and_missing_population_do_not_create_identity(setup):
     assert 'comparison_population' in packet.coverage.unavailable
     assert not packet.intent.card_references and p.population.archetype is None
     with pytest.raises(ValueError): d.select_evidence(p.model_copy(update={'configuration_hash':'old-config'}),'Overview')
+
+
+@pytest.mark.parametrize('counts,band',[
+    ([1]*93+[2]*6+[3],(1,1)),([2]*45+[3]*50+[4]*5,(2,3)),
+    ([1]*50+[3]*50,(1,3)),([2],(2,2)),([1,4],(1,4)),([] ,None),
+])
+def test_central_quantity_band(counts,band):
+    row=d.compare('id','name',3,counts)
+    assert row.typical_range==band
+    assert row.observed_range==((min(counts),max(counts)) if counts else None)
+    assert row==d.compare('id','name',3,list(reversed(counts)))
+    if len(counts)==100 and counts.count(1)==93:
+        assert row.characteristics==('ARCHETYPE_CORE','COMMON_PRESENT','ABOVE_TYPICAL_QUANTITY')
+        assert row.modes==(1,) and row.median_quantity_when_included==1
+        assert sum(b.lists for b in row.distribution)==100
+
+
+def test_typical_band_bounds_and_absence():
+    counts=[1]*5+[2]*90+[4]*5
+    assert d.compare('i','n',1,counts).characteristics[-1]=='BELOW_TYPICAL_QUANTITY'
+    assert d.compare('i','n',4,counts).characteristics[-1]=='ABOVE_TYPICAL_QUANTITY'
+    assert d.compare('i','n',2,counts).characteristics==('ARCHETYPE_CORE','COMMON_PRESENT')
+    assert d.compare('i','n',0,counts).characteristics==('ARCHETYPE_CORE','COMMON_ABSENT')
+
+
+def test_exact_self_exclusion_with_validated_observation_identity(setup):
+    from pokelab.research_identity import evidence_key
+    key=evidence_key('1',1)
+    original=profile(setup)
+    assert original.population.self_comparison=='unavailable' and len(original.matching_observations)==16
+    excluded=profile(setup,active_observation=key)
+    assert excluded.population.self_comparison=='excluded_exactly'
+    assert excluded.population.eligible_lists==15 and excluded.population.excluded_self==1
+    assert excluded.population.published_lists==17
+    assert excluded.population.excluded_self_reference.resource==key
+    assert key not in {r.resource for r in excluded.population.references}
+    assert all(sum(b.lists for b in r.distribution)==15 for r in excluded.comparisons)
+    assert excluded==profile(setup,active_observation=key)
+    unknown=profile(setup,active_observation='not-a-local-list')
+    assert unknown.population.self_comparison=='unavailable' and unknown.population.eligible_lists==16
+
+
+def test_identified_self_outside_population_and_changed_deck(setup):
+    from datetime import timedelta
+    from test_research import seed
+    from pokelab.research_identity import evidence_key
+    seed(setup[1],[4],day=TODAY-timedelta(days=40),event='older')
+    outside=profile(setup,active_observation=evidence_key('older',1))
+    assert outside.population.self_comparison=='not_present' and outside.population.eligible_lists==16
+    seed(setup[1],[3],event='different')
+    changed=profile(setup,active_observation=evidence_key('different',1))
+    assert changed.population.self_comparison=='unavailable'
+    assert changed.population.self_comparison_reason=='source-composition-does-not-match-active-deck'
+    assert changed.population.eligible_lists==17

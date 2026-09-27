@@ -5,6 +5,7 @@ Categories: Energy=8, Pokemon=19, Trainer=33.
 Comparison: Dragapult; explicit local archetype 780e0eca3a75532945bfca1e; 30-day window; as-of 2026-09-26.
 Eligible mapped lists: 159; published 159; excluded unmapped 0; excluded current identity 0.
 Exact-vector observation matches: 9. Matches are not proof of copied-deck provenance or creator intent.
+Self-comparison: unavailable; reason source-list-identity-not-retained; excluded 0.
 
 Complete composition:
 - Crispin: 2 (065f604e8ea5bf4927e1ee7e67c4b64e)
@@ -34,11 +35,11 @@ Complete composition:
 - Rosa's Encouragement: 1 (fc2291f3ec98f5d32c6e9d6e3fe78e94)
 
 ARCHETYPE_CORE:
-- Crispin: active 2; included 159/159; included range (1, 3); distribution 1:3, 2:149, 3:7
-- Fezandipiti ex: active 1; included 159/159; included range (1, 1); distribution 1:159
-- Poké Pad: active 4; included 159/159; included range (4, 4); distribution 4:159
-- Ultra Ball: active 3; included 159/159; included range (3, 4); distribution 3:115, 4:44
-- Munkidori: active 2; included 155/159; included range (1, 2); distribution 0:4, 1:6, 2:149
+- Crispin: active 2; included 159/159; typical band (2, 2); observed range (1, 3); distribution 1:3, 2:149, 3:7
+- Fezandipiti ex: active 1; included 159/159; typical band (1, 1); observed range (1, 1); distribution 1:159
+- Poké Pad: active 4; included 159/159; typical band (4, 4); observed range (4, 4); distribution 4:159
+- Ultra Ball: active 3; included 159/159; typical band (3, 4); observed range (3, 4); distribution 3:115, 4:44
+- Munkidori: active 2; included 155/159; typical band (2, 2); observed range (1, 2); distribution 0:4, 1:6, 2:149
 
 UNCOMMON_PRESENT:
 - None observed under the documented rule.
@@ -68,11 +69,11 @@ Selected evidence, in order:
 - mechanics: Dreepy [SOURCE_FACT]
 - mechanics: Buddy-Buddy Poffin [SOURCE_FACT]
 
-Packet bytes: 12648/24576.
-Packet hash: `83b2826ab9483495f98f573a7417ceef6e815b728a3e88c43351338253e39fce`.
-Profile hash: `2250c204b93a5601dcde138b23a21210cf813a95107f64c2a5532cdd413b32ef`.
+Packet bytes: 13556/24576.
+Packet hash: `1769e01b75df6d81f20d35e85367e2555852b5821696e2baac2132dd889120e3`.
+Profile hash: `33a20e9e79590eda2ab26f5e71dbd62bc89b291f19e2c409a8035e83fd6e6656`.
 Omitted: intent/card:46, rank/core-orientation:18
-Unavailable: creator_intent, reviewed-interaction-results, semantic-functions:draw-search-acceleration-disruption-recovery
+Unavailable: creator_intent, reviewed-interaction-results, self-exclusion:source-list-identity-not-retained, semantic-functions:draw-search-acceleration-disruption-recovery
 
 Population list URLs, dates, fetched-at metadata and content hashes are retained in profile.json. packet.json is the exact bounded serialization; trailing file newline is not part of packet bytes/hash.
 This is a local snapshot inspection, not a reconstruction of provider output.
