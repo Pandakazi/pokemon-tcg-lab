@@ -128,6 +128,13 @@ separate "cannot establish" field; express those boundaries in limitations.
 Rules-boundary information belongs inside existing statement text (with its
 evidence citations), not additional top-level fields or a separate rules object.
 Do not claim creator intent.
+Attack cost may be stated only when the cited printed attack explicitly supplies
+cost. An omitted/null cost is unavailable, not one Energy and not proven free.
+An explicit empty cost array means zero Energy; do not count attacks as costs.
+Deck/card presence and absence are factual claims: put them in facts with
+citations, never limitations. For a false premise, cite the corrective deck fact
+in facts and reserve limitations for what cannot be established. This applies
+to negative facts too. Pure epistemic boundaries do not require citations.
 The entire returned JSON answer must fit within 16,384 UTF-8 bytes, including
 syntax and escaping. Prefer concise answers well below that ceiling. Per-field
 maxima are individual limits, not a guarantee their combined maxima will fit.
@@ -157,6 +164,15 @@ Decklist prevalence does not establish matchup performance, piloting instruction
 creator intent or mechanical synergy. Printed mechanics, empirical observations
 and derived deviations are independent evidence. Missing reviewed interactions
 remain unavailable. Interpretations must remain plausible, cited and bounded.
+For comparison questions, answer the requested difference first using the complete
+deviation-summary, not just the capped orientation examples. ARCHETYPE_CORE and
+COMMON_PRESENT are similarities, not deviations. If available=true and
+UNCOMMON_PRESENT, COMMON_ABSENT, ABOVE_TYPICAL_QUANTITY and BELOW_TYPICAL_QUANTITY
+are all zero, say no supported composition/quantity deviations were detected under
+the recorded thresholds/population. Do not call the decks identical, or infer
+equal strategy/performance. Similarities may follow as context. Cite the summary
+and population, retaining confidence, window and configured threshold limitations.
+If comparison is unavailable, absence of detected deviations is not established.
 '''
 
 
@@ -312,7 +328,7 @@ def schema_diagnostics(text, error):
 
 
 def assess(text, envelope):
-    """Structural integrity only; no claim that citation entailment is proven."""
+    """Structure plus bounded known-error checks, not general entailment proof."""
     try:
         answer = Answer.model_validate_json(text)
     except ValidationError as exc:
@@ -333,6 +349,9 @@ def assess(text, envelope):
         raise ContractError('empty_answer')
     if answer.outcome == 'unsupported_question' and (answer.facts or answer.interpretation):
         raise ContractError('unsupported_with_claims')
+    from .research_grounding import violation
+    if condition := violation(answer, envelope):
+        raise ContractError(condition)
     return answer
 
 

@@ -329,6 +329,25 @@ def select_evidence(profile, question):
     core = sorted((r for r in profile.comparisons if 'ARCHETYPE_CORE' in r.characteristics),
                   key=lambda r:(-(r.inclusion_rate or 0),-r.active_quantity,r.identity))
     orientation = {r.identity for r in core[:CORE_ORIENTATION_CAP]}
+    # Overview mechanics: prioritize core evolution endpoints and their actual
+    # active ancestors, not opaque functional-ID order among all Pokemon.
+    # No archetype-name matching or inferred strategic role is involved.
+    overview_rank = {}
+    if 'DECK_OVERVIEW' in categories and not comparison:
+        core_ids = {r.identity for r in core}
+        def lineage(identity, seen=frozenset()):
+            if identity in seen: return ()
+            card = by_id[identity]
+            return (identity, *(ancestor for parent in card.evolution_parents
+                if parent in by_id and by_id[parent].quantity
+                for ancestor in lineage(parent, seen | {identity})))
+        endpoints = [c for c in profile.cards if c.quantity and c.category=='Pokemon'
+            and c.identity in core_ids and c.evolution_parents]
+        endpoints.sort(key=lambda c:(-len(set(lineage(c.identity))),
+            -sum(by_id[i].quantity for i in set(lineage(c.identity))),c.identity))
+        for endpoint in endpoints:
+            for identity in lineage(endpoint.identity):
+                if identity not in overview_rank: overview_rank[identity]=len(overview_rank)
     omissions = Counter()
     for row in profile.comparisons:
         card = by_id[row.identity]; labels = set(row.characteristics); referenced = row.identity in intent.card_references
@@ -349,6 +368,8 @@ def select_evidence(profile, question):
                     continue
         elif card.quantity:
             priority = {'Pokemon':2,'Energy':4,'Trainer':7}.get(card.category,9)
+            if card.identity in overview_rank:
+                priority = 1 + overview_rank[card.identity] / (len(overview_rank)+1)
         if priority == 30:
             omissions['intent/card']+=1
             continue
