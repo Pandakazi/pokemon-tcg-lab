@@ -14,7 +14,7 @@ type Status={version:string;available:boolean;reason:string|null;provider:string
 type Statement={text:string;evidence:string[]}
 type Evidence={id:string;classification:string;payload:Record<string,unknown>;references:string[]}
 type Reference={id:string;source:string;resource:string;url?:string;checked_at?:string;event_date?:string;content_hash:string}
-type Result={status:string;reason?:string;answer:null|{outcome:string;facts:Statement[];interpretation:Statement[];limitations:string[]};
+type Result={status:string;reason?:string;contract_diagnostics?:unknown;answer:null|{outcome:string;facts:Statement[];interpretation:Statement[];limitations:string[]};
  envelope?:{content_hash:string;packet:{request:{printing:string;window:string;as_of:string};evidence:Evidence[];references:Reference[];coverage:{omitted:string[];unavailable:string[]}};
  active_deck:{id:string;name:string;revision:number;dirty:boolean;references:string[];[key:string]:unknown};omitted:string[]};
  execution?:{provider:string;model:string;latency_ms:number;input_tokens:number|null;output_tokens:number|null}}
@@ -33,6 +33,31 @@ const messages:Record<string,string>={
  request_timeout:'The research deadline expired. The provider request may still be finishing; no retry was made.',
  unavailable:'Research is not enabled or its configured provider is unavailable.',
  secret_input_rejected:'Research context could not be safely sent.',
+}
+const diagnosticLabels:Record<string,string>={json_syntax:'JSON parsing failed.',schema_validation:'Answer schema validation failed.',invalid_reference:'One or more citations did not identify supplied evidence.',invalid_limitations:'Limitations were blank or exceeded their length limit.',empty_statement:'A statement was blank.',empty_answer:'An answered response contained no claims.',unsupported_with_claims:'An unsupported-question response contained claims.',internal_assessment_error:'Internal assessment failed; no model-quality judgment was made.',secret_quarantined:'Diagnostic details were quarantined.'}
+const issueLabels:Record<string,string>={json_invalid:'invalid JSON',model_type:'expected a statement/object',missing:'required field missing',extra_forbidden:'unexpected field',literal_error:'invalid fixed value',tuple_type:'expected an array',string_type:'expected a string',string_too_short:'string below minimum length',string_too_long:'string above maximum length',too_short:'below minimum count',too_long:'above maximum count',validation_error:'validation failed'}
+const fieldLabels:Record<string,string>={version:'version',outcome:'outcome',facts:'facts',interpretation:'interpretation',limitations:'limitations',text:'text',evidence:'evidence','<item>':'item','<unknown_field>':'unknown field'}
+const safeLabel=(labels:Record<string,string>,value:unknown)=>typeof value==='string'&&Object.prototype.hasOwnProperty.call(labels,value)?labels[value]:undefined
+function ValidationDetails({value}:{value:unknown}) {
+ if(!value||typeof value!=='object'||Array.isArray(value))return null
+ const d=value as Record<string,unknown>,condition=safeLabel(diagnosticLabels,d.condition)
+ const count=(value:unknown)=>typeof value==='number'&&Number.isInteger(value)&&value>=0&&value<=9999?value:null
+ const issues=Array.isArray(d.errors)?d.errors.slice(0,8):[]
+ return <details aria-label="Validation details"><summary>Validation details</summary>
+  <p>{condition||'Detailed classification is unavailable.'}</p>
+  {typeof d.json_parsed==='boolean'&&<p>JSON parsed: {d.json_parsed?'yes':'no'}.</p>}
+  {typeof d.schema_valid==='boolean'&&<p>Schema valid: {d.schema_valid?'yes':'no'}.</p>}
+  {d.markdown_fence_prefix===true&&<p>Markdown fence prefix detected.</p>}
+  {count(d.unknown_reference_count)!==null&&<p>Unknown citation targets: {count(d.unknown_reference_count)}.</p>}
+  {count(d.source_reference_id_count)!==null&&<p>Source IDs used as citations: {count(d.source_reference_id_count)}.</p>}
+  {!!issues.length&&<ul>{issues.map((issue,i)=>{
+   if(!issue||typeof issue!=='object'||Array.isArray(issue))return null
+   const item=issue as Record<string,unknown>
+   const path=Array.isArray(item.path)?item.path.slice(0,5).map(part=>safeLabel(fieldLabels,part)||'unknown field').join(' → '):'field unavailable'
+   return <li key={i}>{path||'answer'}: {safeLabel(issueLabels,item.condition)||'validation failed'}.</li>
+  })}</ul>}
+  <p>No rejected answer, provider message or exception text is displayed. No retry was made.</p>
+ </details>
 }
 function EvidenceValue({value}:{value:unknown}) {
  if(value===null||value===undefined)return <span>Unknown</span>
@@ -95,6 +120,7 @@ export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
    {error&&<p role="alert">{error}</p>}
    {submitted&&(pending||result)&&<div className="research-context"><span>Submitted: {submitted.name} · revision {submitted.revision}</span><span>{submitted.question}</span>{stale&&<strong>Current context changed. This result belongs to the submitted snapshot.</strong>}</div>}
    {result&&!result.answer&&<p role="alert">{messages[result.status]||'Research could not produce a completed answer.'}{result.reason?` (${result.reason.replace(/_/g,' ')})`:''}</p>}
+   {result&&!result.answer&&['invalid_answer_contract','internal_assessment_failure'].includes(result.status)&&<ValidationDetails value={result.contract_diagnostics}/>}
    {result?.answer&&<article aria-label="Research answer">
     {result.answer.outcome!=='answered'&&<p>{result.answer.outcome==='unsupported_question'?'This question is outside selected-card research.':'Available evidence is insufficient for a full answer.'}</p>}
     {!!result.answer.facts.length&&<section><h3>Evidence-backed facts</h3>{statements(result.answer.facts)}</section>}

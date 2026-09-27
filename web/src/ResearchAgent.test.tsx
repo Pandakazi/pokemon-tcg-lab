@@ -64,3 +64,27 @@ test.each(['output_token_limit_reached','invalid_answer_contract','internal_asse
  expect(fetch.mock.calls.filter(([url])=>url==='/api/v1/agent/research')).toHaveLength(1)
 })
 
+test.each([
+ ['invalid_answer_contract',{condition:'json_syntax',json_parsed:false,schema_valid:false,markdown_fence_prefix:true},'JSON parsing failed.'],
+ ['invalid_answer_contract',{condition:'schema_validation',json_parsed:true,schema_valid:false,errors:[{path:['facts','<item>','evidence'],condition:'too_long'}]},'facts → item → evidence: above maximum count.'],
+ ['invalid_answer_contract',{condition:'invalid_reference',json_parsed:true,schema_valid:true,unknown_reference_count:2,source_reference_id_count:1},'Source IDs used as citations: 1.'],
+ ['internal_assessment_failure',{condition:'internal_assessment_error'},'Internal assessment failed; no model-quality judgment was made.'],
+])('exposes bounded %s details without retry',async(status,contract_diagnostics,expected)=>{
+ const fetch=setup(async()=>({status,answer:null,contract_diagnostics})),agent=await select()
+ fireEvent.click(agent.getByRole('button',{name:'Ask'}));await agent.findByRole('alert')
+ fireEvent.click(agent.getByText('Validation details'))
+ expect(agent.getByLabelText('Validation details')).toHaveTextContent(expected)
+ expect(agent.queryByRole('article')).not.toBeInTheDocument()
+ expect(fetch.mock.calls.filter(([url])=>url==='/api/v1/agent/research')).toHaveLength(1)
+})
+
+test('diagnostic viewer never renders arbitrary fields, values, paths, messages or raw output',async()=>{
+ setup(async()=>({status:'invalid_answer_contract',answer:null,contract_diagnostics:{condition:'PRIVATE_CONDITION',json_parsed:'PRIVATE_BOOL',unknown_reference_count:'PRIVATE_COUNT',message:'PRIVATE_PROVIDER_MESSAGE',raw:'PRIVATE_OUTPUT',reasoning:'PRIVATE_REASONING',errors:Array.from({length:12},()=>({path:['facts','PRIVATE_KEY'],condition:'PRIVATE_ERROR',input:'PRIVATE_INPUT',msg:'PRIVATE_EXCEPTION'}))}}))
+ const agent=await select();fireEvent.click(agent.getByRole('button',{name:'Ask'}));await agent.findByRole('alert')
+ fireEvent.click(agent.getByText('Validation details'))
+ const details=agent.getByLabelText('Validation details')
+ expect(details).not.toHaveTextContent('PRIVATE')
+ expect(within(details).getAllByRole('listitem')).toHaveLength(8)
+ expect(details).toHaveTextContent('facts → unknown field: validation failed.')
+})
+

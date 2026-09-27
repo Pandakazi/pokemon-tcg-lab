@@ -336,3 +336,39 @@ def test_reconstructed_budew_revision157_regression(setup,monkeypatch,case,expec
         assert result['answer'] is None and result['contract_diagnostics']['condition']==expected
         assert result['status']==('internal_assessment_failure' if case=='internal' else 'invalid_answer_contract')
     assert result['execution']['output_tokens']==50
+
+
+@pytest.mark.parametrize('name,printing,variant,question',[
+    ('Risky Ruins','me01-127','normal','what role does risky ruins play in this deck?'),
+    ('Budew','me02.5-221','holo','What kinds of decks would Budew be most useful against?'),
+    ('Crispin','sv08.5-171','holo','What would this deck lose if I removed Crispin?'),
+])
+@pytest.mark.parametrize('outcome',['valid','source_id','schema'])
+def test_failed_question_shapes_do_not_determine_contract_acceptance(setup,name,printing,variant,question,outcome):
+    # Synthetic local card fixtures, not reconstructed unknown model responses.
+    # These verify request/diagnostic plumbing, not strategic answer quality.
+    from tcg_lab.card_db import SQLiteCards
+    from pokelab.decks import deck_identity
+    sources,research=setup
+    cards=SQLiteCards(sources.paths['cards']);raw=cards.get('sm2-1')['card']
+    raw.update(id=printing,name=name,set={'id':printing.rsplit('-',1)[0]},localId=printing.rsplit('-',1)[1],variants={'normal':True,'holo':True})
+    cards.put(raw);record=research.collection.catalog()[0][printing]
+    with sqlite3.connect(sources.paths['workspace']) as db:
+        document=json.loads(db.execute('SELECT document FROM workspace WHERE id=1').fetchone()[0])
+        document['entries']=[dict(identity=deck_identity(record),quantity=2,name=name,category=raw['category'],allocations=[dict(printing_id=printing,variant=variant,quantity=2)])]
+        db.execute('UPDATE workspace SET revision=157,document=?',(json.dumps(document),))
+    before={k:p.read_bytes() for k,p in sources.paths.items()};calls=[]
+    def reply(e):
+        calls.append(1)
+        assert e['packet']['request']['question']==question
+        assert e['active_deck']['revision']==157
+        a=good(e)
+        if outcome=='source_id': a['facts'][0]['evidence']=[e['packet']['references'][0]['id']]
+        if outcome=='schema': del a['facts']
+        return response(a)
+    result=service(sources,reply).run(agent.ResearchRequest(question=question,printing=printing,variant=variant,revision=157))
+    assert len(calls)==1 and before=={k:p.read_bytes() for k,p in sources.paths.items()}
+    if outcome=='valid': assert result['status']=='answered'
+    else:
+        assert result['status']=='invalid_answer_contract' and result['answer'] is None
+        assert result['contract_diagnostics']['condition']==('invalid_reference' if outcome=='source_id' else 'schema_validation')
