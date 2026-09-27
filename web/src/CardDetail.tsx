@@ -6,11 +6,13 @@ import { QuantityControls } from './QuantityControls'
 import { Variations } from './Variations'
 import { CompetitiveDashboard } from './Competitive'
 import { useBuilder, ReadOnlyOwnership, DeckControls } from './DeckBuilder'
+import { useResearchAgent } from './ResearchAgent'
 
 export function CardDetail() {
  const {printingId=''}=useParams()
  const location=useLocation()
  const builder=useBuilder()
+ const agent=useResearchAgent()
  const [params]=useSearchParams(),variant=params.get('variant')||undefined
  const [variationsOpen,setVariationsOpen]=useState(false),[revision,setRevision]=useState(0)
  const [data,setData]=useState<Detail|null>(null), [error,setError]=useState(''), [attempt,setAttempt]=useState(0)
@@ -35,6 +37,7 @@ export function CardDetail() {
     {card.ownership && <button className="detail-variations-toggle" aria-expanded={variationsOpen} aria-controls="detail-variations" onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>}
    </div>
     <section><p className="source-note">CARD DETAILS · EXACT PRINTING</p><h1 ref={title} tabIndex={-1}>{card.name}</h1>
+     <button onClick={()=>agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant})}>Ask about this card</button>
      <p>{classification(card)}</p><dl>
       <dt>Printing ID</dt><dd><code>{card.id}</code></dd>
       <dt>Set</dt><dd>{card.set.name || card.set.id} ({card.set.id}{card.set.code?` / ${card.set.code}`:''})</dd>

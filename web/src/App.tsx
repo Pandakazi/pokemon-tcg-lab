@@ -9,6 +9,7 @@ import { CollectionPage } from './CollectionPage'
 import { CompetitiveProvider, CompetitiveWindows } from './Competitive'
 import { DeckProvider, DeckTray, useBuilder } from './DeckBuilder'
 import { ArchetypeResearch, TournamentDeckResearch } from './ResearchPages'
+import { ResearchAgentProvider, ResearchPanel, useResearchAgent } from './ResearchAgent'
 
 type CategoryMemory = {current:Record<string,string>;filterOpen?:boolean;scroll?:Record<string,number>}
 function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
@@ -100,6 +101,8 @@ function ApplicationWorkspace() {
  const [builderView,setBuilderView]=useState<'gallery'|'list'>('gallery')
  const builder=useBuilder()
  const panelOpen=builder?builderAgentOpen:agentOpen
+ const {selected}=useResearchAgent()
+ useEffect(()=>{if(selected){setAgentOpen(true);setBuilderAgentOpen(true)}},[selected])
  const navigate=useNavigate(), location=useLocation()
  const lastLibrary=useRef('/'),lastCollection=useRef('/collection'),lastBuilder=useRef('/deck-builder')
  useEffect(()=>{if(location.pathname==='/')lastLibrary.current='/'+location.search;if(location.pathname==='/collection')lastCollection.current='/collection'+location.search;if(location.pathname==='/deck-builder')lastBuilder.current='/deck-builder'+location.search},[location])
@@ -117,12 +120,9 @@ function ApplicationWorkspace() {
    <Route path="*" element={<main className="gallery-scroll"><h1>Page not found</h1><Link to="/">Open library</Link></main>}/>
   </Routes>
   <DeckTray/>
-  <aside className={`agent-panel ${panelOpen?'':'collapsed'}`} aria-label="PokéLab Agent">
-   <button aria-label="Toggle Agent panel" aria-expanded={panelOpen} onClick={()=>builder?setBuilderAgentOpen(v=>!v):setAgentOpen(v=>!v)}>{panelOpen?'PokéLab Agent  ›':'‹'}</button>
-   {panelOpen && <p>The Agent workspace is preserved for a later slice. No AI provider is connected.</p>}
-  </aside></div>
+  <ResearchPanel open={panelOpen} toggle={()=>builder?setBuilderAgentOpen(v=>!v):setAgentOpen(v=>!v)}/></div>
  </div>
 }
-export function Application() {return <DeckProvider><ApplicationWorkspace/></DeckProvider>}
+export function Application() {return <DeckProvider><ResearchAgentProvider><ApplicationWorkspace/></ResearchAgentProvider></DeckProvider>}
 // Query controls must update synchronously with the URL, not in a delayed transition.
 export default function App() {return <BrowserRouter useTransitions={false}><CompetitiveProvider><Application/></CompetitiveProvider></BrowserRouter>}

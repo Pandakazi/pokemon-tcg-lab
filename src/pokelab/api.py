@@ -97,6 +97,52 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
         raise ValueError('Deck storage must be separate from competitive storage')
     research = Research(competitive,collection)
 
+    # Product research uses the certified provider boundary, never the benchmark
+    # harness or legacy desktop Agent. Source adapters import lazily to avoid the
+    # existing ReadOnlyCards composition cycle.
+    from .agent_research import ResearchService, ResearchRequest, DEADLINE_SECONDS
+    agent = ResearchService(dict(cards=cards.path, collection=collection.path,
+        workspace=decks.path, competitive=competitive.path), competitive.format_start.isoformat() if competitive.format_start else None)
+    app.state.research_agent = agent
+
+    @app.get('/api/v1/agent/status')
+    def agent_status():
+        return app.state.research_agent.status()
+
+    from starlette.requests import Request as HttpRequest
+
+    @app.post('/api/v1/agent/research')
+    async def agent_research(request: HttpRequest):
+        import asyncio
+        from urllib.parse import urlsplit
+        from pydantic import ValidationError
+        # Local development uses a same-host Vite proxy. Never accept a remote
+        # web origin or simple form submission that could trigger paid traffic.
+        origin = request.headers.get('origin')
+        if origin and (urlsplit(origin).hostname not in ('localhost', '127.0.0.1', '[::1]', '::1')
+                       or urlsplit(origin).hostname != request.url.hostname):
+            raise HTTPException(403, detail='Research requires a same-host local origin.')
+        if request.headers.get('content-type', '').split(';')[0] != 'application/json':
+            raise HTTPException(415, detail='JSON required.')
+        raw = b''
+        async for chunk in request.stream():
+            raw += chunk
+            if len(raw) > 8192:
+                raise HTTPException(413, detail='Research request too large.')
+        try:
+            query = ResearchRequest.model_validate_json(raw)
+            if not query.question.strip():
+                raise ValueError()
+        except (ValidationError, ValueError):
+            # Do not echo invalid user input into framework validation responses.
+            raise HTTPException(422, detail='Invalid research context or question.') from None
+        try:
+            # A timed-out worker retains its single-flight lock until transport
+            # exits; timeout must never permit overlapping/retried inference.
+            return await asyncio.wait_for(asyncio.to_thread(app.state.research_agent.run, query), DEADLINE_SECONDS)
+        except TimeoutError:
+            return dict(status='request_timeout', answer=None)
+
     def research_read(operation):
         try:
             return operation()
