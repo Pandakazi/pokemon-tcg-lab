@@ -120,7 +120,7 @@ def live_gate(selection):
     return None
 
 
-def complete(selection, system, user, *, transport=None, max_output=1200):
+def complete(selection, system, user, *, transport=None, max_output=1200, response_schema=None):
     """Mocks must be httpx.MockTransport. All real sockets require the live gate."""
     selection=Selection.model_validate(selection.model_dump())
     fake=isinstance(transport,httpx.MockTransport)
@@ -148,6 +148,10 @@ def complete(selection, system, user, *, transport=None, max_output=1200):
         payload['max_completion_tokens' if selection.provider=='openai' else 'max_tokens']=max_output
     if selection.provider=='openrouter':
         payload['provider']={'allow_fallbacks':False,'max_price':{'prompt':0,'completion':0,'request':0}}
+    if selection.provider=='gemini' and response_schema is not None:
+        # Opt-in product schema; qualification and all other adapters stay unchanged.
+        payload['response_format']={'type':'json_schema','json_schema':{
+            'name':'pokelab_research_answer','strict':True,'schema':response_schema}}
     # Prevent HTTP debug logging from emitting headers/body. No raw response/request is returned.
     previous=logging.root.manager.disable
     logging.disable(logging.CRITICAL)

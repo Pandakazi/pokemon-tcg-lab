@@ -577,12 +577,28 @@ def test_gemini_corrected_wire_contract_and_frozen_input():
         assert str(request.url)=='https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
         data=json.loads(request.content)
         assert data['model']=='gemini-3.5-flash-lite'
+        assert 'response_format' not in data
         system,user,hashed=q.inputs(packet)
         assert hashed=='389165b46a93ce34ea62853b5d49beeaf7c45c4875a16bbcfb8fb46631719432'
         assert data['messages']==[{'role':'system','content':system},{'role':'user','content':user}]
         return delegate.handle_request(request)
     report=q.run([selection()],transport_factory=lambda s:httpx.MockTransport(respond))
     assert report['records'][0]['status']=='ok'
+
+
+@pytest.mark.parametrize('provider',[name for name in p.PROVIDERS if name!='gemini'])
+def test_research_schema_does_not_change_other_provider_requests(provider):
+    from pokelab.agent_research import Answer
+    bodies=[]
+    def respond(request):
+        bodies.append(json.loads(request.content))
+        if provider=='anthropic':
+            return httpx.Response(200,json={'content':[{'type':'text','text':'answer'}],'stop_reason':'end_turn'})
+        return httpx.Response(200,json=wire())
+    for schema in (None,Answer.model_json_schema()):
+        result=p.complete(selection(provider),'system','user',transport=httpx.MockTransport(respond),response_schema=schema)
+        assert result.status=='ok'
+    assert len(bodies)==2 and bodies[0]==bodies[1] and 'response_format' not in bodies[0]
 
 
 def test_404_not_a_model_qualification_failure():

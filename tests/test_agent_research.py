@@ -89,6 +89,49 @@ def test_product_is_provider_neutral(setup,provider,model):
     assert service(setup[0],provider=provider,model=model).run(query())['status']=='answered'
 
 
+@pytest.mark.parametrize('case,expected',[
+    ('valid','answered'),('malformed','json_syntax'),('fenced','json_syntax'),
+    ('schema','schema_validation'),('citation','invalid_reference'),
+    ('truncated','output_token_limit_reached'),('secret','provider_failure'),
+])
+def test_gemini_structured_research_still_validates_locally(setup,monkeypatch,case,expected):
+    sources,_=setup;calls=[]
+    before={k:p.read_bytes() for k,p in sources.paths.items()}
+    monkeypatch.setenv('POKELAB_GEMINI_API_KEY','private-test-credential')
+    def handle(request):
+        calls.append(1);body=json.loads(request.content)
+        assert str(request.url)=='https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+        assert 'authorization' not in request.headers
+        assert body['model']=='gemini-3.5-flash-lite' and body['max_tokens']==4096
+        assert body['response_format']=={'type':'json_schema','json_schema':{
+            'name':'pokelab_research_answer','strict':True,'schema':agent.Answer.model_json_schema()}}
+        schema=body['response_format']['json_schema']['schema']
+        assert set(schema['required'])=={'version','outcome','facts','interpretation','limitations'}
+        assert schema['additionalProperties'] is False
+        assert schema['$defs']['Statement']['properties']['evidence']['maxItems']==12
+        assert body['messages'][0]['content']==agent.SYSTEM
+        a=good(json.loads(body['messages'][1]['content']))
+        if case=='schema': del a['facts']
+        if case=='citation': a['facts'][0]['evidence']=['ref-not-an-evidence-id']
+        text=json.dumps(a)
+        if case=='malformed': text='PRIVATE_REJECTED_PROSE'
+        if case=='fenced': text='```json\n'+text+'\n```'
+        if case=='secret': text='private-test-credential'
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},
+            'finish_reason':'length' if case=='truncated' else 'stop'}],
+            'usage':{'prompt_tokens':100,'completion_tokens':50}})
+    research=agent.ResearchService(sources.paths,transport=httpx.MockTransport(handle),
+        selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'))
+    result=research.run(query())
+    assert calls==[1] and before=={k:p.read_bytes() for k,p in sources.paths.items()}
+    assert 'PRIVATE_REJECTED_PROSE' not in json.dumps(result) and 'private-test-credential' not in json.dumps(result)
+    if expected in ('json_syntax','schema_validation','invalid_reference'):
+        assert result['status']=='invalid_answer_contract'
+        assert result['contract_diagnostics']['condition']==expected
+    else: assert result['status']==expected
+    assert (result['answer'] is not None)==(case=='valid')
+
+
 @pytest.mark.parametrize('change,expected',[
     ({'revision':8},'context_changed'),({'printing':'sm2-2'},'selected_card_not_in_active_deck'),
     ({'printing':'missing-card'},'context_unavailable')])

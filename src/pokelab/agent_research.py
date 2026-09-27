@@ -324,7 +324,8 @@ class ResearchService:
             return dict(status=exc.reason, answer=None)
         if providers.secret_present(canonical(envelope)):
             return dict(status='secret_input_rejected', answer=None)
-        result = providers.complete(selection, SYSTEM, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT)
+        result = providers.complete(selection, SYSTEM, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT,
+            response_schema=Answer.model_json_schema() if selection.provider=='gemini' else None)
         # Do not expose arbitrary provider model labels or raw text in metadata.
         execution = {k: getattr(result, k) for k in ('latency_ms', 'input_tokens', 'output_tokens',
             'reasoning_tokens', 'estimated_cost_usd', 'actual_cost_usd')}
