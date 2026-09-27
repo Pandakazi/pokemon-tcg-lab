@@ -6,7 +6,7 @@ import os
 from threading import Lock
 from typing import Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 from .agent_context_models import Frozen, Packet, FieldValue
 from . import agent_providers as providers
 from .rules.models import digest
@@ -18,12 +18,21 @@ FLIGHT = Lock()
 
 
 class ResearchRequest(Frozen):
-    scope: Literal['selected_card_research'] = 'selected_card_research'
+    scope: Literal['selected_card_research', 'active_deck_research'] = 'selected_card_research'
     question: str = Field(min_length=1, max_length=2000)
-    printing: str = Field(min_length=1, max_length=100)
+    printing: str | None = Field(None, min_length=1, max_length=100)
+    archetype: str | None = Field(None, min_length=1, max_length=100)
     variant: str | None = Field(None, min_length=1, max_length=100)
     revision: int = Field(ge=0, strict=True)
     window: Literal['7', '30', '90', 'format'] = '30'
+
+    @model_validator(mode='after')
+    def context_shape(self):
+        if (self.scope=='selected_card_research') != (self.printing is not None):
+            raise ValueError('Scope and selected printing must agree')
+        if self.printing is None and self.variant is not None:
+            raise ValueError('Finish requires a selected printing')
+        return self
 
 
 class DeckEntry(Frozen):
@@ -132,6 +141,60 @@ def canonical(value):
     if hasattr(value, 'model_dump'):
         value = value.model_dump(mode='json')
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(',', ':'))
+
+
+# Reuse the entire answer/citation contract; only expand the product evidence scope.
+DECK_SYSTEM = SYSTEM.replace('selected-card research assistant', 'active-deck research assistant').replace(
+    'Never propose replacements, compare\nwhole decks/composites, execute actions, or answer unrelated questions.',
+    'Never propose replacements, deck edits, optimization actions, or answer unrelated questions.') + '''
+The packet is deterministic deck research, not a qualification benchmark.
+Use its computed statistics, classifications and typical bands; do not recalculate them.
+FieldValue.value strings encode JSON source/derived values. active-deck contains
+the complete functional composition. The selected comparison population is explicit;
+it does not prove the active deck belongs to that archetype. Do not accept a card,
+archetype or mechanical premise merely because the question states it.
+Decklist prevalence does not establish matchup performance, piloting instructions,
+creator intent or mechanical synergy. Printed mechanics, empirical observations
+and derived deviations are independent evidence. Missing reviewed interactions
+remain unavailable. Interpretations must remain plausible, cited and bounded.
+'''
+
+
+def make_deck_envelope(request, sources, today=None):
+    from .deck_research import build_profile, select_evidence, FUTURE_ENVELOPE_BYTES, Packet as DeckPacket
+    from .agent_context_sources import Unavailable
+    from .agent_qualification_config import INPUT_BYTES
+    try:
+        profile=build_profile(sources,revision=request.revision,as_of=today or date.today(),
+            archetype=request.archetype,window=request.window)
+        packet=select_evidence(profile,request.question)
+    except Unavailable as exc:
+        raise ResearchUnavailable('context_changed' if str(exc)=='context_changed' else 'context_unavailable') from None
+    except (KeyError, ValueError):
+        raise ResearchUnavailable('context_unavailable') from None
+    requires_comparison=bool(set(packet.intent.categories)&{
+        'ARCHETYPE_COMPARISON','ABSENT_CARDS','PRESENT_DEVIATIONS','CARD_QUANTITY','COMPETITIVE_CONTEXT'})
+    if requires_comparison and (not profile.population.archetype or not profile.population.eligible_lists):
+        raise ResearchUnavailable('comparison_unavailable')
+    active=dict(id='active-deck',deck_id=profile.deck_id,name=profile.name,revision=profile.revision,
+        dirty=profile.dirty,total=profile.total,references=[r.id for r in packet.references if r.source=='PokéLab workspace'],
+        entries=[dict(identity=c.identity,name=c.name,quantity=c.quantity,category=c.category) for c in profile.cards if c.quantity])
+    # This wrapper reuses the approved Pass 1 packet without converting/recalculating it.
+    class DeckEnvelope(Frozen):
+        version: Literal['pokelab-deck-research-envelope-v1'] = 'pokelab-deck-research-envelope-v1'
+        packet: DeckPacket
+        active_deck: dict
+        omitted: tuple[str,...] = ()
+        content_hash: str
+    envelope=DeckEnvelope(packet=packet,active_deck=active,content_hash='')
+    envelope=envelope.model_copy(update={'content_hash':digest(envelope.model_dump(mode='json',exclude={'content_hash'}))})
+    if len(canonical(envelope).encode())>FUTURE_ENVELOPE_BYTES or len((DECK_SYSTEM+canonical(envelope)).encode())>INPUT_BYTES:
+        raise ResearchUnavailable('budget_exceeded')
+    snapshot=profile.population.model_dump(mode='json',exclude={'references'})
+    snapshot.update(packet_bytes=packet.serialized_bytes,packet_hash=packet.content_hash,profile_hash=profile.content_hash,
+        source_reference_count=len(profile.population.references),
+        source_reference_sample=[r.model_dump(mode='json') for r in profile.population.references[:10]])
+    return envelope,snapshot
 
 
 class ResearchUnavailable(Exception):
@@ -299,9 +362,21 @@ class ResearchService:
 
     def status(self):
         selection, reason = self.configured()
+        archetypes=[]
+        try:
+            from .agent_context_sources import Sources
+            from .research_identity import archetype_key
+            from .limitless_main import SOURCE
+            with Sources(**self.paths,format_start=self.format_start).snapshot() as (dbs,errors):
+                if 'competitive' not in errors:
+                    rows=dbs['competitive'].execute("SELECT DISTINCT json_extract(raw,'$.archetype_id') id,json_extract(raw,'$.archetype_name') name FROM competitive_decks WHERE source=? ORDER BY name,id",(SOURCE,))
+                    archetypes=[dict(id=archetype_key(r['id']),name=r['name']) for r in rows if r['id'] and r['id']!='unknown']
+        except Exception: pass
+        if providers.secret_present(canonical(archetypes)): archetypes=[]
         return dict(version='pokelab-research-v1', available=reason is None, reason=reason,
             provider=selection.provider if selection else None, model=selection.model if selection else None,
-            max_output_tokens=MAX_OUTPUT, scope='selected_card_research', read_only=True)
+            max_output_tokens=MAX_OUTPUT, scope='selected_card_research',
+            scopes=['selected_card_research','active_deck_research'],archetypes=archetypes[:500],read_only=True)
 
     def run(self, request):
         if not FLIGHT.acquire(blocking=False):
@@ -318,13 +393,16 @@ class ResearchService:
         if reason:
             return dict(status='unavailable', reason=reason, answer=None)
         from .agent_context_sources import Sources
+        snapshot=None
         try:
-            envelope = make_envelope(request, Sources(**self.paths, format_start=self.format_start))
+            sources=Sources(**self.paths, format_start=self.format_start)
+            if request.scope=='active_deck_research': envelope,snapshot=make_deck_envelope(request,sources)
+            else: envelope = make_envelope(request, sources)
         except ResearchUnavailable as exc:
             return dict(status=exc.reason, answer=None)
-        if providers.secret_present(canonical(envelope)):
+        if providers.secret_present(canonical(envelope)+canonical(snapshot)):
             return dict(status='secret_input_rejected', answer=None)
-        result = providers.complete(selection, SYSTEM, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT,
+        result = providers.complete(selection, DECK_SYSTEM if snapshot is not None else SYSTEM, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT,
             response_schema=Answer.model_json_schema() if selection.provider=='gemini' else None)
         # Do not expose arbitrary provider model labels or raw text in metadata.
         execution = {k: getattr(result, k) for k in ('latency_ms', 'input_tokens', 'output_tokens',
@@ -332,6 +410,7 @@ class ResearchService:
         execution.update(provider=selection.provider, model=selection.model,
             finish_reason=result.finish_reason if result.finish_reason in ('stop', 'end_turn', 'length', 'max_tokens') else None)
         response = dict(answer=None, execution=execution, envelope=envelope.model_dump(mode='json'))
+        if snapshot is not None: response['snapshot']=snapshot
         if result.finish_reason in ('length', 'max_tokens'):
             return dict(response, status='output_token_limit_reached')
         if result.status != 'ok':

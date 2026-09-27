@@ -25,6 +25,11 @@ export function CardDetail() {
  },[printingId,variant,attempt])
  useEffect(()=>{if(data)title.current?.focus()},[data?.card.id,data?.card.ownership?.variant])
  const card=data?.card.id===printingId?data.card:undefined
+ useEffect(()=>{if(builder)agent.select(null)},[printingId,variant,location.key])
+ useEffect(()=>{
+  if(card&&builder?.data?.deck.entries.some(e=>e.identity===card.deck_identity))
+   agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant})
+ },[card?.id,card?.ownership?.variant,!!builder?.data,location.key])
  function changed(id:string,owned:Ownership) {setData(old=>old?{...old,card:withOwnership(old.card,id,owned)}:old)}
  return <main className="detail-page">
   <Link to={location.state?.library || (builder?'/deck-builder':'/')} state={location.state?.libraryState}>← Back to {/\/(archetypes|tournament-decks)\//.test(location.state?.library||'')?'research':builder?'Deck Builder':'library'}</Link>
@@ -37,7 +42,7 @@ export function CardDetail() {
     {card.ownership && <button className="detail-variations-toggle" aria-expanded={variationsOpen} aria-controls="detail-variations" onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>}
    </div>
     <section><p className="source-note">CARD DETAILS · EXACT PRINTING</p><h1 ref={title} tabIndex={-1}>{card.name}</h1>
-     <button onClick={()=>agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant})}>Ask about this card</button>
+     <button onClick={()=>{agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant});document.getElementById('research-question')?.focus()}}>Ask about this card</button>
      <p>{classification(card)}</p><dl>
       <dt>Printing ID</dt><dd><code>{card.id}</code></dd>
       <dt>Set</dt><dd>{card.set.name || card.set.id} ({card.set.id}{card.set.code?` / ${card.set.code}`:''})</dd>

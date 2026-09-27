@@ -96,7 +96,7 @@ function ApplicationWorkspace() {
  const categoryMemory=useRef<Record<string,string>>({})
  const builderMemory=useRef<Record<string,string>>({})
  const [agentOpen,setAgentOpen]=useState(true)
- const [builderAgentOpen,setBuilderAgentOpen]=useState(false)
+ const [builderAgentOpen,setBuilderAgentOpen]=useState(true)
  const [view,setView]=useState<'gallery'|'list'>('gallery')
  const [builderView,setBuilderView]=useState<'gallery'|'list'>('gallery')
  const builder=useBuilder()

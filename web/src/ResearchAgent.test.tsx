@@ -4,7 +4,7 @@ import {test,expect,vi} from 'vitest'
 import {Application} from './App'
 import {CompetitiveProvider} from './Competitive'
 
-function setup(reply:()=>Promise<unknown>,holdSave?:()=>Promise<void>) {
+function setup(reply:()=>Promise<unknown>,holdSave?:()=>Promise<void>,path='/deck-builder/cards/test-1') {
  const card={id:'test-1',name:'Example Card',deck_identity:'functional-1',category:'Pokemon',localId:'1',set:{id:'test'},legal:{standard:true},legality_provenance:{source:'TCGdex',checked_at:'today'},ownership:{functional_id:'functional-1',library_id:'library-1',variant:'normal',quantity:2,functional_total:2,library_total:2}}
  let revision=7
  const fetch=vi.fn(async(url:string,options?:RequestInit)=>{
@@ -19,7 +19,7 @@ function setup(reply:()=>Promise<unknown>,holdSave?:()=>Promise<void>) {
   return {ok:true,json:async()=>result}
  })
  vi.stubGlobal('fetch',fetch)
- render(<MemoryRouter initialEntries={['/deck-builder/cards/test-1']}><CompetitiveProvider><Application/></CompetitiveProvider></MemoryRouter>)
+ render(<MemoryRouter initialEntries={[path]}><CompetitiveProvider><Application/></CompetitiveProvider></MemoryRouter>)
  return fetch
 }
 async function select() {
@@ -30,6 +30,18 @@ async function select() {
  return agent
 }
 const answered={status:'answered',answer:{outcome:'answered',facts:[{text:'A supported fact.',evidence:['active-deck']}],interpretation:[],limitations:['Intent is unknown.']}}
+
+test('Deck Builder initially exposes Active Deck research without a selected card',async()=>{
+ const fetch=setup(async()=>answered,undefined,'/deck-builder')
+ const agent=within(screen.getByRole('complementary',{name:'PokéLab Agent'}))
+ expect(agent.getByText('Context: Active Deck')).toBeVisible()
+ await agent.findByText(/Configured:/)
+ fireEvent.change(agent.getByRole('textbox'),{target:{value:'What is this deck trying to do?'}})
+ await waitFor(()=>expect(agent.getByRole('button',{name:'Ask'})).toBeEnabled())
+ expect(fetch.mock.calls.filter(([url])=>url==='/api/v1/agent/research')).toHaveLength(0)
+ fireEvent.click(agent.getByRole('button',{name:'Ask'}));await agent.findByRole('article')
+ expect(JSON.parse(fetch.mock.calls.find(([url])=>url==='/api/v1/agent/research')![1]!.body as string).scope).toBe('active_deck_research')
+})
 
 test('one request captures acknowledged context and repeated clicks do not queue inference',async()=>{
  let release!:(v:unknown)=>void
@@ -50,10 +62,18 @@ test('pending deck save disables Ask and submission uses the new acknowledged re
  fireEvent.click(within(document.querySelector('.detail-art') as HTMLElement).getByRole('button',{name:'Add Example Card to deck'}))
  expect(agent.getByRole('button',{name:'Ask'})).toBeDisabled()
  await waitFor(()=>expect(release).toBeTypeOf('function'));release()
+ await waitFor(()=>expect(agent.getByRole('textbox')).toHaveValue(''))
+ fireEvent.change(agent.getByRole('textbox'),{target:{value:'What role could this play now?'}})
  await waitFor(()=>expect(agent.getByRole('button',{name:'Ask'})).toBeEnabled())
  fireEvent.click(agent.getByRole('button',{name:'Ask'}))
  await agent.findByRole('article')
  expect(JSON.parse(fetch.mock.calls.find(([url])=>url==='/api/v1/agent/research')![1]!.body as string).revision).toBe(8)
+})
+
+test('Card Detail establishes selected context without the convenience action',async()=>{
+ const fetch=setup(async()=>answered)
+ await screen.findByText('Context: Active Deck › Example Card')
+ expect(fetch.mock.calls.filter(([url])=>url==='/api/v1/agent/research')).toHaveLength(0)
 })
 
 test.each(['output_token_limit_reached','invalid_answer_contract','internal_assessment_failure','provider_failure'])('%s displays no completed answer and makes no automatic retry',async status=>{
