@@ -1,0 +1,2549 @@
+{
+  "version": "pokelab-mechanics-discovery-v1",
+  "total_cache_rows": 23736,
+  "selected_printings": 3345,
+  "functional_identities": 2092,
+  "category_counts": {
+    "Energy": 316,
+    "Pokemon": 2584,
+    "Trainer": 445
+  },
+  "regulation_counts": {
+    "G": 1,
+    "H": 1303,
+    "I": 1278,
+    "J": 469,
+    "None": 294
+  },
+  "last_sync": {
+    "status": "complete",
+    "started_at": "2026-09-23T02:34:34.217917+00:00",
+    "catalog": 23736,
+    "updated": 23736,
+    "unchanged": 0,
+    "skipped": 0,
+    "failed": 0,
+    "missing": 0,
+    "retained_unlisted": 0,
+    "finished_at": "2026-09-23T02:39:38.770017+00:00"
+  },
+  "source_failures": [],
+  "exclusions": {
+    "tcg:standard=0": 17911,
+    "pocket:standard=0": 2480
+  },
+  "checked_at_range": [
+    "2026-09-23T02:34:37.564096+00:00",
+    "2026-09-23T02:39:18.155629+00:00"
+  ],
+  "corpus_hash": "bd069ccc10964e13c127f97ab318cca018933ca18f1f3b3e5c18c94643d08581",
+  "taxonomy_hash": "c6e80086f7e93ee901f508075496a139e6459ea102922825130bf408baea3fa0",
+  "coverage": {
+    "components": 5180,
+    "usable": 4886,
+    "text_bearing": 3646,
+    "atom_represented": 4834,
+    "atom_percent": 98.94,
+    "text_action_represented": 3500,
+    "taxonomy_mapped": 4798,
+    "taxonomy_percent": 98.2,
+    "partial": 3565,
+    "unclassified": 52,
+    "taxonomy_unclassified": 88,
+    "simple": 1269,
+    "ambiguous": 3249,
+    "missing": 294,
+    "source_issue_components": 2185
+  },
+  "coverage_by_component": {
+    "ability": {
+      "components": 589,
+      "usable": 589,
+      "text_bearing": 589,
+      "atom_represented": 558,
+      "atom_percent": 94.74,
+      "text_action_represented": 558,
+      "taxonomy_mapped": 539,
+      "taxonomy_percent": 91.51,
+      "partial": 558,
+      "unclassified": 31,
+      "taxonomy_unclassified": 50,
+      "simple": 0,
+      "ambiguous": 534,
+      "missing": 0,
+      "source_issue_components": 0
+    },
+    "attack": {
+      "components": 3830,
+      "usable": 3830,
+      "text_bearing": 2590,
+      "atom_represented": 3812,
+      "atom_percent": 99.53,
+      "text_action_represented": 2478,
+      "taxonomy_mapped": 3801,
+      "taxonomy_percent": 99.24,
+      "partial": 2548,
+      "unclassified": 18,
+      "taxonomy_unclassified": 29,
+      "simple": 1264,
+      "ambiguous": 2326,
+      "missing": 0,
+      "source_issue_components": 1891
+    },
+    "energy_effect": {
+      "components": 316,
+      "usable": 22,
+      "text_bearing": 22,
+      "atom_represented": 22,
+      "atom_percent": 100.0,
+      "text_action_represented": 22,
+      "taxonomy_mapped": 22,
+      "taxonomy_percent": 100.0,
+      "partial": 22,
+      "unclassified": 0,
+      "taxonomy_unclassified": 0,
+      "simple": 0,
+      "ambiguous": 22,
+      "missing": 294,
+      "source_issue_components": 294
+    },
+    "trainer_effect": {
+      "components": 445,
+      "usable": 445,
+      "text_bearing": 445,
+      "atom_represented": 442,
+      "atom_percent": 99.33,
+      "text_action_represented": 442,
+      "taxonomy_mapped": 436,
+      "taxonomy_percent": 97.98,
+      "partial": 437,
+      "unclassified": 3,
+      "taxonomy_unclassified": 9,
+      "simple": 5,
+      "ambiguous": 367,
+      "missing": 0,
+      "source_issue_components": 0
+    }
+  },
+  "cards_with_text": 2705,
+  "cards_with_source_issues": 1780,
+  "unique_normalized_texts": 1361,
+  "duplicate_effect_ids": 0,
+  "text_audit": {
+    "lost_zone": {
+      "effect_count": 0,
+      "example_printings": [],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "alternate_win_loss": {
+      "effect_count": 0,
+      "example_printings": [],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "search_denial": {
+      "effect_count": 0,
+      "example_printings": [],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "technical_machine": {
+      "effect_count": 1,
+      "example_printings": [
+        "sv10-181"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "rule_box": {
+      "effect_count": 22,
+      "example_printings": [
+        "me02.5-198",
+        "me03-081",
+        "me03-113",
+        "me05-077",
+        "me05-078"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "future": {
+      "effect_count": 18,
+      "example_printings": [
+        "sv05-062",
+        "sv05-080",
+        "sv05-081",
+        "sv05-118",
+        "sv05-121"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "ancient": {
+      "effect_count": 11,
+      "example_printings": [
+        "sv05-077",
+        "sv05-097",
+        "sv05-109",
+        "sv05-119",
+        "sv05-141"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "tera": {
+      "effect_count": 30,
+      "example_printings": [
+        "me02.5-097",
+        "me02.5-178",
+        "me02.5-189",
+        "me02.5-197",
+        "me02.5-238"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "team_rocket": {
+      "effect_count": 50,
+      "example_printings": [
+        "me02.5-019",
+        "me02.5-079",
+        "me02.5-127",
+        "me02.5-162",
+        "me02.5-201"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "bench_capacity": {
+      "effect_count": 22,
+      "example_printings": [
+        "me02.5-022",
+        "me02.5-038",
+        "me02.5-294",
+        "me04-076",
+        "me04-106"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "weakness_resistance": {
+      "effect_count": 383,
+      "example_printings": [
+        "me01-005",
+        "me01-024",
+        "me01-027",
+        "me01-036",
+        "me01-043"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "special_conditions": {
+      "effect_count": 323,
+      "example_printings": [
+        "me01-006",
+        "me01-015",
+        "me01-022",
+        "me01-024",
+        "me01-025"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "prize_interaction": {
+      "effect_count": 108,
+      "example_printings": [
+        "me01-061",
+        "me01-093",
+        "me01-094",
+        "me01-113",
+        "me01-119"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "stadium": {
+      "effect_count": 37,
+      "example_printings": [
+        "me01-012",
+        "me01-018",
+        "me01-031",
+        "me02-025",
+        "me02-069"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "tool": {
+      "effect_count": 56,
+      "example_printings": [
+        "me01-102",
+        "me01-151",
+        "me02-029",
+        "me02-072",
+        "me02-086"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "opponent_prize": {
+      "effect_count": 56,
+      "example_printings": [
+        "me01-061",
+        "me01-113",
+        "me01-120",
+        "me01-144",
+        "me01-165"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "attack_copy": {
+      "effect_count": 47,
+      "example_printings": [
+        "me01-020",
+        "me01-113",
+        "me01-165",
+        "me01-183",
+        "me02.5-075"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "counter_prevention": {
+      "effect_count": 2,
+      "example_printings": [
+        "me02-085",
+        "me02-116"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "hand_lock": {
+      "effect_count": 27,
+      "example_printings": [
+        "me01-031",
+        "me02.5-016",
+        "me02.5-221",
+        "me04-028",
+        "me04-039"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    },
+    "stall_lock": {
+      "effect_count": 171,
+      "example_printings": [
+        "me01-001",
+        "me01-031",
+        "me01-088",
+        "me01-133",
+        "me02-050"
+      ],
+      "interpretation": "text occurrence only, not a classified mechanic"
+    }
+  },
+  "rare_atom_sequences": [
+    {
+      "sequence": "attach > draw",
+      "functional_identities": 2,
+      "printings": [
+        "sv06-025",
+        "sv06-190",
+        "sv06-211",
+        "sv06-221",
+        "sv08.5-012",
+        "sv08.5-145",
+        "sv08.5-177",
+        "svp-166"
+      ]
+    },
+    {
+      "sequence": "attach > place > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me01-051"
+      ]
+    },
+    {
+      "sequence": "attack_cost_modifier > damage_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-148"
+      ]
+    },
+    {
+      "sequence": "attack_cost_modifier > retreat_modifier > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-016"
+      ]
+    },
+    {
+      "sequence": "bench_capacity > discard > discard > discard",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-131",
+        "sv07-174",
+        "sv08.5-094"
+      ]
+    },
+    {
+      "sequence": "change",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-057",
+        "me02.5-277",
+        "sv08-057",
+        "sv08-219",
+        "sv08-238",
+        "sv08-247",
+        "sv08.5-179",
+        "sv10.5b-052",
+        "sv10.5b-130"
+      ]
+    },
+    {
+      "sequence": "change > discard",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-164"
+      ]
+    },
+    {
+      "sequence": "choose > attach",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-189",
+        "me02.5-260",
+        "me03-029",
+        "me03-093",
+        "sv07-135",
+        "sv08.5-110"
+      ]
+    },
+    {
+      "sequence": "choose > choose > damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-023",
+        "sv10-207"
+      ]
+    },
+    {
+      "sequence": "choose > coin_flip > damage",
+      "functional_identities": 1,
+      "printings": [
+        "me04-069",
+        "me04-096"
+      ]
+    },
+    {
+      "sequence": "choose > discard",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-212",
+        "me04-115",
+        "sv10.5w-085"
+      ]
+    },
+    {
+      "sequence": "choose > prevent",
+      "functional_identities": 1,
+      "printings": [
+        "me01-113",
+        "me01-165",
+        "me01-183",
+        "me02.5-180"
+      ]
+    },
+    {
+      "sequence": "choose > put",
+      "functional_identities": 2,
+      "printings": [
+        "me03-073",
+        "sv09-069"
+      ]
+    },
+    {
+      "sequence": "choose > put > evolve > place > restrict",
+      "functional_identities": 1,
+      "printings": [
+        "me04-038"
+      ]
+    },
+    {
+      "sequence": "choose > put > evolve > restrict > put",
+      "functional_identities": 1,
+      "printings": [
+        "me01-125",
+        "me01-175"
+      ]
+    },
+    {
+      "sequence": "choose > put > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-096"
+      ]
+    },
+    {
+      "sequence": "choose > search > attach > shuffle > special_condition",
+      "functional_identities": 1,
+      "printings": [
+        "sv06.5-059",
+        "sv06.5-088",
+        "sv08.5-112",
+        "sv08.5-173"
+      ]
+    },
+    {
+      "sequence": "choose > search > put > evolve > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-115"
+      ]
+    },
+    {
+      "sequence": "choose > shuffle > choose",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-005",
+        "sv05-163"
+      ]
+    },
+    {
+      "sequence": "choose > shuffle > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "me04-078"
+      ]
+    },
+    {
+      "sequence": "choose > switch > damage_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-154",
+        "sv06-206",
+        "sv06-218",
+        "sv08.5-113",
+        "sv08.5-174"
+      ]
+    },
+    {
+      "sequence": "coin_flip",
+      "functional_identities": 1,
+      "printings": [
+        "me05-074"
+      ]
+    },
+    {
+      "sequence": "coin_flip > attach",
+      "functional_identities": 2,
+      "printings": [
+        "me02-080",
+        "svp-158"
+      ]
+    },
+    {
+      "sequence": "coin_flip > change",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-116",
+        "me02.5-268",
+        "me02.5-283",
+        "me05-041"
+      ]
+    },
+    {
+      "sequence": "coin_flip > choose",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-006"
+      ]
+    },
+    {
+      "sequence": "coin_flip > choose > copy",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-093"
+      ]
+    },
+    {
+      "sequence": "coin_flip > choose > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me01-092"
+      ]
+    },
+    {
+      "sequence": "coin_flip > choose > shuffle > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me01-066",
+        "me01-145"
+      ]
+    },
+    {
+      "sequence": "coin_flip > damage",
+      "functional_identities": 2,
+      "printings": [
+        "me03-047",
+        "me03-104",
+        "me03-120",
+        "me03-124",
+        "mep-071"
+      ]
+    },
+    {
+      "sequence": "coin_flip > damage_modifier > damage_modifier > damage_modifier > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-149"
+      ]
+    },
+    {
+      "sequence": "coin_flip > damage_modifier > heal > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-017"
+      ]
+    },
+    {
+      "sequence": "coin_flip > draw > draw",
+      "functional_identities": 1,
+      "printings": [
+        "svp-114"
+      ]
+    },
+    {
+      "sequence": "coin_flip > heal",
+      "functional_identities": 1,
+      "printings": [
+        "me01-106"
+      ]
+    },
+    {
+      "sequence": "coin_flip > knock_out",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-078"
+      ]
+    },
+    {
+      "sequence": "coin_flip > knock_out > knock_out",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-133",
+        "sv08-225",
+        "sv08-242",
+        "sv08-248"
+      ]
+    },
+    {
+      "sequence": "coin_flip > prize_take",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-082",
+        "me02.5-235",
+        "sv08-072"
+      ]
+    },
+    {
+      "sequence": "coin_flip > put",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-015",
+        "me02.5-220",
+        "sv10.5w-076",
+        "sv10.5w-156"
+      ]
+    },
+    {
+      "sequence": "coin_flip > put > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-179"
+      ]
+    },
+    {
+      "sequence": "coin_flip > search > put > shuffle",
+      "functional_identities": 2,
+      "printings": [
+        "me01-099",
+        "me05-071"
+      ]
+    },
+    {
+      "sequence": "coin_flip > search > reveal > put > search > reveal > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-205",
+        "sv10-175"
+      ]
+    },
+    {
+      "sequence": "coin_flip > search > reveal > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "me03-080"
+      ]
+    },
+    {
+      "sequence": "coin_flip > special_condition > discard > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-064",
+        "sv08-202"
+      ]
+    },
+    {
+      "sequence": "coin_flip > special_condition > special_condition > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv10.5b-007",
+        "sv10.5b-092"
+      ]
+    },
+    {
+      "sequence": "coin_flip > switch",
+      "functional_identities": 2,
+      "printings": [
+        "me03-082",
+        "mep-005"
+      ]
+    },
+    {
+      "sequence": "coin_flip > switch > special_condition",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-088"
+      ]
+    },
+    {
+      "sequence": "copy",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-063"
+      ]
+    },
+    {
+      "sequence": "counter_scale",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-051"
+      ]
+    },
+    {
+      "sequence": "damage > attach > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-056"
+      ]
+    },
+    {
+      "sequence": "damage > coin_flip",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-048"
+      ]
+    },
+    {
+      "sequence": "damage > damage > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-061",
+        "svp-135"
+      ]
+    },
+    {
+      "sequence": "damage > discard > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-110"
+      ]
+    },
+    {
+      "sequence": "damage > retreat_modifier > printed_damage",
+      "functional_identities": 2,
+      "printings": [
+        "me05-040",
+        "sv09-073"
+      ]
+    },
+    {
+      "sequence": "damage > shuffle > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me01-034"
+      ]
+    },
+    {
+      "sequence": "damage > special_condition",
+      "functional_identities": 1,
+      "printings": [
+        "me01-043"
+      ]
+    },
+    {
+      "sequence": "damage > special_condition > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me03-052",
+        "me03-097"
+      ]
+    },
+    {
+      "sequence": "damage > switch > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me03-022"
+      ]
+    },
+    {
+      "sequence": "damage_modifier > place > discard",
+      "functional_identities": 1,
+      "printings": [
+        "me05-082",
+        "me05-113"
+      ]
+    },
+    {
+      "sequence": "damage_modifier > restrict > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06.5-042"
+      ]
+    },
+    {
+      "sequence": "damage_modifier > shuffle > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-043"
+      ]
+    },
+    {
+      "sequence": "devolve > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me04-047",
+        "me04-092"
+      ]
+    },
+    {
+      "sequence": "devolve > restrict",
+      "functional_identities": 1,
+      "printings": [
+        "me01-128"
+      ]
+    },
+    {
+      "sequence": "discard > choose > copy",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-058"
+      ]
+    },
+    {
+      "sequence": "discard > copy",
+      "functional_identities": 1,
+      "printings": [
+        "me01-020"
+      ]
+    },
+    {
+      "sequence": "discard > discard > discard",
+      "functional_identities": 2,
+      "printings": [
+        "me02-086",
+        "me02-117",
+        "sv05-150"
+      ]
+    },
+    {
+      "sequence": "discard > discard > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-045",
+        "sv10-193"
+      ]
+    },
+    {
+      "sequence": "discard > draw > usage_limit",
+      "functional_identities": 2,
+      "printings": [
+        "me01-074",
+        "me02.5-105",
+        "mep-004"
+      ]
+    },
+    {
+      "sequence": "discard > heal",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-188"
+      ]
+    },
+    {
+      "sequence": "discard > knock_out > discard",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-018",
+        "sv10-188"
+      ]
+    },
+    {
+      "sequence": "discard > prize_take",
+      "functional_identities": 1,
+      "printings": [
+        "sv08.5-060",
+        "sv08.5-161",
+        "svp-176"
+      ]
+    },
+    {
+      "sequence": "discard > provide_energy",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-217",
+        "sv10-182"
+      ]
+    },
+    {
+      "sequence": "discard > provide_energy > provide_energy",
+      "functional_identities": 1,
+      "printings": [
+        "me02-124",
+        "sv10.5w-086"
+      ]
+    },
+    {
+      "sequence": "discard > restrict > printed_damage",
+      "functional_identities": 2,
+      "printings": [
+        "me01-031",
+        "sv07-051",
+        "sv07-159",
+        "sv07-168"
+      ]
+    },
+    {
+      "sequence": "discard > switch",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-085"
+      ]
+    },
+    {
+      "sequence": "draw > discard",
+      "functional_identities": 1,
+      "printings": [
+        "sv08.5-093",
+        "sv08.5-132",
+        "sv08.5-170"
+      ]
+    },
+    {
+      "sequence": "draw > discard > draw > restrict",
+      "functional_identities": 1,
+      "printings": [
+        "me03-079",
+        "me03-112"
+      ]
+    },
+    {
+      "sequence": "draw > shuffle",
+      "functional_identities": 2,
+      "printings": [
+        "sv05-129",
+        "sv06-144",
+        "sv06-203",
+        "sv08.5-080"
+      ]
+    },
+    {
+      "sequence": "draw > usage_limit",
+      "functional_identities": 2,
+      "printings": [
+        "me01-104",
+        "me01-164",
+        "me01-182",
+        "mep-025"
+      ]
+    },
+    {
+      "sequence": "draw > usage_limit > coin_flip",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-142",
+        "me02.5-288",
+        "sv06.5-038",
+        "sv06.5-084",
+        "sv06.5-092"
+      ]
+    },
+    {
+      "sequence": "evolve > attach",
+      "functional_identities": 2,
+      "printings": [
+        "sv08-130",
+        "sv08-224",
+        "sv08-241",
+        "sv09-085",
+        "sv09-166"
+      ]
+    },
+    {
+      "sequence": "evolve > choose > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-122",
+        "sv10-217",
+        "sv10-234",
+        "sv10-242"
+      ]
+    },
+    {
+      "sequence": "evolve > coin_flip > choose > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-138"
+      ]
+    },
+    {
+      "sequence": "evolve > coin_flip > discard",
+      "functional_identities": 1,
+      "printings": [
+        "me01-097"
+      ]
+    },
+    {
+      "sequence": "evolve > discard",
+      "functional_identities": 2,
+      "printings": [
+        "me02-053",
+        "me02-101",
+        "mep-016"
+      ]
+    },
+    {
+      "sequence": "evolve > heal",
+      "functional_identities": 1,
+      "printings": [
+        "me05-020",
+        "me05-088"
+      ]
+    },
+    {
+      "sequence": "evolve > heal > discard",
+      "functional_identities": 2,
+      "printings": [
+        "sv05-015",
+        "sv07-067",
+        "sv07-160",
+        "sv07-169",
+        "sv08.5-008"
+      ]
+    },
+    {
+      "sequence": "evolve > inspect > attach > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "me01-063"
+      ]
+    },
+    {
+      "sequence": "evolve > restrict",
+      "functional_identities": 2,
+      "printings": [
+        "sv08.5-075",
+        "sv08.5-167",
+        "svp-174"
+      ]
+    },
+    {
+      "sequence": "evolve > reveal > put",
+      "functional_identities": 2,
+      "printings": [
+        "sv09-067",
+        "sv09-164",
+        "svp-183"
+      ]
+    },
+    {
+      "sequence": "evolve > search > attach > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-287",
+        "sv10-136"
+      ]
+    },
+    {
+      "sequence": "evolve > search > put > shuffle",
+      "functional_identities": 2,
+      "printings": [
+        "me01-017",
+        "me01-137",
+        "me02.5-012"
+      ]
+    },
+    {
+      "sequence": "evolve > search > reveal > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-115",
+        "sv08.5-078",
+        "svp-141"
+      ]
+    },
+    {
+      "sequence": "heal > discard",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-158"
+      ]
+    },
+    {
+      "sequence": "heal > heal",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-161"
+      ]
+    },
+    {
+      "sequence": "heal > put",
+      "functional_identities": 2,
+      "printings": [
+        "me01-132",
+        "me01-176",
+        "me01-186",
+        "sv06.5-062"
+      ]
+    },
+    {
+      "sequence": "heal > recover",
+      "functional_identities": 2,
+      "printings": [
+        "me01-123",
+        "sv08-093",
+        "svp-154"
+      ]
+    },
+    {
+      "sequence": "heal > remove",
+      "functional_identities": 1,
+      "printings": [
+        "me03-078"
+      ]
+    },
+    {
+      "sequence": "heal > restrict",
+      "functional_identities": 2,
+      "printings": [
+        "sv08-145",
+        "sv08-212",
+        "sv10-141"
+      ]
+    },
+    {
+      "sequence": "hp_modifier > damage_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-111",
+        "sv06.5-074",
+        "sv08.5-057"
+      ]
+    },
+    {
+      "sequence": "inspect",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-015"
+      ]
+    },
+    {
+      "sequence": "inspect > attach > shuffle",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-215",
+        "sv07-032",
+        "sv07-158",
+        "svp-164"
+      ]
+    },
+    {
+      "sequence": "inspect > attach > shuffle > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-114",
+        "svp-090"
+      ]
+    },
+    {
+      "sequence": "inspect > put > discard",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-147",
+        "sv05-200",
+        "sv08.5-107"
+      ]
+    },
+    {
+      "sequence": "inspect > put > put",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-159",
+        "me02.5-248",
+        "sv06-129",
+        "sv08.5-072"
+      ]
+    },
+    {
+      "sequence": "inspect > put > reorder > shuffle > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-171"
+      ]
+    },
+    {
+      "sequence": "inspect > put > shuffle > put > restrict",
+      "functional_identities": 1,
+      "printings": [
+        "me02-090",
+        "me02-120"
+      ]
+    },
+    {
+      "sequence": "inspect > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv06.5-033"
+      ]
+    },
+    {
+      "sequence": "prevent > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv06.5-060"
+      ]
+    },
+    {
+      "sequence": "prize_take > draw",
+      "functional_identities": 1,
+      "printings": [
+        "me01-120",
+        "me01-170",
+        "me01-185"
+      ]
+    },
+    {
+      "sequence": "prize_take > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-076"
+      ]
+    },
+    {
+      "sequence": "provide_energy",
+      "functional_identities": 2,
+      "printings": [
+        "me01-010",
+        "mep-001"
+      ]
+    },
+    {
+      "sequence": "provide_energy > attach",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-166"
+      ]
+    },
+    {
+      "sequence": "provide_energy > attach > draw",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-191"
+      ]
+    },
+    {
+      "sequence": "provide_energy > attach > search > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "me03-088"
+      ]
+    },
+    {
+      "sequence": "provide_energy > damage_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "me05-084"
+      ]
+    },
+    {
+      "sequence": "provide_energy > hp_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "me03-086"
+      ]
+    },
+    {
+      "sequence": "provide_energy > provide_energy > prize_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-167"
+      ]
+    },
+    {
+      "sequence": "provide_energy > put",
+      "functional_identities": 2,
+      "printings": [
+        "me04-086",
+        "sv09-159",
+        "sv09-190"
+      ]
+    },
+    {
+      "sequence": "provide_energy > recover",
+      "functional_identities": 1,
+      "printings": [
+        "me04-084"
+      ]
+    },
+    {
+      "sequence": "provide_energy > retreat_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "me04-085"
+      ]
+    },
+    {
+      "sequence": "put > damage > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-063"
+      ]
+    },
+    {
+      "sequence": "put > damage_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-041",
+        "svp-089"
+      ]
+    },
+    {
+      "sequence": "put > discard",
+      "functional_identities": 2,
+      "printings": [
+        "me03-050",
+        "sv07-134"
+      ]
+    },
+    {
+      "sequence": "put > discard > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-122",
+        "sv10-217",
+        "sv10-234",
+        "sv10-242"
+      ]
+    },
+    {
+      "sequence": "put > discard > put > hp_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "me04-075"
+      ]
+    },
+    {
+      "sequence": "put > draw",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-052"
+      ]
+    },
+    {
+      "sequence": "put > reorder > put > draw > put > restrict",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-138",
+        "sv07-165"
+      ]
+    },
+    {
+      "sequence": "put > reveal > draw > draw",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-190",
+        "sv08.5-143"
+      ]
+    },
+    {
+      "sequence": "put > search > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-011"
+      ]
+    },
+    {
+      "sequence": "put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-023",
+        "sv06-189",
+        "sv06-210"
+      ]
+    },
+    {
+      "sequence": "recover",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-149",
+        "sv08.5-108"
+      ]
+    },
+    {
+      "sequence": "recover > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-023",
+        "sv10-207"
+      ]
+    },
+    {
+      "sequence": "restrict > damage > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-179",
+        "sv07-128",
+        "sv07-170",
+        "sv07-173",
+        "sv08.5-092",
+        "sv08.5-169",
+        "sv08.5-180",
+        "svp-165"
+      ]
+    },
+    {
+      "sequence": "restrict > damage_modifier > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-062"
+      ]
+    },
+    {
+      "sequence": "restrict > evolve > devolve",
+      "functional_identities": 1,
+      "printings": [
+        "me02-088"
+      ]
+    },
+    {
+      "sequence": "restrict > evolve > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-069"
+      ]
+    },
+    {
+      "sequence": "retreat_modifier > damage_modifier > printed_damage",
+      "functional_identities": 2,
+      "printings": [
+        "me04-004",
+        "sv07-123"
+      ]
+    },
+    {
+      "sequence": "retreat_modifier > move",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-151"
+      ]
+    },
+    {
+      "sequence": "retreat_modifier > retreat_modifier",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-159",
+        "sv06-225",
+        "sv08.5-126"
+      ]
+    },
+    {
+      "sequence": "retreat_modifier > switch",
+      "functional_identities": 1,
+      "printings": [
+        "me04-068",
+        "mep-077"
+      ]
+    },
+    {
+      "sequence": "reveal > choose > copy > shuffle",
+      "functional_identities": 2,
+      "printings": [
+        "sv10-150",
+        "sv10-219",
+        "svp-218"
+      ]
+    },
+    {
+      "sequence": "reveal > choose > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-142"
+      ]
+    },
+    {
+      "sequence": "reveal > damage > discard > shuffle > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-062",
+        "svp-098"
+      ]
+    },
+    {
+      "sequence": "reveal > damage > printed_damage",
+      "functional_identities": 2,
+      "printings": [
+        "me03-057",
+        "me03-098",
+        "mep-067"
+      ]
+    },
+    {
+      "sequence": "reveal > damage > shuffle > discard > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me05-009"
+      ]
+    },
+    {
+      "sequence": "reveal > put > search > reveal > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-160",
+        "sv06-209",
+        "sv06-220"
+      ]
+    },
+    {
+      "sequence": "search > attach > shuffle > place",
+      "functional_identities": 2,
+      "printings": [
+        "me02-068",
+        "me02-103",
+        "mep-017"
+      ]
+    },
+    {
+      "sequence": "search > attach > shuffle > special_condition",
+      "functional_identities": 1,
+      "printings": [
+        "sv06.5-036",
+        "sv06.5-082",
+        "sv06.5-090"
+      ]
+    },
+    {
+      "sequence": "search > discard > shuffle",
+      "functional_identities": 2,
+      "printings": [
+        "sv05-085",
+        "sv08-164"
+      ]
+    },
+    {
+      "sequence": "search > put > evolve > search > put > evolve > shuffle > restrict > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-136"
+      ]
+    },
+    {
+      "sequence": "search > put > evolve > shuffle > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv10-095"
+      ]
+    },
+    {
+      "sequence": "search > put > evolve > shuffle > put > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv05-160",
+        "sv05-202",
+        "sv05-212"
+      ]
+    },
+    {
+      "sequence": "search > put > shuffle > put > move",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-046"
+      ]
+    },
+    {
+      "sequence": "search > reveal > put > attach > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-133",
+        "sv07-164",
+        "sv08.5-105",
+        "sv08.5-171"
+      ]
+    },
+    {
+      "sequence": "search > reveal > put > shuffle > usage_limit",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-171",
+        "me02.5-250",
+        "me03-062",
+        "me03-107",
+        "me03-121",
+        "sv07-118",
+        "sv08.5-085"
+      ]
+    },
+    {
+      "sequence": "search > shuffle > put",
+      "functional_identities": 2,
+      "printings": [
+        "me04-051",
+        "me04-093",
+        "mep-076"
+      ]
+    },
+    {
+      "sequence": "search > shuffle > put > reorder",
+      "functional_identities": 2,
+      "printings": [
+        "sv05-145",
+        "sv05-198",
+        "sv08-135",
+        "sv08.5-104"
+      ]
+    },
+    {
+      "sequence": "search > switch > put > shuffle",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-060"
+      ]
+    },
+    {
+      "sequence": "shuffle > coin_flip > draw > draw",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-173",
+        "sv08-231"
+      ]
+    },
+    {
+      "sequence": "shuffle > coin_flip > draw > draw > draw > draw",
+      "functional_identities": 1,
+      "printings": [
+        "sv10.5w-083",
+        "sv10.5w-163"
+      ]
+    },
+    {
+      "sequence": "shuffle > damage",
+      "functional_identities": 1,
+      "printings": [
+        "me03-055",
+        "me03-106"
+      ]
+    },
+    {
+      "sequence": "shuffle > damage > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-064",
+        "sv06-194",
+        "sv06-213",
+        "sv08.5-027",
+        "sv08.5-152"
+      ]
+    },
+    {
+      "sequence": "shuffle > damage_modifier > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "me01-095"
+      ]
+    },
+    {
+      "sequence": "shuffle > put > draw",
+      "functional_identities": 2,
+      "printings": [
+        "me03-009",
+        "me04-082",
+        "me04-113"
+      ]
+    },
+    {
+      "sequence": "shuffle > put > draw > draw",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-157",
+        "sv06-208"
+      ]
+    },
+    {
+      "sequence": "shuffle > put > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-156"
+      ]
+    },
+    {
+      "sequence": "special_condition > damage_modifier > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv09-129"
+      ]
+    },
+    {
+      "sequence": "special_condition > draw",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-175"
+      ]
+    },
+    {
+      "sequence": "special_condition > heal",
+      "functional_identities": 1,
+      "printings": [
+        "sv10.5b-035",
+        "sv10.5b-116"
+      ]
+    },
+    {
+      "sequence": "special_condition > move",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-082"
+      ]
+    },
+    {
+      "sequence": "special_condition > place",
+      "functional_identities": 1,
+      "printings": [
+        "me04-065",
+        "me04-104",
+        "me04-118"
+      ]
+    },
+    {
+      "sequence": "special_condition > put",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-049"
+      ]
+    },
+    {
+      "sequence": "special_condition > restrict",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-116"
+      ]
+    },
+    {
+      "sequence": "special_condition > switch > printed_damage",
+      "functional_identities": 2,
+      "printings": [
+        "me03-016",
+        "me03-101",
+        "sv09-013"
+      ]
+    },
+    {
+      "sequence": "switch > attach",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-068"
+      ]
+    },
+    {
+      "sequence": "switch > choose > damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv07-096"
+      ]
+    },
+    {
+      "sequence": "switch > draw",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-200",
+        "me02.5-293",
+        "sv08-187",
+        "sv08-235"
+      ]
+    },
+    {
+      "sequence": "switch > heal",
+      "functional_identities": 1,
+      "printings": [
+        "me04-076",
+        "me04-106",
+        "me04-120"
+      ]
+    },
+    {
+      "sequence": "switch > move",
+      "functional_identities": 2,
+      "printings": [
+        "sv05-025",
+        "sv05-186",
+        "sv05-203",
+        "sv05-213",
+        "sv08-186",
+        "sv08.5-176",
+        "svp-128"
+      ]
+    },
+    {
+      "sequence": "switch > special_condition",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-179",
+        "sv08-234",
+        "sv08-246"
+      ]
+    },
+    {
+      "sequence": "switch > special_condition > usage_limit",
+      "functional_identities": 1,
+      "printings": [
+        "sv06.5-039",
+        "sv06.5-085",
+        "sv06.5-093",
+        "sv06.5-095",
+        "sv08.5-163"
+      ]
+    },
+    {
+      "sequence": "switch > switch",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-204",
+        "sv05-157",
+        "sv08.5-119",
+        "sv10-174",
+        "sv10-225",
+        "sv10-238"
+      ]
+    },
+    {
+      "sequence": "switch > switch > choose",
+      "functional_identities": 1,
+      "printings": [
+        "sv10.5w-023",
+        "sv10.5w-107"
+      ]
+    },
+    {
+      "sequence": "switch > switch > choose > printed_damage",
+      "functional_identities": 1,
+      "printings": [
+        "sv06-062"
+      ]
+    },
+    {
+      "sequence": "tool_nullification",
+      "functional_identities": 1,
+      "printings": [
+        "me02.5-261",
+        "sv06-153",
+        "sv10-243"
+      ]
+    },
+    {
+      "sequence": "weakness_change",
+      "functional_identities": 2,
+      "printings": [
+        "me02.5-076",
+        "me02.5-280",
+        "sv09-056",
+        "sv09-173",
+        "sv09-184",
+        "svp-195"
+      ]
+    },
+    {
+      "sequence": "weakness_change > change",
+      "functional_identities": 1,
+      "printings": [
+        "sv08-156"
+      ]
+    }
+  ],
+  "taxonomy_frequencies": {
+    "ability_lock": 11,
+    "ancient_interaction": 5,
+    "attack_cost_modification": 14,
+    "attack_lock": 113,
+    "basic_search": 57,
+    "bench_capacity": 3,
+    "bench_damage": 94,
+    "bench_development": 69,
+    "bottom_deck_placement": 20,
+    "burn": 37,
+    "choice": 127,
+    "class_protection": 29,
+    "coin_flip": 366,
+    "confusion": 70,
+    "copy_effect": 22,
+    "counter_multiplication": 1,
+    "damage_counter_movement": 14,
+    "damage_counter_placement": 114,
+    "damage_modification": 638,
+    "damage_prevention": 97,
+    "damage_reduction": 90,
+    "damage_scaling": 638,
+    "devolution": 10,
+    "direct_damage": 537,
+    "discard": 530,
+    "draw": 224,
+    "effect_prevention": 65,
+    "energy_acceleration": 60,
+    "energy_attachment": 126,
+    "energy_denial": 38,
+    "energy_movement": 59,
+    "energy_provision": 24,
+    "energy_recovery": 13,
+    "energy_self_discard": 266,
+    "evolution": 86,
+    "evolution_acceleration": 1,
+    "evolution_lock": 5,
+    "evolution_search": 19,
+    "extra_prizes": 13,
+    "future_interaction": 2,
+    "gust": 56,
+    "hand_discard": 96,
+    "hand_disruption": 19,
+    "hand_play_lock": 20,
+    "hand_reset": 27,
+    "hand_reveal": 9,
+    "healing": 147,
+    "hp_modification": 15,
+    "inspect": 47,
+    "item_lock": 13,
+    "knock_out": 14,
+    "opponent_mill": 38,
+    "paralysis": 59,
+    "poison": 70,
+    "pokemon_ex_interaction": 33,
+    "pokemon_recovery": 13,
+    "printed_damage": 3188,
+    "prize_access": 20,
+    "prize_condition_damage": 13,
+    "prize_reduction": 12,
+    "recycling": 6,
+    "reorder": 11,
+    "retreat_lock": 72,
+    "retreat_modification": 41,
+    "reveal": 172,
+    "rule_box_interaction": 3,
+    "search": 318,
+    "self_ability_use_restriction": 1,
+    "self_damage": 103,
+    "self_mill": 14,
+    "sleep": 32,
+    "snipe": 40,
+    "spread_damage": 336,
+    "stadium_interaction": 28,
+    "stadium_removal": 21,
+    "status_recovery": 8,
+    "supporter_lock": 2,
+    "switch": 132,
+    "technical_machine_interaction": 1,
+    "tool_lock": 3,
+    "tool_nullification": 3,
+    "tool_removal": 26,
+    "top_deck_inspection": 51,
+    "top_deck_placement": 10,
+    "type_change": 5,
+    "usage_limit": 24,
+    "weakness_change": 7
+  },
+  "taxonomy_examples": {
+    "ability_lock": [
+      "me02.5-210",
+      "mep-007",
+      "mep-008",
+      "sv05-078",
+      "sv06-077"
+    ],
+    "ancient_interaction": [
+      "sv05-077",
+      "sv05-109",
+      "sv05-119",
+      "sv08.5-065",
+      "svp-091"
+    ],
+    "attack_cost_modification": [
+      "me02.5-186",
+      "me02.5-197",
+      "me02.5-259",
+      "sv05-034",
+      "sv05-187"
+    ],
+    "attack_lock": [
+      "me01-081",
+      "me02-069",
+      "me02.5-005",
+      "me02.5-050",
+      "me02.5-070"
+    ],
+    "basic_search": [
+      "me01-021",
+      "me01-032",
+      "me01-064",
+      "me01-116",
+      "me01-167"
+    ],
+    "bench_capacity": [
+      "sv07-131",
+      "sv07-174",
+      "sv08.5-094"
+    ],
+    "bench_damage": [
+      "me01-081",
+      "me01-108",
+      "me02-002",
+      "me02-028",
+      "me02.5-033"
+    ],
+    "bench_development": [
+      "me01-017",
+      "me01-021",
+      "me01-032",
+      "me01-064",
+      "me01-137"
+    ],
+    "bottom_deck_placement": [
+      "me02-090",
+      "me02-120",
+      "me02.5-159",
+      "me02.5-248",
+      "me03-009"
+    ],
+    "burn": [
+      "me01-024",
+      "me01-025",
+      "me02.5-027",
+      "me02.5-030",
+      "me02.5-223"
+    ],
+    "choice": [
+      "me01-009",
+      "me01-015",
+      "me01-041",
+      "me01-066",
+      "me01-092"
+    ],
+    "class_protection": [
+      "me01-050",
+      "me01-113",
+      "me01-158",
+      "me01-165",
+      "me01-183"
+    ],
+    "coin_flip": [
+      "me01-015",
+      "me01-026",
+      "me01-030",
+      "me01-039",
+      "me01-040"
+    ],
+    "confusion": [
+      "me01-015",
+      "me01-053",
+      "me02-036",
+      "me02-112",
+      "me02.5-099"
+    ],
+    "copy_effect": [
+      "me01-020",
+      "me02.5-075",
+      "me02.5-097",
+      "me02.5-137",
+      "me02.5-238"
+    ],
+    "counter_multiplication": [
+      "me02.5-051"
+    ],
+    "damage_counter_movement": [
+      "me02.5-099",
+      "me04-009",
+      "sv05-107",
+      "sv06-082",
+      "sv06-095"
+    ],
+    "damage_counter_placement": [
+      "me01-051",
+      "me01-056",
+      "me01-087",
+      "me01-127",
+      "me01-148"
+    ],
+    "damage_modification": [
+      "me01-005",
+      "me01-007",
+      "me01-018",
+      "me01-022",
+      "me01-024"
+    ],
+    "damage_prevention": [
+      "me01-042",
+      "me01-050",
+      "me01-080",
+      "me01-113",
+      "me01-146"
+    ],
+    "damage_reduction": [
+      "me01-005",
+      "me01-036",
+      "me01-118",
+      "me01-135",
+      "me01-157"
+    ],
+    "damage_scaling": [
+      "me01-005",
+      "me01-007",
+      "me01-018",
+      "me01-022",
+      "me01-024"
+    ],
+    "devolution": [
+      "me01-128",
+      "me02-088",
+      "me04-047",
+      "me04-092",
+      "sv08-095"
+    ],
+    "direct_damage": [
+      "me01-027",
+      "me01-033",
+      "me01-034",
+      "me01-036",
+      "me01-040"
+    ],
+    "discard": [
+      "me01-020",
+      "me01-022",
+      "me01-030",
+      "me01-031",
+      "me01-034"
+    ],
+    "draw": [
+      "me01-055",
+      "me01-056",
+      "me01-058",
+      "me01-074",
+      "me01-090"
+    ],
+    "effect_prevention": [
+      "me01-042",
+      "me01-080",
+      "me01-113",
+      "me01-146",
+      "me01-165"
+    ],
+    "energy_acceleration": [
+      "me01-077",
+      "me01-160",
+      "me01-179",
+      "me01-188",
+      "me02-080"
+    ],
+    "energy_attachment": [
+      "me01-038",
+      "me01-051",
+      "me01-063",
+      "me01-077",
+      "me01-141"
+    ],
+    "energy_denial": [
+      "me01-030",
+      "me01-097",
+      "me02-074",
+      "me02.5-042",
+      "me03-012"
+    ],
+    "energy_movement": [
+      "me01-003",
+      "me01-101",
+      "me01-115",
+      "me01-155",
+      "me01-177"
+    ],
+    "energy_provision": [
+      "me01-010",
+      "me02-124",
+      "me02.5-216",
+      "me02.5-217",
+      "me03-086"
+    ],
+    "energy_recovery": [
+      "me01-173",
+      "me02.5-196",
+      "me03-085",
+      "me03-116",
+      "me04-108"
+    ],
+    "energy_self_discard": [
+      "me01-022",
+      "me01-030",
+      "me01-034",
+      "me01-038",
+      "me01-041"
+    ],
+    "evolution": [
+      "me01-017",
+      "me01-055",
+      "me01-056",
+      "me01-063",
+      "me01-073"
+    ],
+    "evolution_acceleration": [
+      "sv08-039"
+    ],
+    "evolution_lock": [
+      "me01-128",
+      "sv07-136",
+      "sv08.5-075",
+      "sv08.5-167",
+      "svp-174"
+    ],
+    "evolution_search": [
+      "me01-121",
+      "me01-171",
+      "me02-087",
+      "me02-118",
+      "me02-129"
+    ],
+    "extra_prizes": [
+      "me02.5-082",
+      "me02.5-182",
+      "me02.5-235",
+      "me02.5-254",
+      "sv05-076"
+    ],
+    "future_interaction": [
+      "sv05-062",
+      "svp-098"
+    ],
+    "gust": [
+      "me01-009",
+      "me01-073",
+      "me01-114",
+      "me01-126",
+      "me02.5-129"
+    ],
+    "hand_discard": [
+      "me01-074",
+      "me01-122",
+      "me01-131",
+      "me01-172",
+      "me02-020"
+    ],
+    "hand_disruption": [
+      "me02.5-134",
+      "me02.5-135",
+      "me02.5-139",
+      "me02.5-270",
+      "me02.5-285"
+    ],
+    "hand_play_lock": [
+      "me01-031",
+      "me02.5-016",
+      "me02.5-221",
+      "me04-028",
+      "sv05-069"
+    ],
+    "hand_reset": [
+      "me01-119",
+      "me01-169",
+      "me01-184",
+      "me02.5-102",
+      "me02.5-192"
+    ],
+    "hand_reveal": [
+      "me03-057",
+      "me03-098",
+      "mep-067",
+      "sv06-160",
+      "sv06-209"
+    ],
+    "healing": [
+      "me01-003",
+      "me01-007",
+      "me01-011",
+      "me01-013",
+      "me01-106"
+    ],
+    "hp_modification": [
+      "me03-045",
+      "me03-086",
+      "me04-075",
+      "mep-066",
+      "sv05-021"
+    ],
+    "inspect": [
+      "me01-063",
+      "me02-090",
+      "me02-120",
+      "me02.5-159",
+      "me02.5-215"
+    ],
+    "item_lock": [
+      "me02.5-016",
+      "me02.5-221",
+      "me04-028",
+      "sv07-051",
+      "sv07-159"
+    ],
+    "knock_out": [
+      "me02.5-039",
+      "me02.5-040",
+      "me02.5-078",
+      "me02.5-226",
+      "me03-053"
+    ],
+    "opponent_mill": [
+      "me01-087",
+      "me01-148",
+      "me02-004",
+      "me02-053",
+      "me02-101"
+    ],
+    "paralysis": [
+      "me01-044",
+      "me01-046",
+      "me01-070",
+      "me02.5-007",
+      "me02.5-013"
+    ],
+    "poison": [
+      "me01-006",
+      "me01-091",
+      "me01-149",
+      "me02-003",
+      "me02-049"
+    ],
+    "pokemon_ex_interaction": [
+      "me01-113",
+      "me01-165",
+      "me01-183",
+      "me02.5-180",
+      "me02.5-191"
+    ],
+    "pokemon_recovery": [
+      "me01-173",
+      "me02.5-196",
+      "me03-085",
+      "me03-116",
+      "sv06-019"
+    ],
+    "printed_damage": [
+      "me01-001",
+      "me01-002",
+      "me01-003",
+      "me01-005",
+      "me01-006"
+    ],
+    "prize_access": [
+      "me01-120",
+      "me01-170",
+      "me01-185",
+      "me02.5-082",
+      "me02.5-182"
+    ],
+    "prize_condition_damage": [
+      "me02.5-122",
+      "me02.5-148",
+      "sv08-004",
+      "sv08-215",
+      "sv08-236"
+    ],
+    "prize_reduction": [
+      "me01-061",
+      "me01-144",
+      "me02-056",
+      "me02.5-125",
+      "me02.5-269"
+    ],
+    "recycling": [
+      "me03-108",
+      "me03-115",
+      "me04-078",
+      "sv10-164",
+      "sv10-168"
+    ],
+    "reorder": [
+      "sv05-080",
+      "sv05-145",
+      "sv05-198",
+      "sv07-138",
+      "sv07-165"
+    ],
+    "retreat_lock": [
+      "me01-001",
+      "me01-088",
+      "me01-133",
+      "me02-050",
+      "me02.5-044"
+    ],
+    "retreat_modification": [
+      "me01-166",
+      "me02-011",
+      "me02.5-024",
+      "me02.5-181",
+      "me02.5-222"
+    ],
+    "reveal": [
+      "me01-012",
+      "me01-059",
+      "me01-116",
+      "me01-121",
+      "me01-131"
+    ],
+    "rule_box_interaction": [
+      "sv06.5-060",
+      "sv10-010",
+      "sv10-185"
+    ],
+    "search": [
+      "me01-004",
+      "me01-012",
+      "me01-017",
+      "me01-021",
+      "me01-028"
+    ],
+    "self_ability_use_restriction": [
+      "me04-038"
+    ],
+    "self_damage": [
+      "me01-033",
+      "me01-049",
+      "me01-065",
+      "me01-073",
+      "me01-079"
+    ],
+    "self_mill": [
+      "me01-020",
+      "me01-036",
+      "me01-157",
+      "me03-074",
+      "me04-024"
+    ],
+    "sleep": [
+      "me01-043",
+      "me02-003",
+      "me02.5-003",
+      "me02.5-015",
+      "me02.5-047"
+    ],
+    "snipe": [
+      "me01-027",
+      "me02-008",
+      "me02-058",
+      "me02.5-022",
+      "me02.5-038"
+    ],
+    "spread_damage": [
+      "me01-034",
+      "me01-036",
+      "me01-040",
+      "me01-043",
+      "me01-052"
+    ],
+    "stadium_interaction": [
+      "me01-012",
+      "me02-025",
+      "me02-069",
+      "me02-086",
+      "me02-117"
+    ],
+    "stadium_removal": [
+      "me02-025",
+      "me02-069",
+      "me02-086",
+      "me02-117",
+      "me02.5-116"
+    ],
+    "status_recovery": [
+      "me01-123",
+      "me04-084",
+      "sv06-149",
+      "sv08-093",
+      "sv08.5-108"
+    ],
+    "supporter_lock": [
+      "sv06-094",
+      "sv06-197"
+    ],
+    "switch": [
+      "me01-009",
+      "me01-017",
+      "me01-054",
+      "me01-073",
+      "me01-100"
+    ],
+    "technical_machine_interaction": [
+      "sv10-181"
+    ],
+    "tool_lock": [
+      "sv10.5w-045",
+      "sv10.5w-160",
+      "sv10.5w-168"
+    ],
+    "tool_nullification": [
+      "me02.5-261",
+      "sv06-153",
+      "sv10-243"
+    ],
+    "tool_removal": [
+      "me01-102",
+      "me01-151",
+      "me02-029",
+      "me02-086",
+      "me02-111"
+    ],
+    "top_deck_inspection": [
+      "me01-063",
+      "me02-090",
+      "me02-120",
+      "me02.5-159",
+      "me02.5-215"
+    ],
+    "top_deck_placement": [
+      "me04-051",
+      "me04-093",
+      "mep-076",
+      "sv05-145",
+      "sv05-198"
+    ],
+    "type_change": [
+      "me02.5-117",
+      "me02.5-242",
+      "sv05-118",
+      "sv08-037",
+      "sv08-216"
+    ],
+    "usage_limit": [
+      "me01-074",
+      "me01-104",
+      "me01-164",
+      "me01-182",
+      "me02.5-105"
+    ],
+    "weakness_change": [
+      "me02.5-076",
+      "me02.5-280",
+      "sv08-156",
+      "sv09-056",
+      "sv09-173"
+    ]
+  },
+  "unobserved_concepts": [
+    "deck_to_discard",
+    "lost_zone_movement",
+    "counter_removal"
+  ],
+  "source_issue_counts": {
+    "attack_cost_not_supplied": 13,
+    "attack_damage_not_supplied": 642,
+    "effect_text_not_supplied": 1534
+  },
+  "effects_hash": "3a1b9c6b1af1574e3c4b7a9c9d8196e299a1d3f3f598d5007c312eaa87d7841b",
+  "artifact_format": "gzip with mtime=0; UTF-8 JSONL effects, JSON cards; all selected printings retained"
+}

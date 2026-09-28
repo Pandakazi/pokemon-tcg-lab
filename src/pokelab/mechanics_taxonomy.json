@@ -1,0 +1,1761 @@
+{
+  "version": "pokelab-mechanics-taxonomy-v1",
+  "semantics": "Candidate concepts derived from explicit action atoms and their spans; no equivalence/strategy/rules authority.",
+  "concepts": [
+    {
+      "id": "draw",
+      "family": "resource",
+      "actions": [
+        "draw"
+      ],
+      "pattern": null,
+      "description": "Draw cards; quantity/conditions remain in source",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "search",
+      "family": "resource",
+      "actions": [
+        "search"
+      ],
+      "pattern": null,
+      "description": "Search source zone",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "discard",
+      "family": "resource",
+      "actions": [
+        "discard"
+      ],
+      "pattern": null,
+      "description": "Discard an object; source/controller distinguish subtypes",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "opponent_mill",
+      "family": "resource",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "top\\b.*\\byour opponent's deck",
+      "description": "Discard top cards of opposing deck",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "self_mill",
+      "family": "resource",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "top\\b.*\\byour deck",
+      "description": "Discard top cards of own deck",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "deck_to_discard",
+      "family": "resource",
+      "actions": [
+        "put"
+      ],
+      "pattern": "deck.*(?:into|in) .*discard pile",
+      "description": "Explicit deck to discard movement",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "pokemon_recovery",
+      "family": "resource",
+      "actions": [
+        "put"
+      ],
+      "pattern": "pokémon.*from your discard pile.*(?:into|to) your hand",
+      "description": "Pokemon recovery to hand",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_recovery",
+      "family": "resource",
+      "actions": [
+        "put"
+      ],
+      "pattern": "energy.*from your discard pile.*(?:into|to) your hand",
+      "description": "Energy recovery to hand",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "recycling",
+      "family": "resource",
+      "actions": [
+        "shuffle",
+        "put"
+      ],
+      "pattern": "discard pile.*(?:into|in|to) your deck",
+      "description": "Discard to deck",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "lost_zone_movement",
+      "family": "resource",
+      "actions": [
+        "put",
+        "move"
+      ],
+      "pattern": "lost zone",
+      "description": "Lost Zone movement; may be unobserved in this Standard snapshot",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "top_deck_placement",
+      "family": "resource",
+      "actions": [
+        "put"
+      ],
+      "pattern": "(?:on|to) top of",
+      "description": "Top deck placement",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "bottom_deck_placement",
+      "family": "resource",
+      "actions": [
+        "put"
+      ],
+      "pattern": "(?:on|to) (?:the )?bottom of",
+      "description": "Bottom deck placement",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "hand_reset",
+      "family": "resource",
+      "actions": [
+        "shuffle"
+      ],
+      "pattern": "hand.*(?:into|in) .*deck",
+      "description": "Hand shuffle/reset component; draw may be a later atom",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_attachment",
+      "family": "resource",
+      "actions": [
+        "attach"
+      ],
+      "pattern": "energy",
+      "description": "Energy attachment",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_acceleration",
+      "family": "resource",
+      "actions": [
+        "attach"
+      ],
+      "pattern": "energy.*(?:from .*discard pile|from .*deck)",
+      "description": "Explicit non-hand Energy attachment",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_movement",
+      "family": "resource",
+      "actions": [
+        "move"
+      ],
+      "pattern": "energy",
+      "description": "Move Energy, without equating it to new attachment",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_denial",
+      "family": "resource",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "energy.*from your opponent's",
+      "description": "Discard opposing Energy",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_self_discard",
+      "family": "resource",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "energy.*from (?:this pokémon|your)",
+      "description": "Own Energy discard; cost/effect scope unresolved",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "hand_discard",
+      "family": "resource",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "from .*hand",
+      "description": "Discard from hand",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "basic_search",
+      "family": "board",
+      "actions": [
+        "search"
+      ],
+      "pattern": "basic.*pokémon",
+      "description": "Search Basic Pokemon",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "evolution_search",
+      "family": "board",
+      "actions": [
+        "search"
+      ],
+      "pattern": "(?:evolution|stage [12])",
+      "description": "Search Evolution/Stage cards",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "evolution",
+      "family": "board",
+      "actions": [
+        "evolve"
+      ],
+      "pattern": null,
+      "description": "Evolution wording; trigger/action scope needs inspection",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "evolution_acceleration",
+      "family": "board",
+      "actions": [
+        "put"
+      ],
+      "pattern": "(?:stage 2|evolv)",
+      "description": "Put evolution into play",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "devolution",
+      "family": "board",
+      "actions": [
+        "devolve"
+      ],
+      "pattern": null,
+      "description": "Devolve",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "bench_development",
+      "family": "board",
+      "actions": [
+        "put"
+      ],
+      "pattern": "(?:onto|on) your bench",
+      "description": "Place Pokemon onto Bench",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "switch",
+      "family": "board",
+      "actions": [
+        "switch"
+      ],
+      "pattern": null,
+      "description": "Switch board positions",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "gust",
+      "family": "board",
+      "actions": [
+        "switch"
+      ],
+      "pattern": "your opponent's",
+      "description": "Opponent board switching",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "retreat_modification",
+      "family": "board",
+      "actions": [
+        "retreat_modifier"
+      ],
+      "pattern": null,
+      "description": "Retreat Cost modification wording",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "printed_damage",
+      "family": "damage",
+      "actions": [
+        "printed_damage"
+      ],
+      "pattern": null,
+      "description": "Source damage field; not computed final damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "direct_damage",
+      "family": "damage",
+      "actions": [
+        "damage"
+      ],
+      "pattern": null,
+      "description": "Explicit attack damage in text",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "damage_scaling",
+      "family": "damage",
+      "actions": [
+        "damage_modifier"
+      ],
+      "pattern": "(?:for each|more|less)",
+      "description": "Modified/scaling damage, retain conditions",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "bench_damage",
+      "family": "damage",
+      "actions": [
+        "damage"
+      ],
+      "pattern": "bench|benched",
+      "description": "Bench damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "spread_damage",
+      "family": "damage",
+      "actions": [
+        "damage"
+      ],
+      "pattern": "(?:each|all|2 of|3 of)",
+      "description": "Multiple-target damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "damage_counter_placement",
+      "family": "damage",
+      "actions": [
+        "put",
+        "place"
+      ],
+      "pattern": "damage counters?",
+      "description": "Place damage counters, distinct from damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "damage_counter_movement",
+      "family": "damage",
+      "actions": [
+        "move"
+      ],
+      "pattern": "damage counters?",
+      "description": "Move counters, distinct from damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "self_damage",
+      "family": "damage",
+      "actions": [
+        "damage"
+      ],
+      "pattern": "to itself",
+      "description": "Recoil damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "snipe",
+      "family": "damage",
+      "actions": [
+        "damage"
+      ],
+      "pattern": "to 1 of your opponent's pokémon",
+      "description": "Any opposing Pokemon damage target",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "damage_modification",
+      "family": "damage",
+      "actions": [
+        "damage_modifier"
+      ],
+      "pattern": null,
+      "description": "Damage modifiers",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "item_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "play.*item",
+      "description": "Restriction on playing Items",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "supporter_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "play.*supporter",
+      "description": "Restriction on playing Supporters",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "tool_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "play.*tools?",
+      "description": "Restriction on playing Tools",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "tool_removal",
+      "family": "control",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "pokémon tools?",
+      "description": "Discard Tools from play",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "ability_lock",
+      "family": "control",
+      "actions": [
+        "disable"
+      ],
+      "pattern": null,
+      "description": "Ability restriction wording; usage limits kept separate",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "attack_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "attack",
+      "description": "Attack restriction",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "retreat_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "retreat",
+      "description": "Retreat restriction/trapping",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "evolution_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "evolve",
+      "description": "Evolution restriction",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "hand_disruption",
+      "family": "control",
+      "actions": [
+        "discard",
+        "shuffle"
+      ],
+      "pattern": "opponent's hand",
+      "description": "Opposing hand manipulation",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "hand_play_lock",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "play.*hand",
+      "description": "Restriction on playing from hand",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "stadium_removal",
+      "family": "control",
+      "actions": [
+        "discard"
+      ],
+      "pattern": "stadium",
+      "description": "Stadium discard",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "usage_limit",
+      "family": "control",
+      "actions": [
+        "usage_limit"
+      ],
+      "pattern": null,
+      "description": "Ability use limit, not opponent Ability suppression",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "healing",
+      "family": "defense",
+      "actions": [
+        "heal"
+      ],
+      "pattern": null,
+      "description": "Healing damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "damage_reduction",
+      "family": "defense",
+      "actions": [
+        "damage_modifier"
+      ],
+      "pattern": "(?:takes?|take).*less damage",
+      "description": "Reduce incoming damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "damage_prevention",
+      "family": "defense",
+      "actions": [
+        "prevent"
+      ],
+      "pattern": "damage",
+      "description": "Prevent damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "effect_prevention",
+      "family": "defense",
+      "actions": [
+        "prevent"
+      ],
+      "pattern": "effects?",
+      "description": "Prevent attack effects",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "class_protection",
+      "family": "defense",
+      "actions": [
+        "prevent"
+      ],
+      "pattern": "(?:pokémon ex|rule box|basic|evolution)",
+      "description": "Protection qualified by card class",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "status_recovery",
+      "family": "defense",
+      "actions": [
+        "recover"
+      ],
+      "pattern": "special conditions?",
+      "description": "Recover Special Conditions",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "counter_removal",
+      "family": "defense",
+      "actions": [
+        "remove"
+      ],
+      "pattern": "damage counters?",
+      "description": "Remove counters",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "prize_access",
+      "family": "prize",
+      "actions": [
+        "put",
+        "prize_take"
+      ],
+      "pattern": "prize",
+      "description": "Prize movement/access",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "prize_reduction",
+      "family": "prize",
+      "actions": [
+        "restrict",
+        "prize_modifier"
+      ],
+      "pattern": "take.*prize",
+      "description": "Reduced Prize taking",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "extra_prizes",
+      "family": "prize",
+      "actions": [
+        "prize_take"
+      ],
+      "pattern": "(?:more|extra|additional)",
+      "description": "Additional Prize taking",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "prize_condition_damage",
+      "family": "prize",
+      "actions": [
+        "damage_modifier"
+      ],
+      "pattern": "prize",
+      "description": "Prize-dependent damage",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "reveal",
+      "family": "information",
+      "actions": [
+        "reveal"
+      ],
+      "pattern": null,
+      "description": "Reveal cards",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "inspect",
+      "family": "information",
+      "actions": [
+        "inspect"
+      ],
+      "pattern": null,
+      "description": "Inspect hidden information",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "hand_reveal",
+      "family": "information",
+      "actions": [
+        "reveal",
+        "inspect"
+      ],
+      "pattern": "hand",
+      "description": "Hand information",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "top_deck_inspection",
+      "family": "information",
+      "actions": [
+        "inspect",
+        "reveal"
+      ],
+      "pattern": "top",
+      "description": "Top deck information",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "reorder",
+      "family": "information",
+      "actions": [
+        "reorder"
+      ],
+      "pattern": null,
+      "description": "Ordering choices",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "choice",
+      "family": "information",
+      "actions": [
+        "choose"
+      ],
+      "pattern": null,
+      "description": "Explicit choice; not automatically complete resolution",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "copy_effect",
+      "family": "copy_transform",
+      "actions": [
+        "copy"
+      ],
+      "pattern": null,
+      "description": "Use other attack/effect as this attack",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "type_change",
+      "family": "copy_transform",
+      "actions": [
+        "change",
+        "type_change"
+      ],
+      "pattern": "type|\\{[a-z]\\}",
+      "description": "Type-changing language",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "weakness_change",
+      "family": "copy_transform",
+      "actions": [
+        "change",
+        "weakness_change"
+      ],
+      "pattern": "weakness",
+      "description": "Weakness modification",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "poison",
+      "family": "conditions",
+      "actions": [
+        "special_condition"
+      ],
+      "pattern": "poisoned",
+      "description": "Poison",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "burn",
+      "family": "conditions",
+      "actions": [
+        "special_condition"
+      ],
+      "pattern": "burned",
+      "description": "Burn",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "confusion",
+      "family": "conditions",
+      "actions": [
+        "special_condition"
+      ],
+      "pattern": "confused",
+      "description": "Confusion",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "paralysis",
+      "family": "conditions",
+      "actions": [
+        "special_condition"
+      ],
+      "pattern": "paralyzed",
+      "description": "Paralysis",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "sleep",
+      "family": "conditions",
+      "actions": [
+        "special_condition"
+      ],
+      "pattern": "asleep",
+      "description": "Sleep",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "ancient_interaction",
+      "family": "objects",
+      "actions": [
+        "search",
+        "heal",
+        "put",
+        "damage_modifier",
+        "damage",
+        "discard",
+        "reveal"
+      ],
+      "pattern": "ancient",
+      "description": "Ancient-qualified effect",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "future_interaction",
+      "family": "objects",
+      "actions": [
+        "search",
+        "heal",
+        "put",
+        "damage_modifier",
+        "damage",
+        "discard",
+        "reveal"
+      ],
+      "pattern": "future",
+      "description": "Future-qualified effect",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "rule_box_interaction",
+      "family": "objects",
+      "actions": [
+        "restrict",
+        "disable",
+        "prevent"
+      ],
+      "pattern": "rule box",
+      "description": "Rule Box qualifier",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "pokemon_ex_interaction",
+      "family": "objects",
+      "actions": [
+        "restrict",
+        "disable",
+        "prevent",
+        "damage_modifier"
+      ],
+      "pattern": "pokémon ex",
+      "description": "Pokemon ex qualifier",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "stadium_interaction",
+      "family": "objects",
+      "actions": [
+        "search",
+        "discard",
+        "put"
+      ],
+      "pattern": "stadium",
+      "description": "Stadium-specific action",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "technical_machine_interaction",
+      "family": "objects",
+      "actions": [
+        "search",
+        "discard",
+        "put"
+      ],
+      "pattern": "technical machine",
+      "description": "Technical Machine-specific action",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "coin_flip",
+      "family": "chance",
+      "actions": [
+        "coin_flip"
+      ],
+      "pattern": null,
+      "description": "Coin-dependent effect; branch unresolved",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "knock_out",
+      "family": "knockout",
+      "actions": [
+        "knock_out"
+      ],
+      "pattern": null,
+      "description": "Explicit Knock Out instruction",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "energy_provision",
+      "family": "resource",
+      "actions": [
+        "provide_energy"
+      ],
+      "pattern": null,
+      "description": "Energy units supplied, distinct from attachment/acceleration",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "counter_multiplication",
+      "family": "damage",
+      "actions": [
+        "counter_scale"
+      ],
+      "pattern": null,
+      "description": "Multiply existing counters",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "self_ability_use_restriction",
+      "family": "control",
+      "actions": [
+        "restrict"
+      ],
+      "pattern": "use this ability",
+      "description": "Self-use timing restriction, not opposing Ability lock",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "hp_modification",
+      "family": "defense",
+      "actions": [
+        "hp_modifier"
+      ],
+      "pattern": null,
+      "description": "Printed HP modifier",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "bench_capacity",
+      "family": "board",
+      "actions": [
+        "bench_capacity"
+      ],
+      "pattern": null,
+      "description": "Bench capacity expansion/restriction wording",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "attack_cost_modification",
+      "family": "resource",
+      "actions": [
+        "attack_cost_modifier"
+      ],
+      "pattern": null,
+      "description": "Printed attack-cost modifier; distinct from Energy attachment",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    },
+    {
+      "id": "tool_nullification",
+      "family": "control",
+      "actions": [
+        "tool_nullification"
+      ],
+      "pattern": null,
+      "description": "Tools have no effect; distinct from preventing attachment or removing them",
+      "interpretation": "lexical candidate; inspect source/context before claiming equivalence"
+    }
+  ],
+  "synonyms": [
+    {
+      "concept": "deck_depletion",
+      "forms": [
+        "discard the top ... cards of ... deck",
+        "put ... from ... deck into ... discard pile"
+      ],
+      "distinctions": [
+        "self/opponent",
+        "source deck vs hand/play",
+        "discard vs Lost Zone"
+      ],
+      "status": "second form is a conservative explicit movement pattern, report observed counts"
+    },
+    {
+      "concept": "counter_placement",
+      "forms": [
+        "put ... damage counters",
+        "place ... damage counters"
+      ],
+      "distinctions": [
+        "placement vs movement",
+        "counters vs damage"
+      ]
+    },
+    {
+      "concept": "switching",
+      "forms": [
+        "switch ... with",
+        "switch out ... to the Bench",
+        "switch in ... to the Active Spot"
+      ],
+      "distinctions": [
+        "own/opponent",
+        "who chooses"
+      ]
+    },
+    {
+      "concept": "restriction",
+      "forms": [
+        "can't",
+        "cannot"
+      ],
+      "distinctions": [
+        "Item/Supporter/Tool/Ability/attack",
+        "usage cap vs suppression"
+      ]
+    }
+  ],
+  "coverage_checklist": [
+    {
+      "id": "draw",
+      "family": "resource",
+      "pattern": null,
+      "actions": [
+        "draw"
+      ]
+    },
+    {
+      "id": "search",
+      "family": "resource",
+      "pattern": null,
+      "actions": [
+        "search"
+      ]
+    },
+    {
+      "id": "discard",
+      "family": "resource",
+      "pattern": null,
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "opponent_mill",
+      "family": "resource",
+      "pattern": "top\\b.*\\byour opponent's deck",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "self_mill",
+      "family": "resource",
+      "pattern": "top\\b.*\\byour deck",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "deck_to_discard",
+      "family": "resource",
+      "pattern": "deck.*(?:into|in) .*discard pile",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "pokemon_recovery",
+      "family": "resource",
+      "pattern": "pokémon.*from your discard pile.*(?:into|to) your hand",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "energy_recovery",
+      "family": "resource",
+      "pattern": "energy.*from your discard pile.*(?:into|to) your hand",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "recycling",
+      "family": "resource",
+      "pattern": "discard pile.*(?:into|in|to) your deck",
+      "actions": [
+        "shuffle",
+        "put"
+      ]
+    },
+    {
+      "id": "lost_zone_movement",
+      "family": "resource",
+      "pattern": "lost zone",
+      "actions": [
+        "put",
+        "move"
+      ]
+    },
+    {
+      "id": "top_deck_placement",
+      "family": "resource",
+      "pattern": "(?:on|to) top of",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "bottom_deck_placement",
+      "family": "resource",
+      "pattern": "(?:on|to) (?:the )?bottom of",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "hand_reset",
+      "family": "resource",
+      "pattern": "hand.*(?:into|in) .*deck",
+      "actions": [
+        "shuffle"
+      ]
+    },
+    {
+      "id": "energy_attachment",
+      "family": "resource",
+      "pattern": "energy",
+      "actions": [
+        "attach"
+      ]
+    },
+    {
+      "id": "energy_acceleration",
+      "family": "resource",
+      "pattern": "energy.*(?:from .*discard pile|from .*deck)",
+      "actions": [
+        "attach"
+      ]
+    },
+    {
+      "id": "energy_movement",
+      "family": "resource",
+      "pattern": "energy",
+      "actions": [
+        "move"
+      ]
+    },
+    {
+      "id": "energy_denial",
+      "family": "resource",
+      "pattern": "energy.*from your opponent's",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "energy_self_discard",
+      "family": "resource",
+      "pattern": "energy.*from (?:this pokémon|your)",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "hand_discard",
+      "family": "resource",
+      "pattern": "from .*hand",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "basic_search",
+      "family": "board",
+      "pattern": "basic.*pokémon",
+      "actions": [
+        "search"
+      ]
+    },
+    {
+      "id": "evolution_search",
+      "family": "board",
+      "pattern": "(?:evolution|stage [12])",
+      "actions": [
+        "search"
+      ]
+    },
+    {
+      "id": "evolution",
+      "family": "board",
+      "pattern": null,
+      "actions": [
+        "evolve"
+      ]
+    },
+    {
+      "id": "evolution_acceleration",
+      "family": "board",
+      "pattern": "(?:stage 2|evolv)",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "devolution",
+      "family": "board",
+      "pattern": null,
+      "actions": [
+        "devolve"
+      ]
+    },
+    {
+      "id": "bench_development",
+      "family": "board",
+      "pattern": "(?:onto|on) your bench",
+      "actions": [
+        "put"
+      ]
+    },
+    {
+      "id": "switch",
+      "family": "board",
+      "pattern": null,
+      "actions": [
+        "switch"
+      ]
+    },
+    {
+      "id": "gust",
+      "family": "board",
+      "pattern": "your opponent's",
+      "actions": [
+        "switch"
+      ]
+    },
+    {
+      "id": "retreat_modification",
+      "family": "board",
+      "pattern": null,
+      "actions": [
+        "retreat_modifier"
+      ]
+    },
+    {
+      "id": "printed_damage",
+      "family": "damage",
+      "pattern": null,
+      "actions": [
+        "printed_damage"
+      ]
+    },
+    {
+      "id": "direct_damage",
+      "family": "damage",
+      "pattern": null,
+      "actions": [
+        "damage"
+      ]
+    },
+    {
+      "id": "damage_scaling",
+      "family": "damage",
+      "pattern": "(?:for each|more|less)",
+      "actions": [
+        "damage_modifier"
+      ]
+    },
+    {
+      "id": "bench_damage",
+      "family": "damage",
+      "pattern": "bench|benched",
+      "actions": [
+        "damage"
+      ]
+    },
+    {
+      "id": "spread_damage",
+      "family": "damage",
+      "pattern": "(?:each|all|2 of|3 of)",
+      "actions": [
+        "damage"
+      ]
+    },
+    {
+      "id": "damage_counter_placement",
+      "family": "damage",
+      "pattern": "damage counters?",
+      "actions": [
+        "put",
+        "place"
+      ]
+    },
+    {
+      "id": "damage_counter_movement",
+      "family": "damage",
+      "pattern": "damage counters?",
+      "actions": [
+        "move"
+      ]
+    },
+    {
+      "id": "self_damage",
+      "family": "damage",
+      "pattern": "to itself",
+      "actions": [
+        "damage"
+      ]
+    },
+    {
+      "id": "snipe",
+      "family": "damage",
+      "pattern": "to 1 of your opponent's pokémon",
+      "actions": [
+        "damage"
+      ]
+    },
+    {
+      "id": "damage_modification",
+      "family": "damage",
+      "pattern": null,
+      "actions": [
+        "damage_modifier"
+      ]
+    },
+    {
+      "id": "item_lock",
+      "family": "control",
+      "pattern": "play.*item",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "supporter_lock",
+      "family": "control",
+      "pattern": "play.*supporter",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "tool_lock",
+      "family": "control",
+      "pattern": "play.*tools?",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "tool_removal",
+      "family": "control",
+      "pattern": "pokémon tools?",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "ability_lock",
+      "family": "control",
+      "pattern": null,
+      "actions": [
+        "disable"
+      ]
+    },
+    {
+      "id": "attack_lock",
+      "family": "control",
+      "pattern": "attack",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "retreat_lock",
+      "family": "control",
+      "pattern": "retreat",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "evolution_lock",
+      "family": "control",
+      "pattern": "evolve",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "hand_disruption",
+      "family": "control",
+      "pattern": "opponent's hand",
+      "actions": [
+        "discard",
+        "shuffle"
+      ]
+    },
+    {
+      "id": "hand_play_lock",
+      "family": "control",
+      "pattern": "play.*hand",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "stadium_removal",
+      "family": "control",
+      "pattern": "stadium",
+      "actions": [
+        "discard"
+      ]
+    },
+    {
+      "id": "usage_limit",
+      "family": "control",
+      "pattern": null,
+      "actions": [
+        "usage_limit"
+      ]
+    },
+    {
+      "id": "healing",
+      "family": "defense",
+      "pattern": null,
+      "actions": [
+        "heal"
+      ]
+    },
+    {
+      "id": "damage_reduction",
+      "family": "defense",
+      "pattern": "(?:takes?|take).*less damage",
+      "actions": [
+        "damage_modifier"
+      ]
+    },
+    {
+      "id": "damage_prevention",
+      "family": "defense",
+      "pattern": "damage",
+      "actions": [
+        "prevent"
+      ]
+    },
+    {
+      "id": "effect_prevention",
+      "family": "defense",
+      "pattern": "effects?",
+      "actions": [
+        "prevent"
+      ]
+    },
+    {
+      "id": "class_protection",
+      "family": "defense",
+      "pattern": "(?:pokémon ex|rule box|basic|evolution)",
+      "actions": [
+        "prevent"
+      ]
+    },
+    {
+      "id": "status_recovery",
+      "family": "defense",
+      "pattern": "special conditions?",
+      "actions": [
+        "recover"
+      ]
+    },
+    {
+      "id": "counter_removal",
+      "family": "defense",
+      "pattern": "damage counters?",
+      "actions": [
+        "remove"
+      ]
+    },
+    {
+      "id": "prize_access",
+      "family": "prize",
+      "pattern": "prize",
+      "actions": [
+        "put",
+        "prize_take"
+      ]
+    },
+    {
+      "id": "prize_reduction",
+      "family": "prize",
+      "pattern": "take.*prize",
+      "actions": [
+        "restrict",
+        "prize_modifier"
+      ]
+    },
+    {
+      "id": "extra_prizes",
+      "family": "prize",
+      "pattern": "(?:more|extra|additional)",
+      "actions": [
+        "prize_take"
+      ]
+    },
+    {
+      "id": "prize_condition_damage",
+      "family": "prize",
+      "pattern": "prize",
+      "actions": [
+        "damage_modifier"
+      ]
+    },
+    {
+      "id": "reveal",
+      "family": "information",
+      "pattern": null,
+      "actions": [
+        "reveal"
+      ]
+    },
+    {
+      "id": "inspect",
+      "family": "information",
+      "pattern": null,
+      "actions": [
+        "inspect"
+      ]
+    },
+    {
+      "id": "hand_reveal",
+      "family": "information",
+      "pattern": "hand",
+      "actions": [
+        "reveal",
+        "inspect"
+      ]
+    },
+    {
+      "id": "top_deck_inspection",
+      "family": "information",
+      "pattern": "top",
+      "actions": [
+        "inspect",
+        "reveal"
+      ]
+    },
+    {
+      "id": "reorder",
+      "family": "information",
+      "pattern": null,
+      "actions": [
+        "reorder"
+      ]
+    },
+    {
+      "id": "choice",
+      "family": "information",
+      "pattern": null,
+      "actions": [
+        "choose"
+      ]
+    },
+    {
+      "id": "copy_effect",
+      "family": "copy_transform",
+      "pattern": null,
+      "actions": [
+        "copy"
+      ]
+    },
+    {
+      "id": "type_change",
+      "family": "copy_transform",
+      "pattern": "type|\\{[a-z]\\}",
+      "actions": [
+        "change",
+        "type_change"
+      ]
+    },
+    {
+      "id": "weakness_change",
+      "family": "copy_transform",
+      "pattern": "weakness",
+      "actions": [
+        "change",
+        "weakness_change"
+      ]
+    },
+    {
+      "id": "poison",
+      "family": "conditions",
+      "pattern": "poisoned",
+      "actions": [
+        "special_condition"
+      ]
+    },
+    {
+      "id": "burn",
+      "family": "conditions",
+      "pattern": "burned",
+      "actions": [
+        "special_condition"
+      ]
+    },
+    {
+      "id": "confusion",
+      "family": "conditions",
+      "pattern": "confused",
+      "actions": [
+        "special_condition"
+      ]
+    },
+    {
+      "id": "paralysis",
+      "family": "conditions",
+      "pattern": "paralyzed",
+      "actions": [
+        "special_condition"
+      ]
+    },
+    {
+      "id": "sleep",
+      "family": "conditions",
+      "pattern": "asleep",
+      "actions": [
+        "special_condition"
+      ]
+    },
+    {
+      "id": "ancient_interaction",
+      "family": "objects",
+      "pattern": "ancient",
+      "actions": [
+        "search",
+        "heal",
+        "put",
+        "damage_modifier",
+        "damage",
+        "discard",
+        "reveal"
+      ]
+    },
+    {
+      "id": "future_interaction",
+      "family": "objects",
+      "pattern": "future",
+      "actions": [
+        "search",
+        "heal",
+        "put",
+        "damage_modifier",
+        "damage",
+        "discard",
+        "reveal"
+      ]
+    },
+    {
+      "id": "rule_box_interaction",
+      "family": "objects",
+      "pattern": "rule box",
+      "actions": [
+        "restrict",
+        "disable",
+        "prevent"
+      ]
+    },
+    {
+      "id": "pokemon_ex_interaction",
+      "family": "objects",
+      "pattern": "pokémon ex",
+      "actions": [
+        "restrict",
+        "disable",
+        "prevent",
+        "damage_modifier"
+      ]
+    },
+    {
+      "id": "stadium_interaction",
+      "family": "objects",
+      "pattern": "stadium",
+      "actions": [
+        "search",
+        "discard",
+        "put"
+      ]
+    },
+    {
+      "id": "technical_machine_interaction",
+      "family": "objects",
+      "pattern": "technical machine",
+      "actions": [
+        "search",
+        "discard",
+        "put"
+      ]
+    },
+    {
+      "id": "coin_flip",
+      "family": "chance",
+      "pattern": null,
+      "actions": [
+        "coin_flip"
+      ]
+    },
+    {
+      "id": "knock_out",
+      "family": "knockout",
+      "pattern": null,
+      "actions": [
+        "knock_out"
+      ]
+    },
+    {
+      "id": "energy_provision",
+      "family": "resource",
+      "pattern": null,
+      "actions": [
+        "provide_energy"
+      ]
+    },
+    {
+      "id": "counter_multiplication",
+      "family": "damage",
+      "pattern": null,
+      "actions": [
+        "counter_scale"
+      ]
+    },
+    {
+      "id": "self_ability_use_restriction",
+      "family": "control",
+      "pattern": "use this ability",
+      "actions": [
+        "restrict"
+      ]
+    },
+    {
+      "id": "hp_modification",
+      "family": "defense",
+      "pattern": null,
+      "actions": [
+        "hp_modifier"
+      ]
+    },
+    {
+      "id": "bench_capacity",
+      "family": "board",
+      "pattern": null,
+      "actions": [
+        "bench_capacity"
+      ]
+    },
+    {
+      "id": "attack_cost_modification",
+      "family": "resource",
+      "pattern": null,
+      "actions": [
+        "attack_cost_modifier"
+      ]
+    },
+    {
+      "id": "tool_nullification",
+      "family": "control",
+      "pattern": null,
+      "actions": [
+        "tool_nullification"
+      ]
+    }
+  ],
+  "additional_text_audit": {
+    "lost_zone": "lost zone",
+    "alternate_win_loss": "win the game|lose the game",
+    "search_denial": "(?:can't|cannot) search",
+    "technical_machine": "technical machine",
+    "rule_box": "rule box",
+    "future": "future",
+    "ancient": "ancient",
+    "tera": "tera",
+    "team_rocket": "team rocket",
+    "bench_capacity": "bench.*(?:8|eight)|(?:8|eight).*bench",
+    "weakness_resistance": "weakness|resistance",
+    "special_conditions": "poison|burn|confus|paraly|asleep|special condition",
+    "prize_interaction": "prize",
+    "stadium": "stadium",
+    "tool": "pokémon tool",
+    "opponent_prize": "opponent.*prize",
+    "attack_copy": "use.*as.*attack",
+    "counter_prevention": "prevent.*damage counters",
+    "hand_lock": "(?:can't|cannot).*hand",
+    "stall_lock": "(?:can't|cannot) (?:attack|retreat|play)"
+  }
+}

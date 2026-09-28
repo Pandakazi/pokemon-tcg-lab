@@ -24,6 +24,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 tcg_lab = ["data/*.json"]
+pokelab = ["mechanics_taxonomy.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

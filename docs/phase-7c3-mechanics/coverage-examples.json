@@ -1,0 +1,1285 @@
+[
+  {
+    "id": "dab737993edd19d546b3867c794faedea77e95bba8db45f97583fa79574508be",
+    "printing": "me01-086",
+    "functional_identity": "1ad5141d860b19ec20e30e2614d6e1e2",
+    "name": "Mega Absol ex",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Terminal Period",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-086",
+    "source_card_hash": "467b928c040bb517f3a43c1868ecbdb2566216b9302d36786c5a671ce4913aa4",
+    "checked_at": "2026-09-23T02:37:25.911311+00:00",
+    "raw_text": "If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.",
+    "normalized_text": "if your opponent's active pokémon has exactly 6 damage counters on it, that pokémon is knocked out.",
+    "structured_json": "{\"cost\":[\"Darkness\",\"Colorless\"],\"effect\":\"If your opponent's Active Pokémon has exactly 6 damage counters on it, that Pokémon is Knocked Out.\",\"name\":\"Terminal Period\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 99,
+        "text": "if your opponent's active pokémon has exactly 6 damage counters on it, that pokémon is knocked out."
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "reference_resolution_unresolved"
+    ],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "unclassified"
+  },
+  {
+    "id": "5e1fb1d5b6e176ad2c1aee56bb0fe2546d0adc67e8e56985199197906d14a809",
+    "printing": "me03-012",
+    "functional_identity": "20250d05f1c0741e2b0c97365e06950f",
+    "name": "Decidueye ex",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Sniper's Eye",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me03-012",
+    "source_card_hash": "9068196e68f364363f2fb481f78e7867f040e4a3c4832e802f6378e2410885e0",
+    "checked_at": "2026-09-23T02:35:05.297401+00:00",
+    "raw_text": "If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon.",
+    "normalized_text": "if your opponent has exactly 4 cards in their hand, ignore all {c} energy in the costs of attacks used by this pokémon.",
+    "structured_json": "{\"effect\":\"If your opponent has exactly 4 cards in their hand, ignore all {C} Energy in the costs of attacks used by this Pokémon.\",\"name\":\"Sniper's Eye\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 119,
+        "text": "if your opponent has exactly 4 cards in their hand, ignore all {c} energy in the costs of attacks used by this pokémon."
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved"
+    ],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "78cea5ef9f50a4875a156a9442cfeafb54935484e0548ad488896c5dbffa3f34",
+    "printing": "me03-070",
+    "functional_identity": "7ebd73d7b6877da5cd769f05a045f48f",
+    "name": "Core Memory",
+    "category": "Trainer",
+    "component": "trainer_effect",
+    "component_index": 0,
+    "component_name": null,
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me03-070",
+    "source_card_hash": "d873808a7d068f31432d266d638e2b8c925c04b0f16b991c4a45d068a5762cf0",
+    "checked_at": "2026-09-23T02:36:58.006095+00:00",
+    "raw_text": "The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.)",
+    "normalized_text": "the mega zygarde ex this card is attached to can use the attack on this card. (you still need the necessary energy to use this attack.)",
+    "structured_json": "{\"effect\":\"The Mega Zygarde ex this card is attached to can use the attack on this card. (You still need the necessary Energy to use this attack.)\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 135,
+        "text": "the mega zygarde ex this card is attached to can use the attack on this card. (you still need the necessary energy to use this attack.)"
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "6e17df5f45dc2abcf5ecbe8d843637875b7183279e510e6947a08e2e39bdbdf5",
+    "printing": "me04-070",
+    "functional_identity": "f4c601b778125ea115b3b2bb2de8eacb",
+    "name": "Patrat",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Watchful Eye",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me04-070",
+    "source_card_hash": "9064da72f9ae4ce4691fcee5cdfb1c45d1f39d719e9e528c20c443c9f23156a2",
+    "checked_at": "2026-09-23T02:36:58.029169+00:00",
+    "raw_text": "Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.",
+    "normalized_text": "damage counters on each pokémon (both yours and your opponent's) can't be moved to other pokémon.",
+    "structured_json": "{\"effect\":\"Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.\",\"name\":\"Watchful Eye\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 97,
+        "text": "damage counters on each pokémon (both yours and your opponent's) can't be moved to other pokémon."
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "dbc32a2042d79300025548ecc385cfeebd7c206a18f5f15497d4c4c250a96d5b",
+    "printing": "me05-048",
+    "functional_identity": "8ef44939addae0011c7e0835fc771121",
+    "name": "Mega Darkrai ex",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 1,
+    "component_name": "Abyss Eye",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me05-048",
+    "source_card_hash": "d9233ae78fe1737162d29a9a2ed5e1810b2f64409dd83bff69e9f13d73fcfd47",
+    "checked_at": "2026-09-23T02:36:17.833668+00:00",
+    "raw_text": "If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out.",
+    "normalized_text": "if your opponent's active pokémon is affected by a special condition, it is knocked out.",
+    "structured_json": "{\"cost\":[\"Darkness\",\"Darkness\",\"Darkness\"],\"effect\":\"If your opponent's Active Pokémon is affected by a Special Condition, it is Knocked Out.\",\"name\":\"Abyss Eye\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 88,
+        "text": "if your opponent's active pokémon is affected by a special condition, it is knocked out."
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "reference_resolution_unresolved"
+    ],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "unclassified"
+  },
+  {
+    "id": "aa4d075fdc67134354b83cabb93011fce3913cd2a579e444798f94f7b3600f4b",
+    "printing": "mep-086",
+    "functional_identity": "a2ea10efdd16fdd16b4aa24ffdcc53a0",
+    "name": "Slowpoke",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Dopey Face",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/mep-086",
+    "source_card_hash": "7134a192050c9451a44a9b71529fc739b46c0c2909f54df617664e093e461473",
+    "checked_at": "2026-09-23T02:37:25.938588+00:00",
+    "raw_text": "This Pokémon can't be Confused.",
+    "normalized_text": "this pokémon can't be confused.",
+    "structured_json": "{\"effect\":\"This Pokémon can't be Confused.\",\"name\":\"Dopey Face\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 31,
+        "text": "this pokémon can't be confused."
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "a7f0e09d9dc9dfaf155d03d613d2a837959cdc536a131313cb8b9e3fa01b4659",
+    "printing": "sv05-050",
+    "functional_identity": "9f9c746b7a9a69abab02a95035bac425",
+    "name": "Walking Wake ex",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Azure Seas",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/sv05-050",
+    "source_card_hash": "24985522f1c334690a450b1e474e5951ab4ee330bed8bb8335fbbabedd828be1",
+    "checked_at": "2026-09-23T02:36:22.730922+00:00",
+    "raw_text": "Damage from attacks used by this Pokémon isn't affected by any effects on your opponent's Active Pokémon.",
+    "normalized_text": "damage from attacks used by this pokémon isn't affected by any effects on your opponent's active pokémon.",
+    "structured_json": "{\"effect\":\"Damage from attacks used by this Pokémon isn't affected by any effects on your opponent's Active Pokémon.\",\"name\":\"Azure Seas\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 105,
+        "text": "damage from attacks used by this pokémon isn't affected by any effects on your opponent's active pokémon."
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "dae7b26da218f9c17cf9e2c26908a5043b617e26a7af80a1ce8a45cdd042fd83",
+    "printing": "sv05-084",
+    "functional_identity": "6236d7f2fd567287d3b890a407a60731",
+    "name": "Relicanth",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Memory Dive",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/sv05-084",
+    "source_card_hash": "f4d9488888abb0ef1871cc5ae5a6c935ee90df922c6066d60ec492eefca57783",
+    "checked_at": "2026-09-23T02:37:23.874574+00:00",
+    "raw_text": "Each of your evolved Pokémon can use any attack from its previous Evolutions. (You still need the necessary Energy to use each attack.)",
+    "normalized_text": "each of your evolved pokémon can use any attack from its previous evolutions. (you still need the necessary energy to use each attack.)",
+    "structured_json": "{\"effect\":\"Each of your evolved Pokémon can use any attack from its previous Evolutions. (You still need the necessary Energy to use each attack.)\",\"name\":\"Memory Dive\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 135,
+        "text": "each of your evolved pokémon can use any attack from its previous evolutions. (you still need the necessary energy to use each attack.)"
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "26e9c94f5cde0a0206ba88e8d9d577afccfc9feef82c2889e28559bf7f652c4e",
+    "printing": "sv06-066",
+    "functional_identity": "0ea7a76e0a2ad9999824bab3896fbc53",
+    "name": "Shinx",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Curiosity",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/sv06-066",
+    "source_card_hash": "9ae9b207031c17e4a1aab256e9635d78c41a0fbae310195bb6ab699f73de5575",
+    "checked_at": "2026-09-23T02:36:51.137890+00:00",
+    "raw_text": "Your opponent reveals their hand.",
+    "normalized_text": "your opponent reveals their hand.",
+    "structured_json": "{\"cost\":[\"Colorless\"],\"effect\":\"Your opponent reveals their hand.\",\"name\":\"Curiosity\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 33,
+        "text": "your opponent reveals their hand."
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "unclassified"
+  },
+  {
+    "id": "17b88d92d54974f52f1244799f8361c15582d06c7d2d997cff8b99d93abf48ce",
+    "printing": "sv06-141",
+    "functional_identity": "a5925d229660b787da33de747535ce8c",
+    "name": "Bloodmoon Ursaluna ex",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Seasoned Skill",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/sv06-141",
+    "source_card_hash": "223995bc7ef5a3409ec323b165444faf48882caf48805b95d066de8659e42adf",
+    "checked_at": "2026-09-23T02:38:30.030734+00:00",
+    "raw_text": "Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.",
+    "normalized_text": "blood moon used by this pokémon costs {c} less for each prize card your opponent has taken.",
+    "structured_json": "{\"effect\":\"Blood Moon used by this Pokémon costs {C} less for each Prize card your opponent has taken.\",\"name\":\"Seasoned Skill\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 91,
+        "text": "blood moon used by this pokémon costs {c} less for each prize card your opponent has taken."
+      }
+    ],
+    "ambiguities": [
+      "choice_quantity_or_option_scope_unresolved"
+    ],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "93c2d3536bcdb0c428a4a76d9dc6db0d525f1dcf729d75774a1b9b95bc669450",
+    "printing": "sv06.5-046",
+    "functional_identity": "13925c8788c43c660ca0cae5c002ef26",
+    "name": "Haxorus",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Bring Down the Axe",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/sv06.5-046",
+    "source_card_hash": "046f0685ee1b1827601068c05d552afebf706043a581728a4435f9fbfe356d7c",
+    "checked_at": "2026-09-23T02:36:15.289473+00:00",
+    "raw_text": "If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out.",
+    "normalized_text": "if your opponent's active pokémon has any special energy attached, it is knocked out.",
+    "structured_json": "{\"cost\":[\"Fighting\"],\"effect\":\"If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out.\",\"name\":\"Bring Down the Axe\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 85,
+        "text": "if your opponent's active pokémon has any special energy attached, it is knocked out."
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "reference_resolution_unresolved"
+    ],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "unclassified"
+  },
+  {
+    "id": "959ba41d873d186be85d343dc7ce166f6921f41bd815b36966ce18ff66d70a3a",
+    "printing": "sv06.5-047",
+    "functional_identity": "a759c7ceb9275795655d07503d3f9874",
+    "name": "Kyurem",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Plasma Bane",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/sv06.5-047",
+    "source_card_hash": "16a700c3d438f1c40639730be0ca2514698dd606da45254e0e685aef9bfe381b",
+    "checked_at": "2026-09-23T02:36:16.941692+00:00",
+    "raw_text": "If your opponent has any cards in their discard pile that have \"Colress\" in the name, this Pokémon can use the Trifrost attack for {C}.",
+    "normalized_text": "if your opponent has any cards in their discard pile that have \"colress\" in the name, this pokémon can use the trifrost attack for {c}.",
+    "structured_json": "{\"effect\":\"If your opponent has any cards in their discard pile that have \\\"Colress\\\" in the name, this Pokémon can use the Trifrost attack for {C}.\",\"name\":\"Plasma Bane\",\"type\":\"Ability\"}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 135,
+        "text": "if your opponent has any cards in their discard pile that have \"colress\" in the name, this pokémon can use the trifrost attack for {c}."
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "reference_resolution_unresolved"
+    ],
+    "source_issues": [],
+    "representation": "unclassified"
+  },
+  {
+    "id": "b1df0138ea15022b6086cc682859b41a0f8e6aed151d9c1ab461f8512fafaff8",
+    "printing": "me01-001",
+    "functional_identity": "7332fc0b6988e3690814a6c2085a75d6",
+    "name": "Bulbasaur",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Bind Down",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-001",
+    "source_card_hash": "ab288f8664bc0ae3ba5e3db5dce417b4a6419c96d0c37a6f6970b901ca7c5648",
+    "checked_at": "2026-09-23T02:34:38.317714+00:00",
+    "raw_text": "During your opponent's next turn, the Defending Pokémon can't retreat.",
+    "normalized_text": "during your opponent's next turn, the defending pokémon can't retreat.",
+    "structured_json": "{\"cost\":[\"Grass\"],\"damage\":10,\"effect\":\"During your opponent's next turn, the Defending Pokémon can't retreat.\",\"name\":\"Bind Down\"}",
+    "atoms": [
+      {
+        "action": "restrict",
+        "order": 0,
+        "span": {
+          "start": 56,
+          "end": 70,
+          "text": "can't retreat."
+        },
+        "source_field": "effect",
+        "object": null,
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "during your opponent's next turn, the defending pokémon",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "printed_damage",
+        "order": 1,
+        "span": null,
+        "source_field": "damage",
+        "object": "damage",
+        "quantity": "10",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "explicit_source_field",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "printed_damage",
+      "retreat_lock"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 56,
+        "text": "during your opponent's next turn, the defending pokémon "
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "1ef04d7562f741c0de9e7908498cfe7c4beb77b0d5b66e8f331d7d4be585f305",
+    "printing": "me01-003",
+    "functional_identity": "81d09511f42261d57b4fab0f345d9a61",
+    "name": "Mega Venusaur ex",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Jungle Dump",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-003",
+    "source_card_hash": "950b7e72098fb5d9a6602889b815d66bde749f1581e6f5c071d5fea74d1ef6d6",
+    "checked_at": "2026-09-23T02:34:42.692196+00:00",
+    "raw_text": "Heal 30 damage from this Pokémon.",
+    "normalized_text": "heal 30 damage from this pokémon.",
+    "structured_json": "{\"cost\":[\"Grass\",\"Grass\",\"Grass\",\"Grass\"],\"damage\":240,\"effect\":\"Heal 30 damage from this Pokémon.\",\"name\":\"Jungle Dump\"}",
+    "atoms": [
+      {
+        "action": "heal",
+        "order": 0,
+        "span": {
+          "start": 0,
+          "end": 33,
+          "text": "heal 30 damage from this pokémon."
+        },
+        "source_field": "effect",
+        "object": "damage",
+        "quantity": "30",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "printed_damage",
+        "order": 1,
+        "span": null,
+        "source_field": "damage",
+        "object": "damage",
+        "quantity": "240",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "explicit_source_field",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "healing",
+      "printed_damage"
+    ],
+    "unmatched_spans": [],
+    "ambiguities": [
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "eab77c47251d4431fa6b0c0edbb59a0dbfd3ad8608c32af940d935390ca05609",
+    "printing": "me01-003",
+    "functional_identity": "81d09511f42261d57b4fab0f345d9a61",
+    "name": "Mega Venusaur ex",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Solar Transfer",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-003",
+    "source_card_hash": "950b7e72098fb5d9a6602889b815d66bde749f1581e6f5c071d5fea74d1ef6d6",
+    "checked_at": "2026-09-23T02:34:42.692196+00:00",
+    "raw_text": "As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon.",
+    "normalized_text": "as often as you like during your turn, you may use this ability. move a basic {g} energy from 1 of your pokémon to another of your pokémon.",
+    "structured_json": "{\"effect\":\"As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon.\",\"name\":\"Solar Transfer\",\"type\":\"Ability\"}",
+    "atoms": [
+      {
+        "action": "move",
+        "order": 0,
+        "span": {
+          "start": 65,
+          "end": 139,
+          "text": "move a basic {g} energy from 1 of your pokémon to another of your pokémon."
+        },
+        "source_field": "effect",
+        "object": "energy",
+        "quantity": "a",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "energy_movement"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 65,
+        "text": "as often as you like during your turn, you may use this ability. "
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "choice_quantity_or_option_scope_unresolved"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "a73c7d6a1bd61d63705dd56493866f5cb96c2b7dafa96b9ff33069260a42cdaa",
+    "printing": "me01-004",
+    "functional_identity": "85c8f5dbc2d4b41a54b055565b8c6fac",
+    "name": "Exeggcute",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Jam-Packed",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-004",
+    "source_card_hash": "d9a915677550db71989d904812fff37222eca63578fc2043a5fdcde69c8528a8",
+    "checked_at": "2026-09-23T02:34:44.718148+00:00",
+    "raw_text": "Search your deck for a Basic {G} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
+    "normalized_text": "search your deck for a basic {g} energy card and attach it to this pokémon. then, shuffle your deck.",
+    "structured_json": "{\"cost\":[\"Colorless\"],\"effect\":\"Search your deck for a Basic {G} Energy card and attach it to this Pokémon. Then, shuffle your deck.\",\"name\":\"Jam-Packed\"}",
+    "atoms": [
+      {
+        "action": "search",
+        "order": 0,
+        "span": {
+          "start": 0,
+          "end": 48,
+          "text": "search your deck for a basic {g} energy card and"
+        },
+        "source_field": "effect",
+        "object": "energy card",
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "attach",
+        "order": 1,
+        "span": {
+          "start": 49,
+          "end": 75,
+          "text": "attach it to this pokémon."
+        },
+        "source_field": "effect",
+        "object": "pokémon",
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "search your deck for a basic {g} energy card and",
+        "previous_atom": 0,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "shuffle",
+        "order": 2,
+        "span": {
+          "start": 82,
+          "end": 100,
+          "text": "shuffle your deck."
+        },
+        "source_field": "effect",
+        "object": null,
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "then,",
+        "previous_atom": 1,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "search"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 75,
+        "end": 82,
+        "text": " then, "
+      }
+    ],
+    "ambiguities": [
+      "reference_resolution_unresolved",
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "partial"
+  },
+  {
+    "id": "0f8dd0ba93be9c21a9795eb3260d5c8a58ffd350bd22fa10b3feee0584ef7f0e",
+    "printing": "me01-005",
+    "functional_identity": "945318d9677af4c9068e946786eb66bc",
+    "name": "Exeggutor",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Guard Press",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-005",
+    "source_card_hash": "fdc8cd5ac0adc9de7a8d795662f4fc3bc50f2eff302b412c06052e271459ee44",
+    "checked_at": "2026-09-23T02:34:47.835175+00:00",
+    "raw_text": "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).",
+    "normalized_text": "during your opponent's next turn, this pokémon takes 30 less damage from attacks (after applying weakness and resistance).",
+    "structured_json": "{\"cost\":[\"Grass\"],\"damage\":30,\"effect\":\"During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).\",\"name\":\"Guard Press\"}",
+    "atoms": [
+      {
+        "action": "damage_modifier",
+        "order": 0,
+        "span": {
+          "start": 47,
+          "end": 122,
+          "text": "takes 30 less damage from attacks (after applying weakness and resistance)."
+        },
+        "source_field": "effect",
+        "object": "damage",
+        "quantity": "30",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "during your opponent's next turn, this pokémon",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "printed_damage",
+        "order": 1,
+        "span": null,
+        "source_field": "damage",
+        "object": "damage",
+        "quantity": "30",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "explicit_source_field",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "damage_modification",
+      "damage_reduction",
+      "damage_scaling",
+      "printed_damage"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 47,
+        "text": "during your opponent's next turn, this pokémon "
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "83c307bf67f6bf20c2ce78f6b3e1e312e5e8b8c28e9fa36b8406828caeba63ff",
+    "printing": "me01-005",
+    "functional_identity": "945318d9677af4c9068e946786eb66bc",
+    "name": "Exeggutor",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 1,
+    "component_name": "Stomping Wood",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-005",
+    "source_card_hash": "fdc8cd5ac0adc9de7a8d795662f4fc3bc50f2eff302b412c06052e271459ee44",
+    "checked_at": "2026-09-23T02:34:47.835175+00:00",
+    "raw_text": "This attack does 30 more damage for each {G} Energy attached to this Pokémon.",
+    "normalized_text": "this attack does 30 more damage for each {g} energy attached to this pokémon.",
+    "structured_json": "{\"cost\":[\"Colorless\",\"Colorless\",\"Colorless\"],\"damage\":\"60+\",\"effect\":\"This attack does 30 more damage for each {G} Energy attached to this Pokémon.\",\"name\":\"Stomping Wood\"}",
+    "atoms": [
+      {
+        "action": "damage_modifier",
+        "order": 0,
+        "span": {
+          "start": 12,
+          "end": 77,
+          "text": "does 30 more damage for each {g} energy attached to this pokémon."
+        },
+        "source_field": "effect",
+        "object": "damage",
+        "quantity": "30",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "this attack",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "printed_damage",
+        "order": 1,
+        "span": null,
+        "source_field": "damage",
+        "object": "damage",
+        "quantity": "60+",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "explicit_source_field",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "damage_modification",
+      "damage_scaling",
+      "printed_damage"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 12,
+        "text": "this attack "
+      }
+    ],
+    "ambiguities": [
+      "choice_quantity_or_option_scope_unresolved",
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "f4f74f6be2219a1ea6fd515b567b7d1f763e9c18b096c598e78a366bfc9b0384",
+    "printing": "me01-006",
+    "functional_identity": "a46638f4c2b92ffc6c5ec503609edb7e",
+    "name": "Tangela",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Poison Powder",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-006",
+    "source_card_hash": "b126c79ab7f16d522be36724f23cecbfd19885c05a296514cba73444e2d87fef",
+    "checked_at": "2026-09-23T02:34:50.219578+00:00",
+    "raw_text": "Your opponent's Active Pokémon is now Poisoned.",
+    "normalized_text": "your opponent's active pokémon is now poisoned.",
+    "structured_json": "{\"cost\":[\"Grass\"],\"effect\":\"Your opponent's Active Pokémon is now Poisoned.\",\"name\":\"Poison Powder\"}",
+    "atoms": [
+      {
+        "action": "special_condition",
+        "order": 0,
+        "span": {
+          "start": 31,
+          "end": 47,
+          "text": "is now poisoned."
+        },
+        "source_field": "effect",
+        "object": null,
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "your opponent's active pokémon",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "poison"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 31,
+        "text": "your opponent's active pokémon "
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "partial"
+  },
+  {
+    "id": "f392e3a09f1f07a103b1eadea61a4d6e2ae78824a89d5121bdd90de6e86f078c",
+    "printing": "me01-007",
+    "functional_identity": "3541af743993d1d103e052958d3c8722",
+    "name": "Tangrowth",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 1,
+    "component_name": "Pumped-Up Whip",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-007",
+    "source_card_hash": "ccbddadfff707e4f7a1cb1576cab64aa807c727eda8990d2cac0f6f377b8c4b5",
+    "checked_at": "2026-09-23T02:34:52.795763+00:00",
+    "raw_text": "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 140 more damage.",
+    "normalized_text": "if this pokémon has at least 2 extra energy attached (in addition to this attack's cost), this attack does 140 more damage.",
+    "structured_json": "{\"cost\":[\"Grass\",\"Grass\",\"Colorless\",\"Colorless\"],\"damage\":\"120+\",\"effect\":\"If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 140 more damage.\",\"name\":\"Pumped-Up Whip\"}",
+    "atoms": [
+      {
+        "action": "damage_modifier",
+        "order": 0,
+        "span": {
+          "start": 102,
+          "end": 123,
+          "text": "does 140 more damage."
+        },
+        "source_field": "effect",
+        "object": "damage",
+        "quantity": "140",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "if this pokémon has at least 2 extra energy attached (in addition to this attack's cost), this attack",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "printed_damage",
+        "order": 1,
+        "span": null,
+        "source_field": "damage",
+        "object": "damage",
+        "quantity": "120+",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "explicit_source_field",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "damage_modification",
+      "damage_scaling",
+      "printed_damage"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 102,
+        "text": "if this pokémon has at least 2 extra energy attached (in addition to this attack's cost), this attack "
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "56a82e2e4d09e2318fd22a7d947bdc4c92113e48374413286c3e1fc3ac32ef3d",
+    "printing": "me01-009",
+    "functional_identity": "c4b85a43206c7916338718402bb0adeb",
+    "name": "Bayleef",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Push Down",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-009",
+    "source_card_hash": "2b4c06e2e244eeee42c4cefd0909f311f343df5dff69005b94f20f9f4630e359",
+    "checked_at": "2026-09-23T02:34:58.256748+00:00",
+    "raw_text": "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)",
+    "normalized_text": "switch out your opponent's active pokémon to the bench. (your opponent chooses the new active pokémon.)",
+    "structured_json": "{\"cost\":[\"Grass\",\"Colorless\"],\"damage\":50,\"effect\":\"Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)\",\"name\":\"Push Down\"}",
+    "atoms": [
+      {
+        "action": "switch",
+        "order": 0,
+        "span": {
+          "start": 0,
+          "end": 55,
+          "text": "switch out your opponent's active pokémon to the bench."
+        },
+        "source_field": "effect",
+        "object": "active pokémon",
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": "bench",
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "choose",
+        "order": 1,
+        "span": {
+          "start": 71,
+          "end": 103,
+          "text": "chooses the new active pokémon.)"
+        },
+        "source_field": "effect",
+        "object": "active pokémon",
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "(your opponent",
+        "previous_atom": 0,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "printed_damage",
+        "order": 2,
+        "span": null,
+        "source_field": "damage",
+        "object": "damage",
+        "quantity": "50",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "explicit_source_field",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "choice",
+      "gust",
+      "printed_damage",
+      "switch"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 55,
+        "end": 71,
+        "text": " (your opponent "
+      }
+    ],
+    "ambiguities": [
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "29853a92c53aa76aba61d0c1b804dc0921c020c83b4bb44addef5b9f866f594b",
+    "printing": "me01-010",
+    "functional_identity": "87c9d933f70fecc3201ad0fbf82f2324",
+    "name": "Meganium",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Wild Growth",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-010",
+    "source_card_hash": "ef0f3371ecd639b939385316a45abb44ffa9139984ff771ba081af9d5efcc7fa",
+    "checked_at": "2026-09-23T02:35:00.279306+00:00",
+    "raw_text": "Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack.",
+    "normalized_text": "each basic {g} energy attached to all of your pokémon provides {g}{g} energy. the effect of wild growth doesn't stack.",
+    "structured_json": "{\"effect\":\"Each Basic {G} Energy attached to all of your Pokémon provides {G}{G} Energy. The effect of Wild Growth doesn't stack.\",\"name\":\"Wild Growth\",\"type\":\"Ability\"}",
+    "atoms": [
+      {
+        "action": "provide_energy",
+        "order": 0,
+        "span": {
+          "start": 54,
+          "end": 77,
+          "text": "provides {g}{g} energy."
+        },
+        "source_field": "effect",
+        "object": "energy",
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "each basic {g} energy attached to all of your pokémon",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "energy_provision"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 54,
+        "text": "each basic {g} energy attached to all of your pokémon "
+      },
+      {
+        "start": 77,
+        "end": 118,
+        "text": " the effect of wild growth doesn't stack."
+      }
+    ],
+    "ambiguities": [],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "c94b2e1a32b716760d83acee0998dbff8efc953fb6181dfe2dc69841d0bf647b",
+    "printing": "me01-011",
+    "functional_identity": "cfbab3e4fc411df923ddd8bbaedd9f69",
+    "name": "Shuckle",
+    "category": "Pokemon",
+    "component": "ability",
+    "component_index": 0,
+    "component_name": "Fermented Juice",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-011",
+    "source_card_hash": "434f851b9cac2adacd037080c2a018ef791efc544e0f803b15d8e5ade65cb901",
+    "checked_at": "2026-09-23T02:35:03.118351+00:00",
+    "raw_text": "Once during your turn, if this Pokémon has any {G} Energy attached, you may use this Ability. Heal 30 damage from 1 of your Pokémon.",
+    "normalized_text": "once during your turn, if this pokémon has any {g} energy attached, you may use this ability. heal 30 damage from 1 of your pokémon.",
+    "structured_json": "{\"effect\":\"Once during your turn, if this Pokémon has any {G} Energy attached, you may use this Ability. Heal 30 damage from 1 of your Pokémon.\",\"name\":\"Fermented Juice\",\"type\":\"Ability\"}",
+    "atoms": [
+      {
+        "action": "heal",
+        "order": 0,
+        "span": {
+          "start": 94,
+          "end": 132,
+          "text": "heal 30 damage from 1 of your pokémon."
+        },
+        "source_field": "effect",
+        "object": "damage",
+        "quantity": "30",
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "healing"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 0,
+        "end": 94,
+        "text": "once during your turn, if this pokémon has any {g} energy attached, you may use this ability. "
+      }
+    ],
+    "ambiguities": [
+      "condition_or_timing_scope_unresolved",
+      "choice_quantity_or_option_scope_unresolved"
+    ],
+    "source_issues": [],
+    "representation": "partial"
+  },
+  {
+    "id": "15ad6a18e804b4864d268e40949eb63337f8d4ffbd2226a54e0c63c66abb661f",
+    "printing": "me01-012",
+    "functional_identity": "4c71c2194989569ac53db5b74ee8a272",
+    "name": "Celebi",
+    "category": "Pokemon",
+    "component": "attack",
+    "component_index": 0,
+    "component_name": "Traverse Time",
+    "source_url": "https://api.tcgdex.net/v2/en/cards/me01-012",
+    "source_card_hash": "8395be5468026ae6273009c40016746f05225ed50c992fe8f90c5350a0e0e2f2",
+    "checked_at": "2026-09-23T02:35:05.306549+00:00",
+    "raw_text": "Search your deck for up to 3 in any combination of {G} Pokémon and Stadium cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+    "normalized_text": "search your deck for up to 3 in any combination of {g} pokémon and stadium cards, reveal them, and put them into your hand. then, shuffle your deck.",
+    "structured_json": "{\"cost\":[\"Grass\"],\"effect\":\"Search your deck for up to 3 in any combination of {G} Pokémon and Stadium cards, reveal them, and put them into your hand. Then, shuffle your deck.\",\"name\":\"Traverse Time\"}",
+    "atoms": [
+      {
+        "action": "search",
+        "order": 0,
+        "span": {
+          "start": 0,
+          "end": 81,
+          "text": "search your deck for up to 3 in any combination of {g} pokémon and stadium cards,"
+        },
+        "source_field": "effect",
+        "object": "pokémon",
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "",
+        "previous_atom": null,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "reveal",
+        "order": 1,
+        "span": {
+          "start": 82,
+          "end": 98,
+          "text": "reveal them, and"
+        },
+        "source_field": "effect",
+        "object": null,
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "search your deck for up to 3 in any combination of {g} pokémon and stadium cards,",
+        "previous_atom": 0,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "put",
+        "order": 2,
+        "span": {
+          "start": 99,
+          "end": 123,
+          "text": "put them into your hand."
+        },
+        "source_field": "effect",
+        "object": null,
+        "quantity": null,
+        "affected_player": "your",
+        "source_zone": null,
+        "destination_zone": "hand",
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "search your deck for up to 3 in any combination of {g} pokémon and stadium cards, reveal them, and",
+        "previous_atom": 1,
+        "relationship": "text_order_not_execution"
+      },
+      {
+        "action": "shuffle",
+        "order": 3,
+        "span": {
+          "start": 130,
+          "end": 148,
+          "text": "shuffle your deck."
+        },
+        "source_field": "effect",
+        "object": null,
+        "quantity": null,
+        "affected_player": null,
+        "source_zone": null,
+        "destination_zone": null,
+        "optionality": "unknown",
+        "polarity": "unknown",
+        "scope_status": "lexical_only",
+        "context": "then,",
+        "previous_atom": 2,
+        "relationship": "text_order_not_execution"
+      }
+    ],
+    "mechanics": [
+      "reveal",
+      "search",
+      "stadium_interaction"
+    ],
+    "unmatched_spans": [
+      {
+        "start": 123,
+        "end": 130,
+        "text": " then, "
+      }
+    ],
+    "ambiguities": [
+      "reference_resolution_unresolved",
+      "compound_scope_not_executed"
+    ],
+    "source_issues": [
+      "attack_damage_not_supplied"
+    ],
+    "representation": "partial"
+  },
+  {
+    "id": "8d58ea183e5c6d7551c2cce5501b1c7106edd5938ac08c2332eda0676452077e",
+    "printing": "base1-100",
+    "functional_identity": "8e8f51cc9a1f7eed875d435bfe3c78ef",
+    "name": "Lightning Energy",
+    "category": "Energy",
+    "component": "energy_effect",
+    "component_index": 0,
+    "component_name": null,
+    "source_url": "https://api.tcgdex.net/v2/en/cards/base1-100",
+    "source_card_hash": "28fa184b1b073597bcc01bbf6f94502bdd78c61a39259a33d5154154c4ddf4bc",
+    "checked_at": "2026-09-23T02:37:48.190984+00:00",
+    "raw_text": null,
+    "normalized_text": "",
+    "structured_json": "{\"effect\":null}",
+    "atoms": [],
+    "mechanics": [],
+    "unmatched_spans": [],
+    "ambiguities": [],
+    "source_issues": [
+      "effect_text_not_supplied"
+    ],
+    "representation": "missing"
+  }
+]
