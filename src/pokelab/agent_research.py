@@ -18,20 +18,27 @@ FLIGHT = Lock()
 
 
 class ResearchRequest(Frozen):
-    scope: Literal['selected_card_research', 'active_deck_research'] = 'selected_card_research'
+    scope: Literal['selected_card_research', 'active_deck_research', 'card_pool_research'] = 'selected_card_research'
     question: str = Field(min_length=1, max_length=2000)
     printing: str | None = Field(None, min_length=1, max_length=100)
     archetype: str | None = Field(None, min_length=1, max_length=100)
     variant: str | None = Field(None, min_length=1, max_length=100)
-    revision: int = Field(ge=0, strict=True)
+    revision: int | None = Field(None, ge=0, strict=True)
+    include_deck: bool = False
     window: Literal['7', '30', '90', 'format'] = '30'
 
     @model_validator(mode='after')
     def context_shape(self):
-        if (self.scope=='selected_card_research') != (self.printing is not None):
+        if self.scope=='card_pool_research' and len(self.question)>1000:
+            raise ValueError('Card-pool retrieval supports questions up to 1000 characters')
+        if self.scope!='card_pool_research' and (self.scope=='selected_card_research') != (self.printing is not None):
             raise ValueError('Scope and selected printing must agree')
         if self.printing is None and self.variant is not None:
             raise ValueError('Finish requires a selected printing')
+        if (self.scope!='card_pool_research' or self.include_deck) and self.revision is None:
+            raise ValueError('Deck context requires revision')
+        if self.scope!='card_pool_research' and self.include_deck:
+            raise ValueError('Explicit optional deck flag is for card pool research')
         return self
 
 
@@ -173,6 +180,37 @@ the recorded thresholds/population. Do not call the decks identical, or infer
 equal strategy/performance. Similarities may follow as context. Cite the summary
 and population, retaining confidence, window and configured threshold limitations.
 If comparison is unavailable, absence of detected deviations is not established.
+'''
+
+
+POOL_SYSTEM = SYSTEM.replace('selected-card research assistant', 'card-pool research partner').replace(
+    'Never propose replacements, compare\nwhole decks/composites, execute actions, or answer unrelated questions.',
+    'Research cards across the supplied Standard pool candidates. Never execute deck changes or provide matchup piloting plans. Mark actions and unrelated questions unsupported_question.') + '''
+Answer the user's actual question early in natural Pokémon vocabulary. Explain a
+small useful selection, not a database report. Facts may read conversationally;
+put plausible connections in interpretation with citations. Do not expose scores,
+taxonomy labels, hashes or provenance metadata in ordinary prose. The evidence
+viewer supplies those details. You may omit noisy or redundant candidates and
+change their presentation order: retrieval rank is not competitive strength.
+Only supplied candidate/reference cards may be discussed. No outside candidates.
+Open research needs neither a selected card nor a deck. Optional context is not
+the search boundary. Inferred deck orientations are printed mechanics, not intent.
+Preserve direct, related and uncertain distinctions in ordinary language. A related
+card is not necessarily the same mechanic or strategically interchangeable.
+Do not routinely dump uncertain matches into the answer. Explain useful evidence.
+The explicit requested mechanic overrides the reference card: Tools are not Items;
+opponent mill is not self-mill. A missing printed cost is unknown, never free.
+Standard eligibility is a dated local source declaration, not invented legality.
+This packet has no tournament performance or piloting evidence. Never call a card
+best, top-tier, proven, a tournament staple, a successful or competitive choice.
+Explain mechanical relevance separately from unestablished tournament success.
+Absence of tournament evidence does not establish that a card is bad.
+No creator-intent claims, matchup plans, executable cut/add plans or writes.
+The literal active-deck citation is valid ONLY when active_deck is nonempty.
+Every factual assertion must be supported by the particular cited source text;
+a discovery score or concept label alone is not support for a card mechanic.
+Each follow-up is a fresh question with explicit context; no hidden conversation
+memory or previous answer is supplied. Ask for clarification when needed.
 '''
 
 
@@ -335,7 +373,7 @@ def assess(text, envelope):
         # Only validation at this exact model-output boundary establishes a
         # contract rejection. A later/internal ValidationError is not one.
         raise ContractError('schema_validation', schema_diagnostics(text, exc)) from None
-    known = {e.id for e in envelope.packet.evidence} | {'active-deck'}
+    known = {e.id for e in envelope.packet.evidence} | ({'active-deck'} if envelope.active_deck else set())
     if any(not set(s.evidence) <= known for s in (*answer.facts, *answer.interpretation)):
         unknown = [ref for s in (*answer.facts, *answer.interpretation) for ref in s.evidence if ref not in known]
         raise ContractError('invalid_reference', dict(condition='invalid_reference', json_parsed=True,
@@ -352,6 +390,9 @@ def assess(text, envelope):
     from .research_grounding import violation
     if condition := violation(answer, envelope):
         raise ContractError(condition)
+    if envelope.version=='pokelab-card-pool-research-v1':
+        from .card_pool_research import violation as pool_violation
+        if condition := pool_violation(answer,envelope): raise ContractError(condition)
     return answer
 
 
@@ -395,7 +436,7 @@ class ResearchService:
         return dict(version='pokelab-research-v1', available=reason is None, reason=reason,
             provider=selection.provider if selection else None, model=selection.model if selection else None,
             max_output_tokens=MAX_OUTPUT, scope='selected_card_research',
-            scopes=['selected_card_research','active_deck_research'],archetypes=archetypes[:500],read_only=True)
+            scopes=['selected_card_research','active_deck_research','card_pool_research'],archetypes=archetypes[:500],read_only=True)
 
     def run(self, request):
         if not FLIGHT.acquire(blocking=False):
@@ -415,13 +456,25 @@ class ResearchService:
         snapshot=None
         try:
             sources=Sources(**self.paths, format_start=self.format_start)
-            if request.scope=='active_deck_research': envelope,snapshot=make_deck_envelope(request,sources)
+            if request.scope=='card_pool_research':
+                from .card_pool_research import build as build_pool
+                envelope=build_pool(request,sources)
+            elif request.scope=='active_deck_research': envelope,snapshot=make_deck_envelope(request,sources)
             else: envelope = make_envelope(request, sources)
         except ResearchUnavailable as exc:
             return dict(status=exc.reason, answer=None)
         if providers.secret_present(canonical(envelope)+canonical(snapshot)):
             return dict(status='secret_input_rejected', answer=None)
-        result = providers.complete(selection, DECK_SYSTEM if snapshot is not None else SYSTEM, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT,
+        system=POOL_SYSTEM if request.scope=='card_pool_research' else DECK_SYSTEM if snapshot is not None else SYSTEM
+        from .agent_qualification_config import INPUT_BYTES
+        if len((system+canonical(envelope)).encode())>INPUT_BYTES:
+            return dict(status='budget_exceeded',answer=None)
+        if request.scope=='card_pool_research' and (envelope.boundary or not any(e.kind=='card-pool-candidate' for e in envelope.packet.evidence)):
+            outcome='unsupported_question' if envelope.boundary else 'insufficient_evidence'
+            answer=Answer(version='pokelab-research-answer-v1',outcome=outcome,facts=(),interpretation=(),
+                limitations=(envelope.boundary or 'This bounded local search cannot establish relevant candidates. Try an explicit mechanic or card context.',))
+            return dict(status=outcome,answer=answer.model_dump(mode='json'),envelope=envelope.model_dump(mode='json'))
+        result = providers.complete(selection, system, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT,
             response_schema=Answer.model_json_schema() if selection.provider=='gemini' else None)
         # Do not expose arbitrary provider model labels or raw text in metadata.
         execution = {k: getattr(result, k) for k in ('latency_ms', 'input_tokens', 'output_tokens',

@@ -42,7 +42,8 @@ export function CardDetail() {
     {card.ownership && <button className="detail-variations-toggle" aria-expanded={variationsOpen} aria-controls="detail-variations" onClick={()=>setVariationsOpen(v=>!v)}>Variations</button>}
    </div>
     <section><p className="source-note">CARD DETAILS · EXACT PRINTING</p><h1 ref={title} tabIndex={-1}>{card.name}</h1>
-     <button onClick={()=>{agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant});document.getElementById('research-question')?.focus()}}>Ask about this card</button>
+     <button onClick={()=>{agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant,pool:!builder});document.getElementById('research-question')?.focus()}}>Ask about this card</button>
+     <button onClick={()=>{agent.select({printing:card.id,name:card.name,identity:card.deck_identity,variant:card.ownership?.variant,pool:true});document.getElementById('research-question')?.focus()}}>Research similar cards</button>
      <p>{classification(card)}</p><dl>
       <dt>Printing ID</dt><dd><code>{card.id}</code></dd>
       <dt>Set</dt><dd>{card.set.name || card.set.id} ({card.set.id}{card.set.code?` / ${card.set.code}`:''})</dd>

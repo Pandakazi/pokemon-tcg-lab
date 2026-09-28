@@ -230,6 +230,10 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .agent-panel.research-agent:not(.collapsed){width:340px;overflow-y:auto;overflow-wrap:anywhere}
 .research-agent textarea{display:block;width:100%;min-height:90px;resize:vertical;background:#141a27;color:#e8edf6;border:1px solid #ffffff30;border-radius:6px;padding:8px;margin:8px 0}
 .research-agent label,.research-agent h3{font-size:13px;font-weight:600}
+.research-agent .research-area{display:grid;gap:6px;margin:12px 0}
+.research-area select{width:100%;padding:8px;background:#141a27;color:#e8edf6;border:1px solid #ffffff30;border-radius:6px}
+.research-agent .research-deck-option{display:flex;align-items:flex-start;gap:8px;margin:10px 0;font-weight:400;line-height:1.5}
+.research-deck-option input{margin-top:4px;flex-shrink:0}
 .research-agent button:disabled{opacity:.45;cursor:not-allowed}
 .research-context{display:grid;gap:4px;margin:12px 0;padding:9px;border:1px solid #ffffff18;border-radius:8px;font-size:12px}
 .research-agent .research-statement{margin:10px 0}.research-agent p{margin:8px 0;color:#bdc7d7}
