@@ -1,0 +1,401 @@
+{
+  "version": "pokelab-retrieval-benchmark-v1",
+  "target_provenance": "Targets independently selected from manually inspected current local Standard source text; a target is not the complete relevance set. No search output used to select targets.",
+  "cases": [
+    {
+      "id": "tools_budew",
+      "query": "Is there another card that stops players from using Tools?",
+      "targets": [
+        "me02.5-261"
+      ],
+      "reference": "me02.5-016"
+    },
+    {
+      "id": "mill",
+      "query": "What cards can mill my opponent?",
+      "targets": [
+        "me01-087"
+      ]
+    },
+    {
+      "id": "selfmill",
+      "query": "What cards can mill me?",
+      "targets": [
+        "me01-020"
+      ]
+    },
+    {
+      "id": "move",
+      "query": "Are there other Pokémon that move damage counters?",
+      "targets": [
+        "me02.5-099"
+      ]
+    },
+    {
+      "id": "supporter",
+      "query": "What else can search for a Supporter?",
+      "targets": [
+        "me02-027"
+      ]
+    },
+    {
+      "id": "recover",
+      "query": "What other cards can recover Pokémon from the discard pile?",
+      "targets": [
+        "me01-173"
+      ]
+    },
+    {
+      "id": "similar_budew",
+      "query": "What cards perform a similar role to Budew?",
+      "targets": [],
+      "reference": "me02.5-016"
+    },
+    {
+      "id": "basic_items",
+      "query": "Are there other Basic Pokémon that can disrupt Items?",
+      "targets": [
+        "me02.5-016"
+      ]
+    },
+    {
+      "id": "energy_denial",
+      "query": "What can discard Energy from my opponent's Pokémon?",
+      "targets": [
+        "me01-030"
+      ]
+    },
+    {
+      "id": "bench",
+      "query": "What cards can damage the Bench?",
+      "targets": [
+        "me01-081"
+      ]
+    },
+    {
+      "id": "abilities",
+      "query": "What prevents Abilities?",
+      "targets": [
+        "sv05-078"
+      ]
+    },
+    {
+      "id": "copy",
+      "query": "What cards can copy attacks?",
+      "targets": [
+        "me02.5-075"
+      ]
+    },
+    {
+      "id": "mill_plain",
+      "query": "What cards can make my opponent run out of cards?",
+      "targets": [
+        "me01-087"
+      ]
+    },
+    {
+      "id": "selfmill_plain",
+      "query": "What cards discard cards from the top of my own deck?",
+      "targets": [
+        "me01-020"
+      ]
+    },
+    {
+      "id": "recover_plain",
+      "query": "What can get Pokémon back out of my discard pile?",
+      "targets": [
+        "me01-173"
+      ]
+    },
+    {
+      "id": "move_plain",
+      "query": "Transfer existing damage counters between Pokémon",
+      "targets": [
+        "me02.5-099"
+      ]
+    },
+    {
+      "id": "denial_plain",
+      "query": "Take away Energy from my opponent's Pokémon",
+      "targets": [
+        "me01-030"
+      ]
+    },
+    {
+      "id": "items",
+      "query": "Item lock",
+      "targets": [
+        "me02.5-016"
+      ]
+    },
+    {
+      "id": "items_plain",
+      "query": "Stop players from using Items",
+      "targets": [
+        "me02.5-016"
+      ]
+    },
+    {
+      "id": "tools",
+      "query": "Tool effect suppression",
+      "targets": [
+        "me02.5-261"
+      ]
+    },
+    {
+      "id": "tools_plain",
+      "query": "Stop players from using Tools",
+      "targets": [
+        "me02.5-261"
+      ]
+    },
+    {
+      "id": "abilities_plain",
+      "query": "Stop Pokémon from using Abilities",
+      "targets": [
+        "sv05-078"
+      ]
+    },
+    {
+      "id": "draw",
+      "query": "What cards draw cards?",
+      "targets": [
+        "me01-055"
+      ]
+    },
+    {
+      "id": "pokemon_search",
+      "query": "What cards search for Pokémon?",
+      "targets": [
+        "me01-021"
+      ]
+    },
+    {
+      "id": "acceleration",
+      "query": "Energy acceleration",
+      "targets": [
+        "me01-077"
+      ]
+    },
+    {
+      "id": "energy_recovery",
+      "query": "Recover Energy",
+      "targets": [
+        "me04-108"
+      ]
+    },
+    {
+      "id": "tool_removal",
+      "query": "Remove Pokémon Tools",
+      "targets": [
+        "me01-102"
+      ]
+    },
+    {
+      "id": "hand",
+      "query": "Discard cards from my opponent's hand",
+      "targets": [
+        "me02.5-134"
+      ]
+    },
+    {
+      "id": "gust",
+      "query": "Force my opponent to switch Pokémon",
+      "targets": [
+        "me01-009"
+      ]
+    },
+    {
+      "id": "retreat",
+      "query": "Prevent retreat",
+      "targets": [
+        "me01-001"
+      ]
+    },
+    {
+      "id": "stadium",
+      "query": "Discard a Stadium",
+      "targets": [
+        "me02-025"
+      ]
+    },
+    {
+      "id": "heal",
+      "query": "Heal damage",
+      "targets": [
+        "me01-003"
+      ]
+    },
+    {
+      "id": "prevent",
+      "query": "Prevent damage",
+      "targets": [
+        "me01-042"
+      ]
+    },
+    {
+      "id": "reduce",
+      "query": "Damage reduction",
+      "targets": [
+        "me01-005"
+      ]
+    },
+    {
+      "id": "place",
+      "query": "Place damage counters",
+      "targets": [
+        "sv05-078"
+      ]
+    },
+    {
+      "id": "prize",
+      "query": "Prize manipulation",
+      "targets": [
+        "me01-120"
+      ]
+    },
+    {
+      "id": "liability",
+      "query": "Prize reduction",
+      "targets": [
+        "me01-061"
+      ]
+    },
+    {
+      "id": "evolution",
+      "query": "Evolution acceleration",
+      "targets": [
+        "sv05-160"
+      ]
+    },
+    {
+      "id": "devolution",
+      "query": "Devolve Pokémon",
+      "targets": [
+        "me04-047"
+      ]
+    },
+    {
+      "id": "status",
+      "query": "Poison Pokémon",
+      "targets": [
+        "me01-006"
+      ]
+    },
+    {
+      "id": "weakness",
+      "query": "Change Weakness",
+      "targets": [
+        "me02.5-076"
+      ]
+    },
+    {
+      "id": "reorder",
+      "query": "Reorder the deck",
+      "targets": [
+        "sv05-080"
+      ]
+    },
+    {
+      "id": "rule_box",
+      "query": "Rule Box interaction",
+      "targets": [
+        "sv07-058"
+      ]
+    },
+    {
+      "id": "ex",
+      "query": "Pokémon ex interaction",
+      "targets": [
+        "me01-061"
+      ]
+    },
+    {
+      "id": "rare",
+      "query": "Damage counters on each Pokémon (both yours and your opponent's) can't be moved to other Pokémon.",
+      "targets": [
+        "me04-070"
+      ]
+    },
+    {
+      "id": "trainer_recover",
+      "query": "What Trainer cards recover Pokémon from the discard pile?",
+      "targets": [
+        "me01-173"
+      ]
+    },
+    {
+      "id": "lost_zone",
+      "query": "Move cards to the Lost Zone",
+      "targets": []
+    },
+    {
+      "id": "unknown",
+      "query": "Quantum banana transposition",
+      "targets": []
+    },
+    {
+      "id": "vague",
+      "query": "What is best?",
+      "targets": []
+    },
+    {
+      "id": "unknown_constraint",
+      "query": "Pokémon with 999 HP that draw cards",
+      "targets": []
+    },
+    {
+      "id": "spread",
+      "query": "Spread damage to all Pokémon",
+      "targets": [
+        "me01-043"
+      ]
+    },
+    {
+      "id": "topdeck",
+      "query": "Top-deck placement",
+      "targets": [
+        "sv05-145"
+      ]
+    },
+    {
+      "id": "constraint_empty",
+      "query": "Stage 2 Pokémon that stop players from using Tools",
+      "targets": []
+    }
+  ],
+  "pairs": [
+    [
+      "mill",
+      "mill_plain"
+    ],
+    [
+      "selfmill",
+      "selfmill_plain"
+    ],
+    [
+      "recover",
+      "recover_plain"
+    ],
+    [
+      "move",
+      "move_plain"
+    ],
+    [
+      "energy_denial",
+      "denial_plain"
+    ],
+    [
+      "items",
+      "items_plain"
+    ],
+    [
+      "tools",
+      "tools_plain"
+    ],
+    [
+      "abilities",
+      "abilities_plain"
+    ]
+  ]
+}
