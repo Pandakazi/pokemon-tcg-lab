@@ -16,8 +16,12 @@ Phase 7C.1 — Selected-Card Research is **CERTIFIED / PM PASS**, September 26, 
 It provides read-only, evidence-grounded answers in active-deck context using an
 explicit provider/model and strict local validation. See
 [certified scope, live QA and exclusions](docs/phase-7c1-certification.md).
-Deck-level/archetype research (7C.2), alternative-card research (7C.3), and
-proposed actions/research memory (7D) remain outside this certification.
+Phase 7C.2 — Deck & Archetype Research is **CERTIFIED / PM PASS**, September 27, 2026.
+It adds bounded Active Deck research with explicit cached archetype comparison,
+current-local-snapshot evidence and deterministic safe rejection. See
+[certified scope, PM live QA and limitations](docs/phase-7c2-certification.md).
+Alternative-card research (7C.3) and proposed actions/research memory (7D)
+remain outside the certified scope.
 Phase 6 — Archetypes & Decklist Research was certified
 by Mike on September 25, 2026 after manual PM QA passed. See
 [certified Phase 6 capabilities and methodology](docs/phase-6-research.md).
