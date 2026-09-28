@@ -43,6 +43,10 @@ def violation(answer, envelope):
     subject = r'(?:(?:(?:the|this|active|your)\s+)*deck|'+ '|'.join(re.escape(n) for n in sorted(names))+r')'
     assertion = re.compile(r'\b'+subject+r'\s+(?:(?:does|do)\s+not\s+)?(?:contains?|includes?|runs?|plays?|has|have|lacks?|omits?|uses?|deals?|prevents?|is built around)\b', re.I)
     for text in answer.limitations:
+        # Declaring a premise contradicted by deck contents asserts a factual
+        # comparison; it is not merely an uncertainty/scope boundary.
+        if re.search(r'\b(?:premise|assumption)\b[^.!?;]{0,240}\bthat contradicts (?:the )?(?:supplied |active )?deck (?:composition|contents)\b',text,re.I):
+            return 'uncited_limitation_claim'
         for match in assertion.finditer(text):
             prefix = re.split(r'[.;!?]', text[:match.start()])[-1]
             # An explicitly uncertain embedded proposition is not an assertion.
