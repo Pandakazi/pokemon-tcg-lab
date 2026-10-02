@@ -1,0 +1,152 @@
+{
+  "provenance": "Authored synthetic provider-response regression fixtures grounded in real frozen local card evidence. These are NOT the historical rejected PM provider responses.",
+  "cases": [
+    {
+      "id": "direct-mill",
+      "envelope": "simple",
+      "answer": {
+        "version": "pokelab-research-answer-v1",
+        "outcome": "answered",
+        "facts": [
+          {
+            "text": "Centiskorch is a starting point for direct mill: its Controlled Burn costs 1 Fire Energy and discards the top 2 cards of your opponent's deck.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758"
+            ]
+          },
+          {
+            "text": "Coalossal's Cragalanche also discards the top 2 cards of your opponent's deck, but costs 4 Energy.",
+            "evidence": [
+              "ev-pool-7fbabe85eaf68085a28fdf9b"
+            ]
+          }
+        ],
+        "interpretation": [
+          {
+            "text": "I would start researching Centiskorch for its lower printed attack cost. That comparison concerns the cost of the mill effect, not tournament strength.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758",
+              "ev-pool-7fbabe85eaf68085a28fdf9b"
+            ]
+          }
+        ],
+        "limitations": [
+          "The available evidence does not establish tournament success or matchup performance."
+        ]
+      },
+      "expected": "accepted"
+    },
+    {
+      "id": "flagship-mechanical-qualification",
+      "envelope": "flagship",
+      "answer": {
+        "version": "pokelab-research-answer-v1",
+        "outcome": "answered",
+        "facts": [
+          {
+            "text": "Centiskorch is a starting point for direct mill: its Controlled Burn costs 1 Fire Energy and discards the top 2 cards of your opponent's deck.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758"
+            ]
+          },
+          {
+            "text": "Coalossal's Cragalanche also discards the top 2 cards of your opponent's deck, but costs 4 Energy.",
+            "evidence": [
+              "ev-pool-7fbabe85eaf68085a28fdf9b"
+            ]
+          }
+        ],
+        "interpretation": [
+          {
+            "text": "I would start researching Centiskorch for its lower printed attack cost. That comparison concerns the cost of the mill effect, not tournament strength.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758",
+              "ev-pool-7fbabe85eaf68085a28fdf9b"
+            ]
+          }
+        ],
+        "limitations": [
+          "The available evidence does not establish tournament success or matchup performance."
+        ]
+      },
+      "expected": "accepted"
+    },
+    {
+      "id": "direct-plus-support",
+      "envelope": "support",
+      "answer": {
+        "version": "pokelab-research-answer-v1",
+        "outcome": "answered",
+        "facts": [
+          {
+            "text": "Centiskorch's Controlled Burn discards the top 2 cards of your opponent's deck.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758"
+            ]
+          },
+          {
+            "text": "Budew's Itchy Pollen prevents the opponent from playing Item cards from their hand during their next turn.",
+            "evidence": [
+              "ev-pool-74d303c2ae0dd62ec9c8582c"
+            ]
+          }
+        ],
+        "interpretation": [
+          {
+            "text": "These offer different jobs to investigate: Centiskorch supplies the direct discard effect. Budew offers Item restriction as a plausible supporting form of disruption; the evidence does not establish how many extra turns that would buy.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758",
+              "ev-pool-74d303c2ae0dd62ec9c8582c"
+            ]
+          }
+        ],
+        "limitations": [
+          "The available evidence does not establish tournament success or matchup performance."
+        ]
+      },
+      "expected": "accepted"
+    },
+    {
+      "id": "bad-id",
+      "envelope": "simple",
+      "answer": {
+        "version": "pokelab-research-answer-v1",
+        "outcome": "answered",
+        "facts": [
+          {
+            "text": "A claim with a nonexistent citation.",
+            "evidence": [
+              "ev-pool-does-not-exist"
+            ]
+          }
+        ],
+        "interpretation": [],
+        "limitations": [
+          "The available evidence does not establish tournament success or matchup performance."
+        ]
+      },
+      "expected": "invalid_reference"
+    },
+    {
+      "id": "unsupported-competitive",
+      "envelope": "simple",
+      "answer": {
+        "version": "pokelab-research-answer-v1",
+        "outcome": "answered",
+        "facts": [
+          {
+            "text": "Centiskorch is a proven tournament staple.",
+            "evidence": [
+              "ev-pool-44e0b9aafc323e13b0df5758"
+            ]
+          }
+        ],
+        "interpretation": [],
+        "limitations": [
+          "The available evidence does not establish tournament success or matchup performance."
+        ]
+      },
+      "expected": "unsupported_competitive_claim"
+    }
+  ]
+}

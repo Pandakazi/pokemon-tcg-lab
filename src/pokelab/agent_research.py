@@ -211,6 +211,23 @@ Every factual assertion must be supported by the particular cited source text;
 a discovery score or concept label alone is not support for a card mechanic.
 Each follow-up is a fresh question with explicit context; no hidden conversation
 memory or previous answer is supplied. Ask for clarification when needed.
+Candidate evidence is stored in packet.evidence[*].fields: decode each value as
+JSON. Cite the containing item's exact ev-pool-* id, never a ref-pool-* source,
+component name, printing, or functional identity. Components are source material
+inside that evidence item, not separately addressable citation targets.
+Limitations express uncertainty, not uncited card/deck facts. Put assertions about
+what a named card or deck contains, uses, or does in facts/interpretation with its
+own evidence citations. Do not move such claims into limitations even to explain
+an unsupported premise. A suitable limitation is: "Tournament success cannot be
+established from the supplied evidence." A claim about a named card's printed
+effect belongs in a cited statement instead, even when that claim is negative.
+Name the card/attack when stating an attack cost. Count its explicit cost array;
+an absent cost is unknown. Keep claims with different card subjects in separate
+sentences or statements, with each statement citing all of its actual subjects.
+Explain the printed effect's relevance before adding a strategic bridge. Omit a
+bridge if its supporting effect is absent. Do not invent a support card merely
+to provide a balanced list. Mechanical research can still answer the question
+when tournament evidence is unavailable; qualify that boundary naturally.
 '''
 
 
@@ -392,7 +409,9 @@ def assess(text, envelope):
         raise ContractError(condition)
     if envelope.version=='pokelab-card-pool-research-v1':
         from .card_pool_research import violation as pool_violation
-        if condition := pool_violation(answer,envelope): raise ContractError(condition)
+        details={}
+        if condition := pool_violation(answer,envelope,details):
+            raise ContractError(condition,dict(condition=condition,json_parsed=True,schema_valid=True,**details))
     return answer
 
 

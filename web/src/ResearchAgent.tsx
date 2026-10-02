@@ -44,6 +44,20 @@ const messages:Record<string,string>={
  secret_input_rejected:'Research context could not be safely sent.',
 }
 const diagnosticLabels:Record<string,string>={json_syntax:'JSON parsing failed.',schema_validation:'Answer schema validation failed.',invalid_reference:'One or more citations did not identify supplied evidence.',invalid_limitations:'Limitations were blank or exceeded their length limit.',empty_statement:'A statement was blank.',empty_answer:'An answered response contained no claims.',unsupported_with_claims:'An unsupported-question response contained claims.',internal_assessment_error:'Internal assessment failed; no model-quality judgment was made.',secret_quarantined:'Diagnostic details were quarantined.'}
+Object.assign(diagnosticLabels,{
+ uncited_limitation_claim:'A factual claim was placed in uncited limitations.',
+ unsupported_comparison_difference:'A comparison claim contradicted the supplied summary.',
+ unsupported_attack_cost:'An attack cost was not supported by its cited printed cost.',
+ unsupported_competitive_claim:'A competitive-strength claim lacked tournament evidence.',
+ unsupported_action_or_piloting:'The response crossed the deck-action or piloting boundary.',
+ candidate_outside_evidence:'A card claim referred to a card outside the supplied evidence.',
+ uncited_candidate_claim:'A named card was missing its supporting citation.',
+ unsupported_candidate_fact:'A factual card claim lacked card evidence.',
+ unsupported_match_equivalence:'A related or uncertain match was described as a direct equivalent.',
+ unsupported_mill_direction:'The stated mill direction lacked supporting printed evidence.',
+ unsupported_tool_claim:'A Tool claim lacked supporting printed evidence.',
+ unsupported_numeric_card_claim:'A numeric card claim lacked supporting printed evidence.',
+})
 const issueLabels:Record<string,string>={json_invalid:'invalid JSON',model_type:'expected a statement/object',missing:'required field missing',extra_forbidden:'unexpected field',literal_error:'invalid fixed value',tuple_type:'expected an array',string_type:'expected a string',string_too_short:'string below minimum length',string_too_long:'string above maximum length',too_short:'below minimum count',too_long:'above maximum count',validation_error:'validation failed'}
 const fieldLabels:Record<string,string>={version:'version',outcome:'outcome',facts:'facts',interpretation:'interpretation',limitations:'limitations',text:'text',evidence:'evidence','<item>':'item','<unknown_field>':'unknown field'}
 const safeLabel=(labels:Record<string,string>,value:unknown)=>typeof value==='string'&&Object.prototype.hasOwnProperty.call(labels,value)?labels[value]:undefined
@@ -56,6 +70,11 @@ function ValidationDetails({value}:{value:unknown}) {
   <p>{condition||'Detailed classification is unavailable.'}</p>
   {typeof d.json_parsed==='boolean'&&<p>JSON parsed: {d.json_parsed?'yes':'no'}.</p>}
   {typeof d.schema_valid==='boolean'&&<p>Schema valid: {d.schema_valid?'yes':'no'}.</p>}
+  {condition&&<p>Reason code: {d.condition as string}</p>}
+  {d.stage==='card_pool_grounding'&&<p>Stage: card-pool grounding.</p>}
+  {Array.isArray(d.path)&&<p>Field: {d.path.slice(0,5).map(part=>typeof part==='number'&&count(part)!==null?`item ${part+1}`:safeLabel(fieldLabels,part)||'unknown field').join(' → ')}.</p>}
+  {count(d.clause_index)!==null&&<p>Clause: {Number(d.clause_index)+1}.</p>}
+  {count(d.cited_evidence_count)!==null&&<p>Supplied citations checked: {count(d.cited_evidence_count)}.</p>}
   {d.markdown_fence_prefix===true&&<p>Markdown fence prefix detected.</p>}
   {count(d.unknown_reference_count)!==null&&<p>Unknown citation targets: {count(d.unknown_reference_count)}.</p>}
   {count(d.source_reference_id_count)!==null&&<p>Source IDs used as citations: {count(d.source_reference_id_count)}.</p>}

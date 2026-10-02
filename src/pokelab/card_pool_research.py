@@ -178,51 +178,82 @@ def build(request,sources,today=None):
     return envelope
 
 
-def violation(answer,envelope):
-    """Additional bounded guards; not a universal natural-language entailment proof."""
-    from .research_grounding import fields
+def violation(answer,envelope,diagnostics=None):
+    """Bounded checks scoped to the cited subject of each sentence/clause.
+
+    A validated attack-cost operand is not a recommendation of an Energy card.
+    Numeric costs are checked against the cost array, not JSON digit occurrence.
+    No prose, unknown identifier or arbitrary value enters diagnostics.
+    """
+    from .research_grounding import fields, COST, WORDS
     supplied={e.id:fields(e.model_dump(mode='json')['fields']) for e in envelope.packet.evidence}
     available={v['name'] for v in supplied.values() if v.get('name')}
     available.update(e['name'] for e in envelope.active_deck.get('entries',[]) if e.get('name'))
-    unsupported=set(envelope.catalog_names)-available
-    for statement in (*answer.facts,*answer.interpretation):
-        text=statement.text
-        cited=[supplied[r] for r in statement.evidence if r in supplied]
-        for clause in re.split(r'[.!?;]|\bbut\b|\bhowever\b',text,flags=re.I):
-            if re.search(r'\b(?:best|top-tier|premier|tournament staple|most reliable|meta choice|proven|successful|competitive)\b',clause,re.I) and not re.search(r"\b(?:not|isn't|cannot|can't|doesn't|unproven|unavailable|unknown)\b",clause,re.I):
-                return 'unsupported_competitive_claim'
-        if re.search(r'\b(?:replace|cut|add|save|edit)\b.*\b(?:deck|copies|with)\b|\byou should (?:play|attack|retreat)\b',text,re.I):
-            return 'unsupported_action_or_piloting'
-        for name in unsupported:
-            if len(name)>=4 and re.search(r'\b'+re.escape(name)+r'\b',text) and not any(name in n for n in available):
-                return 'candidate_outside_evidence'
-        for value in supplied.values():
-            name=value.get('name')
-            if name and name.casefold() in text.casefold() and not any(v.get('name')==name for v in cited):
-                return 'uncited_candidate_claim'
-        if statement in answer.facts and not cited and statement.evidence!=('active-deck',):
-            return 'unsupported_candidate_fact'
-        for v in cited:
-            components=v.get('components',[])
-            raw=' '.join(c.get('text') or '' for c in components).casefold()
-            from .research_grounding import COST, WORDS
-            for component in components:
-                attack=component.get('structured',{})
-                if component.get('component')!='attack' or not component.get('name') or component['name'].casefold() not in text.casefold(): continue
-                claims=COST.findall(text)
-                if re.search(r'\b(?:is free|zero-cost|requires no energy|costs no energy)\b',text,re.I): claims.append('zero')
-                for claim in claims:
-                    number=int(claim) if claim.isdigit() else WORDS[claim.lower()]
-                    if not isinstance(attack.get('cost'),list) or len(attack['cost'])!=number: return 'unsupported_attack_cost'
-            if v.get('classification') in ('related_functional','text_only_uncertain') and re.search(r'\b(?:directly|same mechanic|equivalent)\b',text,re.I):
-                return 'unsupported_match_equivalence'
-            if re.search(r'mills? (?:your |the |my )?opponent|opponent.s deck',text,re.I) and 'opponent' not in raw:
-                return 'unsupported_mill_direction'
-            if re.search(r'\btools\b',text,re.I) and 'tool' not in raw:
-                return 'unsupported_tool_claim'
-            # Numeric card properties cannot be invented from retrieval rank.
-            if re.search(r'\b\d+\s*(?:hp|damage|energy)\b',text,re.I):
-                numbers=re.findall(r'\b\d+\b',text)
-                source=json.dumps(components)+json.dumps(v.get('properties',{}))
-                if any(not re.search(r'\b'+n+r'\b',source) for n in numbers): return 'unsupported_numeric_card_claim'
+    unsupported=sorted(set(envelope.catalog_names)-available)
+    for field in ('facts','interpretation'):
+        for index,statement in enumerate(getattr(answer,field)):
+            cited=[supplied[r] for r in statement.evidence if r in supplied]
+            def fail(condition,clause_index=0):
+                if diagnostics is not None:
+                    diagnostics.update(stage='card_pool_grounding',path=[field,index,'text'],
+                        clause_index=clause_index,cited_evidence_ids=[r for r in statement.evidence if r in supplied],
+                        cited_evidence_count=len(cited))
+                return condition
+            # Citation membership is checked by assess before this function.
+            for value in supplied.values():
+                name=value.get('name')
+                if name and name.casefold() in statement.text.casefold() and not any(v.get('name')==name for v in cited):
+                    return fail('uncited_candidate_claim')
+            if field=='facts' and not cited and statement.evidence!=('active-deck',):
+                return fail('unsupported_candidate_fact')
+            clauses=re.split(r'(?<=[.!?;])\s+|\s+whereas\s+',statement.text,flags=re.I)
+            for clause_index,text in enumerate(clauses):
+                named=[v for v in cited if v.get('name','').casefold() in text.casefold() or any(
+                    c.get('name') and c['name'].casefold() in text.casefold() for c in v.get('components',[]))]
+                relevant=named or cited  # Unresolved subject remains conservative.
+                for qualification in re.split(r'\s+(?:but|however)\s+',text,flags=re.I):
+                    if re.search(r"\b(?:best|top-tier|premier|tournament staple|most reliable|meta choice|proven|successful|competitive)\b",qualification,re.I) and not re.search(r"\b(?:not|isn't|cannot|can't|doesn't|unproven|unavailable|unknown)\b",qualification,re.I):
+                        return fail('unsupported_competitive_claim',clause_index)
+                if re.search(r'\b(?:replace|cut|add|save|edit)\b.*\b(?:deck|copies|with)\b|\byou should (?:play|attack|retreat)\b',text,re.I):
+                    return fail('unsupported_action_or_piloting',clause_index)
+                attacks=[c['structured'] for v in relevant for c in v.get('components',[])
+                    if c.get('component')=='attack' and c.get('name') and c['name'].casefold() in text.casefold()]
+                costs=list(COST.finditer(text))
+                free=bool(re.search(r'\b(?:is free|zero-cost|requires no energy|costs no energy)\b',text,re.I))
+                if costs or free:
+                    # A shared, ambiguous cost assertion must agree with every
+                    # named attack; separate clauses can have different costs.
+                    if not attacks: return fail('unsupported_attack_cost',clause_index)
+                    for match in costs:
+                        claim=match.group(1);number=int(claim) if claim.isdigit() else WORDS[claim.lower()]
+                        typed=re.search(r'\b(Fire|Water|Grass|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Colorless) Energy',match.group(),re.I)
+                        for attack in attacks:
+                            cost=attack.get('cost')
+                            if not isinstance(cost,list) or len(cost)!=number:
+                                return fail('unsupported_attack_cost',clause_index)
+                            if typed and any(str(t).casefold()!=typed.group(1).casefold() for t in cost):
+                                return fail('unsupported_attack_cost',clause_index)
+                    if free and any(a.get('cost')!=[] for a in attacks):
+                        return fail('unsupported_attack_cost',clause_index)
+                # Remove ONLY fully validated cost operands before catalog-name
+                # and numeric-claim checks. Other occurrences still get checked.
+                remaining=text
+                for match in reversed(costs): remaining=remaining[:match.start()]+' '+remaining[match.end():]
+                for name in unsupported:
+                    if len(name)>=4 and re.search(r'\b'+re.escape(name)+r'\b',remaining) and not any(name in n for n in available):
+                        return fail('candidate_outside_evidence',clause_index)
+                for value in relevant:
+                    components=value.get('components',[])
+                    raw=' '.join(c.get('text') or '' for c in components).casefold()
+                    if value.get('classification') in ('related_functional','text_only_uncertain') and re.search(r'\b(?:directly|same mechanic|equivalent)\b',text,re.I):
+                        return fail('unsupported_match_equivalence',clause_index)
+                    if re.search(r'mills? (?:your |the |my )?opponent|opponent.s deck',text,re.I) and 'opponent' not in raw:
+                        return fail('unsupported_mill_direction',clause_index)
+                    if re.search(r'\btools\b',text,re.I) and 'tool' not in raw:
+                        return fail('unsupported_tool_claim',clause_index)
+                    if re.search(r'\b\d+\s*(?:hp|damage|energy)\b',remaining,re.I):
+                        numbers=re.findall(r'\b\d+\b',remaining)
+                        source=json.dumps(components)+json.dumps(value.get('properties',{}))
+                        if any(not re.search(r'\b'+n+r'\b',source) for n in numbers):
+                            return fail('unsupported_numeric_card_claim',clause_index)
     return None

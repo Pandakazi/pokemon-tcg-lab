@@ -89,6 +89,10 @@ test.each([
  ['invalid_answer_contract',{condition:'schema_validation',json_parsed:true,schema_valid:false,errors:[{path:['facts','<item>','evidence'],condition:'too_long'}]},'facts → item → evidence: above maximum count.'],
  ['invalid_answer_contract',{condition:'invalid_reference',json_parsed:true,schema_valid:true,unknown_reference_count:2,source_reference_id_count:1},'Source IDs used as citations: 1.'],
  ['internal_assessment_failure',{condition:'internal_assessment_error'},'Internal assessment failed; no model-quality judgment was made.'],
+ ['invalid_answer_contract',{condition:'uncited_limitation_claim',json_parsed:true,schema_valid:true},'uncited_limitation_claim'],
+ ['invalid_answer_contract',{condition:'unsupported_attack_cost',json_parsed:true,schema_valid:true,stage:'card_pool_grounding',path:['facts',0,'text'],clause_index:0,cited_evidence_count:1},'unsupported_attack_cost'],
+ ['invalid_answer_contract',{condition:'candidate_outside_evidence',json_parsed:true,schema_valid:true},'candidate_outside_evidence'],
+ ['invalid_answer_contract',{condition:'unsupported_competitive_claim',json_parsed:true,schema_valid:true},'unsupported_competitive_claim'],
 ])('exposes bounded %s details without retry',async(status,contract_diagnostics,expected)=>{
  const fetch=setup(async()=>({status,answer:null,contract_diagnostics})),agent=await select()
  fireEvent.click(agent.getByRole('button',{name:'Ask'}));await agent.findByRole('alert')

@@ -1,0 +1,2757 @@
+{
+  "simple": {
+    "version": "pokelab-card-pool-research-v1",
+    "packet": {
+      "version": "pokelab-card-pool-evidence-v1",
+      "request": {
+        "question": "What cards can mill my opponent?",
+        "printing": null,
+        "variant": null,
+        "window": "30",
+        "as_of": "2026-10-02"
+      },
+      "query": {
+        "retrieval_queries": [
+          "What cards can mill my opponent?"
+        ],
+        "representations": [
+          {
+            "text": "What cards can mill my opponent?",
+            "normalized": "what cards can mill my opponent?",
+            "concepts": [
+              "opponent_mill"
+            ],
+            "actions": [
+              "discard"
+            ],
+            "objects": [
+              "cards"
+            ],
+            "players": [
+              "opponent"
+            ],
+            "source_zones": [
+              "deck"
+            ],
+            "destination_zones": [
+              "discard pile"
+            ],
+            "constraints": [],
+            "reference_functional_identity": null,
+            "unresolved_text": "what cards can mill my opponent?",
+            "recognized_phrases": [
+              "mill my opponent"
+            ],
+            "limitations": [],
+            "reference_used": false
+          }
+        ],
+        "deck_orientation_inferred": false,
+        "orientation_is_not_creator_intent": true
+      },
+      "corpus_hash": "bd069ccc10964e13c127f97ab318cca018933ca18f1f3b3e5c18c94643d08581",
+      "evidence": [
+        {
+          "id": "ev-pool-44e0b9aafc323e13b0df5758",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"cards\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":48,\"start\":0,\"text\":\"discard the top 2 cards of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Controlled Burn\",\"normalized_text\":\"discard the top 2 cards of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[\"attack_damage_not_supplied\"],\"structured\":{\"cost\":[\"Fire\"],\"effect\":\"Discard the top 2 cards of your opponent's deck.\",\"name\":\"Controlled Burn\"},\"text\":\"Discard the top 2 cards of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"2c5bf96add9e6e70499174112729334f\""
+            },
+            {
+              "field": "name",
+              "value": "\"Centiskorch\""
+            },
+            {
+              "field": "printing",
+              "value": "\"me05-010\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Sizzlipede\",\"hp\":140,\"stage\":\"Stage1\",\"types\":[\"Fire\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee"
+          ]
+        },
+        {
+          "id": "ev-pool-7fbabe85eaf68085a28fdf9b",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"cards\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":48,\"start\":0,\"text\":\"discard the top 2 cards of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Cragalanche\",\"normalized_text\":\"discard the top 2 cards of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Fighting\",\"Colorless\",\"Colorless\",\"Colorless\"],\"damage\":150,\"effect\":\"Discard the top 2 cards of your opponent's deck.\",\"name\":\"Cragalanche\"},\"text\":\"Discard the top 2 cards of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"13a0d54d83baccc352c9b297121d14cf\""
+            },
+            {
+              "field": "name",
+              "value": "\"Coalossal\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv05-095\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Carkol\",\"hp\":180,\"stage\":\"Stage2\",\"types\":[\"Fighting\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070"
+          ]
+        },
+        {
+          "id": "ev-pool-9282fc2f3910ec336acdf399",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":45,\"start\":0,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Mountain Ramming\",\"normalized_text\":\"discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Fighting\",\"Fighting\",\"Colorless\"],\"damage\":100,\"effect\":\"Discard the top card of your opponent's deck.\",\"name\":\"Mountain Ramming\"},\"text\":\"Discard the top card of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"b0348689df9b26698268d6ee3d651885\""
+            },
+            {
+              "field": "name",
+              "value": "\"Cornerstone Mask Ogerpon\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv10-111\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"hp\":110,\"stage\":\"Basic\",\"types\":[\"Fighting\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8"
+          ]
+        },
+        {
+          "id": "ev-pool-c667381f03672fe1ca4bda8a",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"choice_quantity_or_option_scope_unresolved\",\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"for each heads,\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":1,\"polarity\":\"unknown\",\"previous_atom\":0,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":75,\"start\":30,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Snip Snip\",\"normalized_text\":\"flip 2 coins. for each heads, discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Water\",\"Colorless\"],\"damage\":40,\"effect\":\"Flip 2 coins. For each heads, discard the top card of your opponent's deck.\",\"name\":\"Snip Snip\"},\"text\":\"Flip 2 coins. For each heads, discard the top card of your opponent's deck.\",\"unmatched_spans\":[{\"end\":30,\"start\":13,\"text\":\" for each heads, \"}]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"d9ae6ff38650d03516d4fd991d899756\""
+            },
+            {
+              "field": "name",
+              "value": "\"Crawdaunt\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv06-048\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Corphish\",\"hp\":130,\"stage\":\"Stage1\",\"types\":[\"Water\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783"
+          ]
+        },
+        {
+          "id": "ev-pool-ce7ea9e58267d06925a678c4",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":45,\"start\":0,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Stomp Off\",\"normalized_text\":\"discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[\"attack_damage_not_supplied\"],\"structured\":{\"cost\":[\"Darkness\"],\"effect\":\"Discard the top card of your opponent's deck.\",\"name\":\"Stomp Off\"},\"text\":\"Discard the top card of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"d822c72d15fe630f6f2e0c7bf5608bef\""
+            },
+            {
+              "field": "name",
+              "value": "\"Deino\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv08-117\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"hp\":70,\"stage\":\"Basic\",\"types\":[\"Darkness\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "id": "ref-pool-3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee",
+          "source": "TCGdex",
+          "resource": "me05-010",
+          "checked_at": "2026-09-23T02:35:00.250172+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/me05-010",
+          "content_hash": "3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070",
+          "source": "TCGdex",
+          "resource": "sv05-095",
+          "checked_at": "2026-09-23T02:37:41.356752+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv05-095",
+          "content_hash": "667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8",
+          "source": "TCGdex",
+          "resource": "sv10-111",
+          "checked_at": "2026-09-23T02:38:03.612182+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv10-111",
+          "content_hash": "c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783",
+          "source": "TCGdex",
+          "resource": "sv06-048",
+          "checked_at": "2026-09-23T02:36:17.708789+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv06-048",
+          "content_hash": "25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd",
+          "source": "TCGdex",
+          "resource": "sv08-117",
+          "checked_at": "2026-09-23T02:38:09.989857+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv08-117",
+          "content_hash": "fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd",
+          "version": null,
+          "excerpt": null
+        }
+      ],
+      "coverage": {
+        "requested": [
+          "card-pool"
+        ],
+        "included": [
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate"
+        ],
+        "omitted": [
+          "competitive-evidence:not-projected;mechanical-relevance-is-not-tournament-success",
+          "candidate-cap-5;component-cap-2;complete-retrieval-output-not-sent"
+        ],
+        "unavailable": [
+          "tournament-performance",
+          "piloting-guides",
+          "reviewed-gameplay-result"
+        ]
+      }
+    },
+    "active_deck": {},
+    "omitted": [],
+    "boundary": null,
+    "content_hash": "e12ca2b923f1b1b1523b9e8d92c8df6b8c12ccbf14ab890cd8b075ade0f0afa9"
+  },
+  "flagship": {
+    "version": "pokelab-card-pool-research-v1",
+    "packet": {
+      "version": "pokelab-card-pool-evidence-v1",
+      "request": {
+        "question": "What are some really good cards if I wanted to make a milling Pokémon deck for Standard format tournament play?",
+        "printing": null,
+        "variant": null,
+        "window": "30",
+        "as_of": "2026-10-02"
+      },
+      "query": {
+        "retrieval_queries": [
+          "mill my opponent"
+        ],
+        "representations": [
+          {
+            "text": "mill my opponent",
+            "normalized": "mill my opponent",
+            "concepts": [
+              "opponent_mill"
+            ],
+            "actions": [
+              "discard"
+            ],
+            "objects": [
+              "cards"
+            ],
+            "players": [
+              "opponent"
+            ],
+            "source_zones": [
+              "deck"
+            ],
+            "destination_zones": [
+              "discard pile"
+            ],
+            "constraints": [],
+            "reference_functional_identity": null,
+            "unresolved_text": "mill my opponent",
+            "recognized_phrases": [
+              "mill my opponent"
+            ],
+            "limitations": [],
+            "reference_used": false
+          }
+        ],
+        "deck_orientation_inferred": false,
+        "orientation_is_not_creator_intent": true
+      },
+      "corpus_hash": "bd069ccc10964e13c127f97ab318cca018933ca18f1f3b3e5c18c94643d08581",
+      "evidence": [
+        {
+          "id": "ev-pool-44e0b9aafc323e13b0df5758",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"cards\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":48,\"start\":0,\"text\":\"discard the top 2 cards of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Controlled Burn\",\"normalized_text\":\"discard the top 2 cards of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[\"attack_damage_not_supplied\"],\"structured\":{\"cost\":[\"Fire\"],\"effect\":\"Discard the top 2 cards of your opponent's deck.\",\"name\":\"Controlled Burn\"},\"text\":\"Discard the top 2 cards of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"2c5bf96add9e6e70499174112729334f\""
+            },
+            {
+              "field": "name",
+              "value": "\"Centiskorch\""
+            },
+            {
+              "field": "printing",
+              "value": "\"me05-010\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Sizzlipede\",\"hp\":140,\"stage\":\"Stage1\",\"types\":[\"Fire\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee"
+          ]
+        },
+        {
+          "id": "ev-pool-7fbabe85eaf68085a28fdf9b",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"cards\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":48,\"start\":0,\"text\":\"discard the top 2 cards of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Cragalanche\",\"normalized_text\":\"discard the top 2 cards of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Fighting\",\"Colorless\",\"Colorless\",\"Colorless\"],\"damage\":150,\"effect\":\"Discard the top 2 cards of your opponent's deck.\",\"name\":\"Cragalanche\"},\"text\":\"Discard the top 2 cards of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"13a0d54d83baccc352c9b297121d14cf\""
+            },
+            {
+              "field": "name",
+              "value": "\"Coalossal\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv05-095\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Carkol\",\"hp\":180,\"stage\":\"Stage2\",\"types\":[\"Fighting\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070"
+          ]
+        },
+        {
+          "id": "ev-pool-9282fc2f3910ec336acdf399",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":45,\"start\":0,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Mountain Ramming\",\"normalized_text\":\"discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Fighting\",\"Fighting\",\"Colorless\"],\"damage\":100,\"effect\":\"Discard the top card of your opponent's deck.\",\"name\":\"Mountain Ramming\"},\"text\":\"Discard the top card of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"b0348689df9b26698268d6ee3d651885\""
+            },
+            {
+              "field": "name",
+              "value": "\"Cornerstone Mask Ogerpon\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv10-111\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"hp\":110,\"stage\":\"Basic\",\"types\":[\"Fighting\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8"
+          ]
+        },
+        {
+          "id": "ev-pool-c667381f03672fe1ca4bda8a",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"choice_quantity_or_option_scope_unresolved\",\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"for each heads,\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":1,\"polarity\":\"unknown\",\"previous_atom\":0,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":75,\"start\":30,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Snip Snip\",\"normalized_text\":\"flip 2 coins. for each heads, discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Water\",\"Colorless\"],\"damage\":40,\"effect\":\"Flip 2 coins. For each heads, discard the top card of your opponent's deck.\",\"name\":\"Snip Snip\"},\"text\":\"Flip 2 coins. For each heads, discard the top card of your opponent's deck.\",\"unmatched_spans\":[{\"end\":30,\"start\":13,\"text\":\" for each heads, \"}]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"d9ae6ff38650d03516d4fd991d899756\""
+            },
+            {
+              "field": "name",
+              "value": "\"Crawdaunt\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv06-048\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Corphish\",\"hp\":130,\"stage\":\"Stage1\",\"types\":[\"Water\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783"
+          ]
+        },
+        {
+          "id": "ev-pool-ce7ea9e58267d06925a678c4",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":45,\"start\":0,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Stomp Off\",\"normalized_text\":\"discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[\"attack_damage_not_supplied\"],\"structured\":{\"cost\":[\"Darkness\"],\"effect\":\"Discard the top card of your opponent's deck.\",\"name\":\"Stomp Off\"},\"text\":\"Discard the top card of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"d822c72d15fe630f6f2e0c7bf5608bef\""
+            },
+            {
+              "field": "name",
+              "value": "\"Deino\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv08-117\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"hp\":70,\"stage\":\"Basic\",\"types\":[\"Darkness\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "id": "ref-pool-3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee",
+          "source": "TCGdex",
+          "resource": "me05-010",
+          "checked_at": "2026-09-23T02:35:00.250172+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/me05-010",
+          "content_hash": "3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070",
+          "source": "TCGdex",
+          "resource": "sv05-095",
+          "checked_at": "2026-09-23T02:37:41.356752+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv05-095",
+          "content_hash": "667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8",
+          "source": "TCGdex",
+          "resource": "sv10-111",
+          "checked_at": "2026-09-23T02:38:03.612182+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv10-111",
+          "content_hash": "c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783",
+          "source": "TCGdex",
+          "resource": "sv06-048",
+          "checked_at": "2026-09-23T02:36:17.708789+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv06-048",
+          "content_hash": "25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd",
+          "source": "TCGdex",
+          "resource": "sv08-117",
+          "checked_at": "2026-09-23T02:38:09.989857+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv08-117",
+          "content_hash": "fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd",
+          "version": null,
+          "excerpt": null
+        }
+      ],
+      "coverage": {
+        "requested": [
+          "card-pool"
+        ],
+        "included": [
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate"
+        ],
+        "omitted": [
+          "competitive-evidence:not-projected;mechanical-relevance-is-not-tournament-success",
+          "candidate-cap-5;component-cap-2;complete-retrieval-output-not-sent"
+        ],
+        "unavailable": [
+          "tournament-performance",
+          "piloting-guides",
+          "reviewed-gameplay-result"
+        ]
+      }
+    },
+    "active_deck": {},
+    "omitted": [],
+    "boundary": null,
+    "content_hash": "c11c463c60deaf422defe460d6d742d2015ef9d498403a8fd9ece090c8d501de"
+  },
+  "support": {
+    "version": "pokelab-card-pool-research-v1",
+    "packet": {
+      "version": "pokelab-card-pool-evidence-v1",
+      "request": {
+        "question": "What cards can mill my opponent?",
+        "printing": "me02.5-016",
+        "variant": null,
+        "window": "30",
+        "as_of": "2026-10-02"
+      },
+      "query": {
+        "retrieval_queries": [
+          "What cards can mill my opponent?"
+        ],
+        "representations": [
+          {
+            "text": "What cards can mill my opponent?",
+            "normalized": "what cards can mill my opponent?",
+            "concepts": [
+              "opponent_mill"
+            ],
+            "actions": [
+              "discard"
+            ],
+            "objects": [
+              "cards"
+            ],
+            "players": [
+              "opponent"
+            ],
+            "source_zones": [
+              "deck"
+            ],
+            "destination_zones": [
+              "discard pile"
+            ],
+            "constraints": [],
+            "reference_functional_identity": "bb71f052255398422b7dc659a97b9501",
+            "unresolved_text": "what cards can mill my opponent?",
+            "recognized_phrases": [
+              "mill my opponent"
+            ],
+            "limitations": [],
+            "reference_used": false
+          }
+        ],
+        "deck_orientation_inferred": false,
+        "orientation_is_not_creator_intent": true
+      },
+      "corpus_hash": "bd069ccc10964e13c127f97ab318cca018933ca18f1f3b3e5c18c94643d08581",
+      "evidence": [
+        {
+          "id": "ev-pool-74d303c2ae0dd62ec9c8582c",
+          "kind": "reference-card",
+          "classification": "DERIVED_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "components",
+              "value": "[{\"component\":\"attack\",\"name\":\"Itchy Pollen\",\"structured\":{\"damage\":10,\"effect\":\"During your opponent's next turn, they can't play any Item cards from their hand.\",\"name\":\"Itchy Pollen\"},\"text\":\"During your opponent's next turn, they can't play any Item cards from their hand.\"}]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"bb71f052255398422b7dc659a97b9501\""
+            },
+            {
+              "field": "name",
+              "value": "\"Budew\""
+            },
+            {
+              "field": "printing",
+              "value": "\"me02.5-016\""
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            },
+            {
+              "field": "variant",
+              "value": "null"
+            }
+          ],
+          "references": [
+            "ref-pool-bc2ed71a190267a5e482304fb1bbf836cbd8ca4ec557bd33f5e9755e6e78dc31"
+          ]
+        },
+        {
+          "id": "ev-pool-44e0b9aafc323e13b0df5758",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"cards\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":48,\"start\":0,\"text\":\"discard the top 2 cards of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Controlled Burn\",\"normalized_text\":\"discard the top 2 cards of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[\"attack_damage_not_supplied\"],\"structured\":{\"cost\":[\"Fire\"],\"effect\":\"Discard the top 2 cards of your opponent's deck.\",\"name\":\"Controlled Burn\"},\"text\":\"Discard the top 2 cards of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"2c5bf96add9e6e70499174112729334f\""
+            },
+            {
+              "field": "name",
+              "value": "\"Centiskorch\""
+            },
+            {
+              "field": "printing",
+              "value": "\"me05-010\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Sizzlipede\",\"hp\":140,\"stage\":\"Stage1\",\"types\":[\"Fire\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee"
+          ]
+        },
+        {
+          "id": "ev-pool-7fbabe85eaf68085a28fdf9b",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"cards\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":48,\"start\":0,\"text\":\"discard the top 2 cards of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Cragalanche\",\"normalized_text\":\"discard the top 2 cards of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Fighting\",\"Colorless\",\"Colorless\",\"Colorless\"],\"damage\":150,\"effect\":\"Discard the top 2 cards of your opponent's deck.\",\"name\":\"Cragalanche\"},\"text\":\"Discard the top 2 cards of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"13a0d54d83baccc352c9b297121d14cf\""
+            },
+            {
+              "field": "name",
+              "value": "\"Coalossal\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv05-095\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Carkol\",\"hp\":180,\"stage\":\"Stage2\",\"types\":[\"Fighting\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070"
+          ]
+        },
+        {
+          "id": "ev-pool-9282fc2f3910ec336acdf399",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":45,\"start\":0,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Mountain Ramming\",\"normalized_text\":\"discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Fighting\",\"Fighting\",\"Colorless\"],\"damage\":100,\"effect\":\"Discard the top card of your opponent's deck.\",\"name\":\"Mountain Ramming\"},\"text\":\"Discard the top card of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"b0348689df9b26698268d6ee3d651885\""
+            },
+            {
+              "field": "name",
+              "value": "\"Cornerstone Mask Ogerpon\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv10-111\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"hp\":110,\"stage\":\"Basic\",\"types\":[\"Fighting\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8"
+          ]
+        },
+        {
+          "id": "ev-pool-c667381f03672fe1ca4bda8a",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[\"choice_quantity_or_option_scope_unresolved\",\"compound_scope_not_executed\"],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"for each heads,\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":1,\"polarity\":\"unknown\",\"previous_atom\":0,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":75,\"start\":30,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Snip Snip\",\"normalized_text\":\"flip 2 coins. for each heads, discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[],\"structured\":{\"cost\":[\"Water\",\"Colorless\"],\"damage\":40,\"effect\":\"Flip 2 coins. For each heads, discard the top card of your opponent's deck.\",\"name\":\"Snip Snip\"},\"text\":\"Flip 2 coins. For each heads, discard the top card of your opponent's deck.\",\"unmatched_spans\":[{\"end\":30,\"start\":13,\"text\":\" for each heads, \"}]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"d9ae6ff38650d03516d4fd991d899756\""
+            },
+            {
+              "field": "name",
+              "value": "\"Crawdaunt\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv06-048\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"evolveFrom\":\"Corphish\",\"hp\":130,\"stage\":\"Stage1\",\"types\":[\"Water\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783"
+          ]
+        },
+        {
+          "id": "ev-pool-ce7ea9e58267d06925a678c4",
+          "kind": "card-pool-candidate",
+          "classification": "SOURCE_FACT",
+          "identity": null,
+          "fields": [
+            {
+              "field": "category",
+              "value": "\"Pokemon\""
+            },
+            {
+              "field": "classification",
+              "value": "\"direct_mechanical\""
+            },
+            {
+              "field": "components",
+              "value": "[{\"ambiguities\":[],\"atoms\":[{\"action\":\"discard\",\"affected_player\":null,\"context\":\"\",\"destination_zone\":null,\"object\":\"card\",\"optionality\":\"unknown\",\"order\":0,\"polarity\":\"unknown\",\"previous_atom\":null,\"quantity\":null,\"relationship\":\"text_order_not_execution\",\"scope_status\":\"lexical_only\",\"source_field\":\"effect\",\"source_zone\":null,\"span\":{\"end\":45,\"start\":0,\"text\":\"discard the top card of your opponent's deck.\"}}],\"component\":\"attack\",\"concepts\":[\"opponent_mill\"],\"matched_text\":[],\"name\":\"Stomp Off\",\"normalized_text\":\"discard the top card of your opponent's deck.\",\"related\":[],\"representation\":\"partial\",\"source_issues\":[\"attack_damage_not_supplied\"],\"structured\":{\"cost\":[\"Darkness\"],\"effect\":\"Discard the top card of your opponent's deck.\",\"name\":\"Stomp Off\"},\"text\":\"Discard the top card of your opponent's deck.\",\"unmatched_spans\":[]}]"
+            },
+            {
+              "field": "constraints_satisfied",
+              "value": "[]"
+            },
+            {
+              "field": "constraints_unevaluable",
+              "value": "[]"
+            },
+            {
+              "field": "functional_identity",
+              "value": "\"d822c72d15fe630f6f2e0c7bf5608bef\""
+            },
+            {
+              "field": "name",
+              "value": "\"Deino\""
+            },
+            {
+              "field": "printing",
+              "value": "\"sv08-117\""
+            },
+            {
+              "field": "properties",
+              "value": "{\"hp\":70,\"stage\":\"Basic\",\"types\":[\"Darkness\"]}"
+            },
+            {
+              "field": "score",
+              "value": "130"
+            },
+            {
+              "field": "score_components",
+              "value": "{\"atoms\":8,\"concept\":25,\"exact_phrase\":0,\"related_concept\":0,\"relationship\":100,\"text\":0,\"uncertainty\":-3}"
+            },
+            {
+              "field": "standard",
+              "value": "true"
+            }
+          ],
+          "references": [
+            "ref-pool-fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "id": "ref-pool-bc2ed71a190267a5e482304fb1bbf836cbd8ca4ec557bd33f5e9755e6e78dc31",
+          "source": "TCGdex",
+          "resource": "me02.5-016",
+          "checked_at": "2026-09-23T02:35:14.637430+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/me02.5-016",
+          "content_hash": "bc2ed71a190267a5e482304fb1bbf836cbd8ca4ec557bd33f5e9755e6e78dc31",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee",
+          "source": "TCGdex",
+          "resource": "me05-010",
+          "checked_at": "2026-09-23T02:35:00.250172+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/me05-010",
+          "content_hash": "3b86b2d751fe6f3afeedf7f5c02c6f5c2466973a6f2bda78d8c14b71b8d9beee",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070",
+          "source": "TCGdex",
+          "resource": "sv05-095",
+          "checked_at": "2026-09-23T02:37:41.356752+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv05-095",
+          "content_hash": "667780945176f028e36a90aeb3350681a156c7e5c2c168927e09a49c9bf11070",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8",
+          "source": "TCGdex",
+          "resource": "sv10-111",
+          "checked_at": "2026-09-23T02:38:03.612182+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv10-111",
+          "content_hash": "c795944ac10df8a60163034b06b8b638b42d74a89cb6b94b2c8b50490e1fe7d8",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783",
+          "source": "TCGdex",
+          "resource": "sv06-048",
+          "checked_at": "2026-09-23T02:36:17.708789+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv06-048",
+          "content_hash": "25d8396a5405bfbf169163bd7e5e92f4bc30c4eb70b914bda0918a7035529783",
+          "version": null,
+          "excerpt": null
+        },
+        {
+          "id": "ref-pool-fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd",
+          "source": "TCGdex",
+          "resource": "sv08-117",
+          "checked_at": "2026-09-23T02:38:09.989857+00:00",
+          "event_date": null,
+          "url": "https://api.tcgdex.net/v2/en/cards/sv08-117",
+          "content_hash": "fec2a17f6f29baf7ff5a6c38a934a34bfc603f51675f2f272d5ffbab1d2668bd",
+          "version": null,
+          "excerpt": null
+        }
+      ],
+      "coverage": {
+        "requested": [
+          "card-pool"
+        ],
+        "included": [
+          "reference-card",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate",
+          "card-pool-candidate"
+        ],
+        "omitted": [
+          "competitive-evidence:not-projected;mechanical-relevance-is-not-tournament-success",
+          "candidate-cap-5;component-cap-2;complete-retrieval-output-not-sent"
+        ],
+        "unavailable": [
+          "tournament-performance",
+          "piloting-guides",
+          "reviewed-gameplay-result"
+        ]
+      }
+    },
+    "active_deck": {},
+    "omitted": [],
+    "boundary": null,
+    "content_hash": "e2f6a1dcb0f3593c1c9478731b0e6bae7b228bd1997e7ffb49b0f5e368d83b42"
+  },
+  "catalog_names": [
+    "AZ's Tranquility",
+    "Abomasnow",
+    "Abra",
+    "Absol",
+    "Academy at Night",
+    "Accelgor",
+    "Accompanying Flute",
+    "Acerola's Mischief",
+    "Adversity Policy",
+    "Aegislash",
+    "Aggron",
+    "Aipom",
+    "Air Balloon",
+    "Alakazam",
+    "Alcremie",
+    "Alcremie ex",
+    "Alolan Diglett",
+    "Alolan Dugtrio",
+    "Alolan Exeggutor ex",
+    "Alolan Geodude",
+    "Alolan Golem",
+    "Alolan Graveler",
+    "Alolan Marowak",
+    "Alomomola",
+    "Altaria",
+    "Amarys",
+    "Amaura",
+    "Ambipom",
+    "Amoonguss",
+    "Amoonguss ex",
+    "Ampharos",
+    "Amulet of Hope",
+    "Ange Floette",
+    "Annihilape",
+    "Anthea & Concordia",
+    "Antique Armor Fossil",
+    "Antique Cover Fossil",
+    "Antique Jaw Fossil",
+    "Antique Plume Fossil",
+    "Antique Root Fossil",
+    "Antique Sail Fossil",
+    "Antique Skull Fossil",
+    "Appletun",
+    "Applin",
+    "Arbok",
+    "Arboliva ex",
+    "Arcanine",
+    "Archaludon",
+    "Archaludon ex",
+    "Archen",
+    "Archeops",
+    "Area Zero Underdepths",
+    "Ariados",
+    "Armarouge",
+    "Armarouge ex",
+    "Aromatisse",
+    "Aron",
+    "Arrokuda",
+    "Articuno",
+    "Arven's Greedent",
+    "Arven's Mabosstiff ex",
+    "Arven's Maschiff",
+    "Arven's Sandwich",
+    "Arven's Skwovet",
+    "Arven's Toedscool",
+    "Arven's Toedscruel",
+    "Audino",
+    "Aurorus",
+    "Avalugg",
+    "Awakening Drum",
+    "Axew",
+    "Azelf",
+    "Azumarill",
+    "Azumarill ex",
+    "Babiri Berry",
+    "Backtrack Badge",
+    "Bagon",
+    "Baltoy",
+    "Banette",
+    "Barbaracle",
+    "Barraskewda",
+    "Basculin",
+    "Basic Darkness Energy",
+    "Basic Fighting Energy",
+    "Basic Fire Energy",
+    "Basic Grass Energy",
+    "Basic Lightning Energy",
+    "Basic Metal Energy",
+    "Basic Psychic Energy",
+    "Basic Water Energy",
+    "Bastiodon",
+    "Battle Cage",
+    "Bayleef",
+    "Beartic",
+    "Beautifly",
+    "Beedrill ex",
+    "Beheeyem",
+    "Beldum",
+    "Bellibolt",
+    "Bergmite",
+    "Bewear",
+    "Bianca's Devotion",
+    "Billy & O'Nare",
+    "Binacle",
+    "Binding Mochi",
+    "Bisharp",
+    "Black Belt's Training",
+    "Black Kyurem ex",
+    "Blaziken",
+    "Blaziken ex",
+    "Blissey ex",
+    "Blitzle",
+    "Bloodmoon Ursaluna",
+    "Bloodmoon Ursaluna ex",
+    "Blowtorch",
+    "Boldore",
+    "Boltund",
+    "Bombirdier",
+    "Boomerang Energy",
+    "Boss's Orders",
+    "Bouffalant",
+    "Bouffalant ex",
+    "Boxed Order",
+    "Braixen",
+    "Brambleghast",
+    "Bramblin",
+    "Brave Bangle",
+    "Braviary",
+    "Breloom",
+    "Briar",
+    "Brilliant Blender",
+    "Brionne",
+    "Brock's Scouting",
+    "Bronzong",
+    "Bronzor",
+    "Brute Bonnet",
+    "Bruxish",
+    "Bubbly Water Energy",
+    "Buddy-Buddy Poffin",
+    "Budew",
+    "Bug Catching Set",
+    "Buizel",
+    "Bulbasaur",
+    "Buneary",
+    "Bunnelby",
+    "Butterfree",
+    "Call Bell",
+    "Camerupt",
+    "Canari",
+    "Capsakid",
+    "Carbink",
+    "Caretaker",
+    "Carkol",
+    "Carmine",
+    "Carnivine",
+    "Carracosta",
+    "Carvanha",
+    "Cascoon",
+    "Cassiopeia",
+    "Castform Sunny Form",
+    "Caterpie",
+    "Celebi",
+    "Celebratory Fanfare",
+    "Centiskorch",
+    "Ceruledge",
+    "Ceruledge ex",
+    "Cetitan",
+    "Cetitan ex",
+    "Cetoddle",
+    "Chandelure",
+    "Chansey",
+    "Charcadet",
+    "Charjabug",
+    "Charmander",
+    "Charmeleon",
+    "Chatot",
+    "Cheren",
+    "Chesnaught",
+    "Chespin",
+    "Chewtle",
+    "Chi-Yu",
+    "Chien-Pao",
+    "Chikorita",
+    "Chill Teaser Toy",
+    "Chimchar",
+    "Chimecho",
+    "Chinchou",
+    "Cinccino",
+    "Cinccino ex",
+    "Cinderace",
+    "Cinderace ex",
+    "Ciphermaniac's Codebreaking",
+    "Clamperl",
+    "Clauncher",
+    "Clawitzer",
+    "Claydol",
+    "Clefable",
+    "Clefairy",
+    "Clemont's Quick Wit",
+    "Clobbopus",
+    "Coalossal",
+    "Cobalion",
+    "Cobalion ex",
+    "Cofagrigus",
+    "Colbur Berry",
+    "Colress's Tenacity",
+    "Combusken",
+    "Comfey",
+    "Community Center",
+    "Conkeldurr",
+    "Cook",
+    "Copperajah",
+    "Core Memory",
+    "Cornerstone Mask Ogerpon",
+    "Cornerstone Mask Ogerpon ex",
+    "Corphish",
+    "Cottonee",
+    "Counter Gain",
+    "Crabominable",
+    "Crabrawler",
+    "Cradily",
+    "Cramorant",
+    "Cranidos",
+    "Crawdaunt",
+    "Cresselia",
+    "Crispin",
+    "Croagunk",
+    "Crobat",
+    "Crocalor",
+    "Croconaw",
+    "Crushing Hammer",
+    "Crustle",
+    "Cryogonal",
+    "Cubchoo",
+    "Cubone",
+    "Cufant",
+    "Cutiefly",
+    "Cyclizar",
+    "Cyclizar ex",
+    "Cyndaquil",
+    "Cynthia's Feebas",
+    "Cynthia's Gabite",
+    "Cynthia's Garchomp ex",
+    "Cynthia's Gible",
+    "Cynthia's Milotic",
+    "Cynthia's Power Weight",
+    "Cynthia's Roselia",
+    "Cynthia's Roserade",
+    "Cynthia's Spiritomb",
+    "Cyrano",
+    "Dachsbun ex",
+    "Dangerous Laser",
+    "Dark Bell",
+    "Darkness Energy",
+    "Darkrai ex",
+    "Darmanitan",
+    "Dartrix",
+    "Darumaka",
+    "Dawn",
+    "Decidueye",
+    "Decidueye ex",
+    "Dedenne",
+    "Deduction Kit",
+    "Deerling",
+    "Deino",
+    "Delcatty",
+    "Delibird",
+    "Delphox",
+    "Deluxe Bomb",
+    "Deoxys",
+    "Dewgong",
+    "Dewott",
+    "Dhelmise",
+    "Dialga",
+    "Dialga ex",
+    "Diancie",
+    "Diggersby",
+    "Dipplin",
+    "Dizzying Valley",
+    "Dolliv",
+    "Dondozo ex",
+    "Donphan",
+    "Doublade",
+    "Dragapult ex",
+    "Dragon Elixir",
+    "Dragonair",
+    "Drakloak",
+    "Drampa",
+    "Drapion",
+    "Drasna",
+    "Dratini",
+    "Drayton",
+    "Drednaw",
+    "Dreepy",
+    "Drifblim",
+    "Drifloon",
+    "Drilbur",
+    "Drizzile",
+    "Drowzee",
+    "Druddigon",
+    "Dubwool",
+    "Ducklett",
+    "Dudunsparce",
+    "Dudunsparce ex",
+    "Dunsparce",
+    "Duosion",
+    "Duraludon",
+    "Durant",
+    "Durant ex",
+    "Dusclops",
+    "Dusk Ball",
+    "Dusknoir",
+    "Duskull",
+    "Dustox",
+    "Dwebble",
+    "Eelektrik",
+    "Eelektross",
+    "Eevee",
+    "Eevee ex",
+    "Eiscue",
+    "Ekans",
+    "Eldegoss",
+    "Electabuzz",
+    "Electivire",
+    "Electivire ex",
+    "Electrike",
+    "Elgyem",
+    "Emboar",
+    "Emcee's Hype",
+    "Emma",
+    "Emolga",
+    "Empoleon ex",
+    "Enamorus",
+    "Energy Coin",
+    "Energy Recycler",
+    "Energy Retrieval",
+    "Energy Search",
+    "Energy Search Pro",
+    "Energy Swatter",
+    "Energy Switch",
+    "Enhanced Hammer",
+    "Enriching Energy",
+    "Entei",
+    "Eri",
+    "Erika's Bellsprout",
+    "Erika's Gloom",
+    "Erika's Oddish",
+    "Erika's Tangela",
+    "Erika's Victreebel",
+    "Erika's Vileplume ex",
+    "Erika's Weepinbell",
+    "Escavalier",
+    "Espathra",
+    "Espeon ex",
+    "Espurr",
+    "Eternatus",
+    "Ethan's Adventure",
+    "Ethan's Cyndaquil",
+    "Ethan's Ho-Oh ex",
+    "Ethan's Magcargo",
+    "Ethan's Pichu",
+    "Ethan's Pinsir",
+    "Ethan's Quilava",
+    "Ethan's Slugma",
+    "Ethan's Sudowoodo",
+    "Ethan's Typhlosion",
+    "Excadrill",
+    "Excadrill ex",
+    "Exeggcute",
+    "Exeggutor",
+    "Explorer's Guidance",
+    "Falinks",
+    "Fan Rotom",
+    "Farfetch'd",
+    "Farigiraf",
+    "Farigiraf ex",
+    "Fearow",
+    "Feebas",
+    "Fennekin",
+    "Fennel",
+    "Feraligatr",
+    "Ferroseed",
+    "Ferrothorn",
+    "Festival Grounds",
+    "Fezandipiti",
+    "Fezandipiti ex",
+    "Fidough",
+    "Fighting Energy",
+    "Fighting Gong",
+    "Finizen",
+    "Finneon",
+    "Fire Energy",
+    "Firebreather",
+    "Flaaffy",
+    "Flabébé",
+    "Flamigo ex",
+    "Flapple",
+    "Flareon ex",
+    "Fletchinder",
+    "Fletchling",
+    "Flittle",
+    "Floatzel",
+    "Floette",
+    "Floragato",
+    "Florges",
+    "Flutter Mane",
+    "Flygon",
+    "Flygon ex",
+    "Fomantis",
+    "Foongus",
+    "Forest of Vitality",
+    "Forretress",
+    "Fossil Quarry",
+    "Fraxure",
+    "Friends in Paldea",
+    "Frillish",
+    "Froakie",
+    "Frogadier",
+    "Froslass",
+    "Frosmoth",
+    "Fuecoco",
+    "Full Metal Lab",
+    "Furfrou",
+    "Furret",
+    "Galarian Linoone",
+    "Galarian Obstagoon",
+    "Galarian Stunfisk",
+    "Galarian Zigzagoon",
+    "Galvantula",
+    "Galvantula ex",
+    "Garbodor",
+    "Garganacl",
+    "Gastly",
+    "Gastrodon",
+    "Genesect",
+    "Genesect ex",
+    "Gengar",
+    "Gengar ex",
+    "Gholdengo",
+    "Gigalith",
+    "Gimmighoul",
+    "Girafarig",
+    "Glaceon",
+    "Glaceon ex",
+    "Gladion's Final Battle",
+    "Glalie",
+    "Glameow",
+    "Glass Trumpet",
+    "Glastrier",
+    "Gligar",
+    "Glimmet",
+    "Glimmora",
+    "Gliscor",
+    "Gloom",
+    "Golbat",
+    "Goldeen",
+    "Golduck",
+    "Golett",
+    "Golisopod",
+    "Golurk",
+    "Goodra",
+    "Goomy",
+    "Gorebyss",
+    "Gossifleur",
+    "Gothita",
+    "Gothitelle",
+    "Gothorita",
+    "Gouging Fire",
+    "Gouging Fire ex",
+    "Gourgeist ex",
+    "Grafaiai",
+    "Granbull",
+    "Grand Tree",
+    "Granite Cave",
+    "Grapploct",
+    "Grass Energy",
+    "Gravity Gemstone",
+    "Gravity Mountain",
+    "Great Haul Net",
+    "Great Tusk",
+    "Greavard",
+    "Greedent",
+    "Greninja ex",
+    "Grimmsnarl",
+    "Grimsley's Move",
+    "Grookey",
+    "Grotle",
+    "Groudon",
+    "Growing Grass Energy",
+    "Growlithe",
+    "Grubbin",
+    "Grumpig",
+    "Gulpin",
+    "Gumshoos",
+    "Gurdurr",
+    "Gwynn",
+    "Haban Berry",
+    "Hand Trimmer",
+    "Handheld Fan",
+    "Hariyama",
+    "Harlequin",
+    "Hassel",
+    "Haunter",
+    "Hawlucha",
+    "Haxorus",
+    "Hearthflame Mask Ogerpon",
+    "Hearthflame Mask Ogerpon ex",
+    "Heat Rotom",
+    "Heatmor",
+    "Heatran",
+    "Heavy Baton",
+    "Heliolisk",
+    "Helioptile",
+    "Heracross",
+    "Herdier",
+    "Hero's Cape",
+    "Hilda",
+    "Hippopotas",
+    "Hippowdon",
+    "Hisuian Arcanine",
+    "Hisuian Growlithe",
+    "Hitmontop",
+    "Ho-Oh",
+    "Hole-Digging Shovel",
+    "Honchkrow",
+    "Honedge",
+    "Hoopa",
+    "Hoothoot",
+    "Hop's Bag",
+    "Hop's Choice Band",
+    "Hop's Corviknight",
+    "Hop's Corvisquire",
+    "Hop's Cramorant",
+    "Hop's Dubwool",
+    "Hop's Phantump",
+    "Hop's Pincurchin ex",
+    "Hop's Rookidee",
+    "Hop's Sandaconda",
+    "Hop's Silicobra",
+    "Hop's Snorlax",
+    "Hop's Trevenant",
+    "Hop's Wooloo",
+    "Hop's Zacian ex",
+    "Horsea",
+    "Houndoom",
+    "Houndour",
+    "Houndstone",
+    "Houndstone ex",
+    "Huntail",
+    "Hydrapple",
+    "Hydrapple ex",
+    "Hydreigon ex",
+    "Hyper Aroma",
+    "Hypno",
+    "Ignition Energy",
+    "Illumise",
+    "Impidimp",
+    "Incineroar ex",
+    "Indeedee",
+    "Infernape",
+    "Inkay",
+    "Inteleon",
+    "Iono's Bellibolt ex",
+    "Iono's Electrode",
+    "Iono's Kilowattrel",
+    "Iono's Tadbulb",
+    "Iono's Voltorb",
+    "Iono's Wattrel",
+    "Iris's Fighting Spirit",
+    "Iron Boulder",
+    "Iron Boulder ex",
+    "Iron Bundle",
+    "Iron Crown",
+    "Iron Crown ex",
+    "Iron Defender",
+    "Iron Hands",
+    "Iron Jugulis",
+    "Iron Leaves",
+    "Iron Leaves ex",
+    "Iron Moth",
+    "Iron Thorns",
+    "Iron Thorns ex",
+    "Iron Treads",
+    "Iron Valiant",
+    "Ivysaur",
+    "Jacinthe",
+    "Jamming Tower",
+    "Janine's Secret Art",
+    "Jasmine's Gaze",
+    "Jellicent ex",
+    "Jett",
+    "Jigglypuff",
+    "Jirachi",
+    "Jolteon ex",
+    "Joltik",
+    "Judge",
+    "Jumbo Ice Cream",
+    "Jynx",
+    "Kadabra",
+    "Kakuna",
+    "Kangaskhan",
+    "Karrablast",
+    "Kecleon",
+    "Keldeo",
+    "Keldeo ex",
+    "Kieran",
+    "Kilowattrel",
+    "Kilowattrel ex",
+    "Kingambit",
+    "Kingdra ex",
+    "Kirlia",
+    "Klang",
+    "Klawf",
+    "Klefki",
+    "Klink",
+    "Klinklang",
+    "Koffing",
+    "Kofu",
+    "Komala",
+    "Koraidon",
+    "Koraidon ex",
+    "Krokorok",
+    "Krookodile",
+    "Krookodile ex",
+    "Kyogre",
+    "Kyogre ex",
+    "Kyurem",
+    "Kyurem ex",
+    "Lacey",
+    "Lairon",
+    "Lampent",
+    "Lana's Aid",
+    "Landorus",
+    "Lanturn",
+    "Lapras",
+    "Lapras ex",
+    "Larry's Braviary",
+    "Larry's Dudunsparce ex",
+    "Larry's Dunsparce",
+    "Larry's Komala",
+    "Larry's Rufflet",
+    "Larry's Skill",
+    "Larry's Staraptor",
+    "Larry's Staravia",
+    "Larry's Starly",
+    "Larvesta",
+    "Larvitar",
+    "Latias",
+    "Latias ex",
+    "Latios",
+    "Leafeon",
+    "Leafeon ex",
+    "Leavanny",
+    "Lechonk",
+    "Ledian",
+    "Ledyba",
+    "Legacy Energy",
+    "Levincia",
+    "Lickilicky",
+    "Lickitung",
+    "Liepard",
+    "Light Ball",
+    "Lightning Energy",
+    "Lileep",
+    "Lillie's Clefairy ex",
+    "Lillie's Comfey",
+    "Lillie's Cutiefly",
+    "Lillie's Determination",
+    "Lillie's Pearl",
+    "Lillie's Ribombee",
+    "Lilligant",
+    "Lillipup",
+    "Linoone",
+    "Lisia's Appeal",
+    "Litleo",
+    "Litten",
+    "Litwick",
+    "Lively Stadium",
+    "Lokix",
+    "Lombre",
+    "Lopunny",
+    "Lotad",
+    "Love Ball",
+    "Lt. Surge's Bargain",
+    "Lucario ex",
+    "Lucian",
+    "Lucky Helmet",
+    "Ludicolo",
+    "Lugia ex",
+    "Lumineon",
+    "Lumiose City",
+    "Lumiose Galette",
+    "Lunatone",
+    "Lurantis",
+    "Lurantis ex",
+    "Luxio",
+    "Luxray",
+    "Luxray ex",
+    "Lycanroc",
+    "Mabosstiff",
+    "Magcargo",
+    "Magcargo ex",
+    "Magearna",
+    "Magmar",
+    "Magmortar",
+    "Magnemite",
+    "Magnetic Metal Energy",
+    "Magneton",
+    "Magnezone",
+    "Makuhita",
+    "Malamar",
+    "Mamoswine",
+    "Mamoswine ex",
+    "Mandibuzz",
+    "Mandibuzz ex",
+    "Manectric",
+    "Mankey",
+    "Mantine",
+    "Maractus",
+    "Mareep",
+    "Marill",
+    "Marnie's Grimmsnarl ex",
+    "Marnie's Impidimp",
+    "Marnie's Liepard",
+    "Marnie's Morgrem",
+    "Marnie's Morpeko",
+    "Marnie's Purrloin",
+    "Marnie's Scrafty",
+    "Marnie's Scraggy",
+    "Marowak",
+    "Marshadow",
+    "Maschiff",
+    "Master Ball",
+    "Maushold",
+    "Mawile",
+    "Max Rod",
+    "Maximum Belt",
+    "Meddling Memo",
+    "Medicham",
+    "Medicham ex",
+    "Meditite",
+    "Mega Abomasnow ex",
+    "Mega Absol ex",
+    "Mega Audino ex",
+    "Mega Camerupt ex",
+    "Mega Chandelure ex",
+    "Mega Charizard X ex",
+    "Mega Charizard Y ex",
+    "Mega Clefable ex",
+    "Mega Darkrai ex",
+    "Mega Delphox ex",
+    "Mega Diancie ex",
+    "Mega Dragalge ex",
+    "Mega Dragonite ex",
+    "Mega Eelektross ex",
+    "Mega Emboar ex",
+    "Mega Excadrill ex",
+    "Mega Feraligatr ex",
+    "Mega Floette ex",
+    "Mega Froslass ex",
+    "Mega Gallade ex",
+    "Mega Gardevoir ex",
+    "Mega Gengar ex",
+    "Mega Greninja ex",
+    "Mega Hawlucha ex",
+    "Mega Heracross ex",
+    "Mega Kangaskhan ex",
+    "Mega Latias ex",
+    "Mega Lopunny ex",
+    "Mega Lucario ex",
+    "Mega Manectric ex",
+    "Mega Mawile ex",
+    "Mega Meganium ex",
+    "Mega Pyroar ex",
+    "Mega Scrafty ex",
+    "Mega Sharpedo ex",
+    "Mega Signal",
+    "Mega Skarmory ex",
+    "Mega Slowbro ex",
+    "Mega Starmie ex",
+    "Mega Venusaur ex",
+    "Mega Zeraora ex",
+    "Mega Zygarde ex",
+    "Meganium",
+    "Megaton Blower",
+    "Melmetal",
+    "Melmetal ex",
+    "Meloetta",
+    "Meloetta ex",
+    "Meltan",
+    "Meowscarada",
+    "Meowstic",
+    "Meowth",
+    "Meowth ex",
+    "Mesprit",
+    "Metagross",
+    "Metal Energy",
+    "Metang",
+    "Metapod",
+    "Mewtwo",
+    "Mienfoo",
+    "Mienshao",
+    "Mightyena",
+    "Milcery",
+    "Milotic",
+    "Milotic ex",
+    "Miltank",
+    "Mimikyu",
+    "Mimikyu ex",
+    "Minccino",
+    "Miracle Headset",
+    "Miraidon",
+    "Miraidon ex",
+    "Misdreavus",
+    "Mismagius",
+    "Mismagius ex",
+    "Mist Energy",
+    "Misty's Gyarados",
+    "Misty's Lapras",
+    "Misty's Magikarp",
+    "Misty's Psyduck",
+    "Misty's Starmie",
+    "Misty's Staryu",
+    "Misty's Vitality",
+    "Moltres",
+    "Monferno",
+    "Morelull",
+    "Morgrem",
+    "Morpeko",
+    "Morpeko ex",
+    "Morty's Conviction",
+    "Mow Rotom",
+    "Mr. Mime",
+    "Mudbray",
+    "Mudkip",
+    "Mudsdale",
+    "Munkidori",
+    "Munkidori ex",
+    "Munna",
+    "Murkrow",
+    "Musharna",
+    "Mystery Garden",
+    "N's Castle",
+    "N's Darmanitan",
+    "N's Darumaka",
+    "N's Joltik",
+    "N's Klang",
+    "N's Klink",
+    "N's Klinklang",
+    "N's PP Up",
+    "N's Plan",
+    "N's Purrloin",
+    "N's Reshiram",
+    "N's Sigilyph",
+    "N's Vanillish",
+    "N's Vanillite",
+    "N's Vanilluxe",
+    "N's Zekrom",
+    "N's Zoroark ex",
+    "N's Zorua",
+    "Nacli",
+    "Naclstack",
+    "Naveen",
+    "Neo Upper Energy",
+    "Neutralization Zone",
+    "Nickit",
+    "Night Stretcher",
+    "Nighttime Mine",
+    "Nincada",
+    "Ninetales",
+    "Ninjask",
+    "Nitro Fire Energy",
+    "Noctowl",
+    "Noibat",
+    "Noivern",
+    "Noivern ex",
+    "Nosepass",
+    "Numel",
+    "Nuzleaf",
+    "Nymble",
+    "Occa Berry",
+    "Octillery",
+    "Oddish",
+    "Ogre's Mask",
+    "Oinkologne",
+    "Okidogi",
+    "Okidogi ex",
+    "Onix",
+    "Oranguru",
+    "Oricorio",
+    "Oricorio ex",
+    "Orthworm ex",
+    "Oshawott",
+    "Pachirisu",
+    "Palafin",
+    "Palafin ex",
+    "Paldean Clodsire ex",
+    "Paldean Tauros",
+    "Paldean Wooper",
+    "Palkia",
+    "Palossand",
+    "Palossand ex",
+    "Palpitoad",
+    "Pancham",
+    "Pangoro",
+    "Panpour",
+    "Pansage",
+    "Pansear",
+    "Paradise Resort",
+    "Paras",
+    "Parasect",
+    "Passho Berry",
+    "Passimian",
+    "Patrat",
+    "Pawmi",
+    "Pawmo",
+    "Pawmot",
+    "Pawniard",
+    "Payapa Berry",
+    "Pecharunt",
+    "Pecharunt ex",
+    "Pelipper",
+    "Perilous Jungle",
+    "Perrin",
+    "Persian",
+    "Petilil",
+    "Phanpy",
+    "Phantump",
+    "Philippe",
+    "Phione",
+    "Picnicker",
+    "Pidove",
+    "Pignite",
+    "Pikachu",
+    "Pikachu ex",
+    "Pikachu with Grey Felt Hat",
+    "Pikipek",
+    "Piloswine",
+    "Pineco",
+    "Pinsir",
+    "Piplup",
+    "Poké Ball",
+    "Poké Pad",
+    "Poké Vital A",
+    "Pokégear 3.0",
+    "Pokémon Catcher",
+    "Pokémon Center Lady",
+    "Poliwag",
+    "Poliwhirl",
+    "Poliwrath",
+    "Poltchageist",
+    "Ponyta",
+    "Poochyena",
+    "Popplio",
+    "Postwick",
+    "Potion",
+    "Powerglass",
+    "Precious Trolley",
+    "Premium Power Pro",
+    "Primarina",
+    "Prime Catcher",
+    "Primeape",
+    "Prinplup",
+    "Prism Energy",
+    "Prism Tower",
+    "Probopass",
+    "Psychic Energy",
+    "Psyduck",
+    "Pumpkaboo",
+    "Punk Helmet",
+    "Pupitar",
+    "Purrloin",
+    "Purugly",
+    "Pyroar",
+    "Quagsire",
+    "Quaquaval",
+    "Quaxly",
+    "Quaxwell",
+    "Quilladin",
+    "Qwilfish",
+    "Raboot",
+    "Rabsca",
+    "Rabsca ex",
+    "Raging Bolt",
+    "Raging Bolt ex",
+    "Raichu",
+    "Raikou",
+    "Ralts",
+    "Rampardos ex",
+    "Rapidash",
+    "Rare Candy",
+    "Raticate",
+    "Rattata",
+    "Rayquaza",
+    "Reboot Pod",
+    "Redeemable Ticket",
+    "Regice",
+    "Regice ex",
+    "Regigigas",
+    "Regirock",
+    "Regirock ex",
+    "Registeel",
+    "Registeel ex",
+    "Relicanth",
+    "Rellor",
+    "Remoraid",
+    "Repel",
+    "Rescue Board",
+    "Reshiram",
+    "Reshiram ex",
+    "Reuniclus",
+    "Revavroom",
+    "Revavroom ex",
+    "Reversal Energy",
+    "Rhydon",
+    "Rhyhorn",
+    "Rhyperior",
+    "Ribombee",
+    "Rillaboom",
+    "Riolu",
+    "Risky Ruins",
+    "Roaring Moon",
+    "Rockruff",
+    "Rocky Fighting Energy",
+    "Roggenrola",
+    "Rolycoly",
+    "Rosa's Encouragement",
+    "Roselia",
+    "Roserade",
+    "Roto-Stick",
+    "Rotom",
+    "Rotom ex",
+    "Rowlet",
+    "Roxie's Performance",
+    "Ruffian",
+    "Rufflet",
+    "Rust Syndicate Grunt",
+    "Sableye",
+    "Sacred Ash",
+    "Sacred Charm",
+    "Salamence ex",
+    "Salandit",
+    "Salazzle",
+    "Salazzle ex",
+    "Salvatore",
+    "Samurott",
+    "Sandile",
+    "Sandshrew",
+    "Sandslash",
+    "Sandy Shocks",
+    "Sandygast",
+    "Sawk",
+    "Sawsbuck",
+    "Scatterbug",
+    "Scizor ex",
+    "Scolipede",
+    "Scoop Up Cyclone",
+    "Scorbunny",
+    "Scovillain ex",
+    "Scrafty",
+    "Scraggy",
+    "Scramble Switch",
+    "Scream Tail",
+    "Scream Tail ex",
+    "Scyther",
+    "Seadra",
+    "Seaking",
+    "Sealeo",
+    "Secret Box",
+    "Seedot",
+    "Seel",
+    "Seismitoad",
+    "Sentret",
+    "Serperior",
+    "Serperior ex",
+    "Servine",
+    "Seviper",
+    "Sewaddle",
+    "Shadowy Darkness Energy",
+    "Sharpedo",
+    "Shaymin",
+    "Shedinja",
+    "Shelgon",
+    "Shellos",
+    "Shelmet",
+    "Shieldon",
+    "Shiftry",
+    "Shiinotic",
+    "Shinx",
+    "Shroodle",
+    "Shroomish",
+    "Shuckle",
+    "Shuppet",
+    "Sigilyph",
+    "Silcoon",
+    "Silvally",
+    "Simipour",
+    "Simisage",
+    "Simisear",
+    "Sinistcha",
+    "Sinistcha ex",
+    "Sizzlipede",
+    "Skarmory",
+    "Skeledirge",
+    "Skitty",
+    "Skorupi",
+    "Skrelp",
+    "Skuntank",
+    "Skwovet",
+    "Slaking ex",
+    "Slakoth",
+    "Sliggoo",
+    "Slither Wing",
+    "Slowbro",
+    "Slowking",
+    "Slowpoke",
+    "Slugma",
+    "Slurpuff",
+    "Smeargle",
+    "Smoliv",
+    "Smoochum",
+    "Sneasel",
+    "Snivy",
+    "Snom",
+    "Snorlax",
+    "Snorlax ex",
+    "Snorunt",
+    "Snover",
+    "Snubbull",
+    "Sobble",
+    "Solosis",
+    "Solrock",
+    "Sparkling Crystal",
+    "Spearow",
+    "Special Red Card",
+    "Spectrier",
+    "Spewpa",
+    "Spheal",
+    "Spikemuth Gym",
+    "Spiky Energy",
+    "Spinarak",
+    "Spiritomb",
+    "Spoink",
+    "Sprigatito",
+    "Sprigatito ex",
+    "Spritzee",
+    "Squawkabilly",
+    "Squirtle",
+    "Staryu",
+    "Steelix",
+    "Steven's Baltoy",
+    "Steven's Beldum",
+    "Steven's Carbink",
+    "Steven's Claydol",
+    "Steven's Metagross ex",
+    "Steven's Metang",
+    "Steven's Skarmory",
+    "Stonjourner",
+    "Stoutland",
+    "Strange Timepiece",
+    "Stufful",
+    "Stunfisk",
+    "Stunfisk ex",
+    "Stunky",
+    "Sudowoodo",
+    "Suicune",
+    "Sunflora",
+    "Sunkern",
+    "Super Potion",
+    "Surfer",
+    "Surfing Beach",
+    "Survival Brace",
+    "Swablu",
+    "Swadloon",
+    "Swalot",
+    "Swanna",
+    "Swellow",
+    "Swinub",
+    "Swirlix",
+    "Switch",
+    "Swoobat",
+    "Sylveon",
+    "Sylveon ex",
+    "TM Machine",
+    "Tadbulb",
+    "Taillow",
+    "Talonflame",
+    "Tandemaus",
+    "Tangela",
+    "Tangrowth",
+    "Tapu Bulu",
+    "Tapu Koko",
+    "Tapu Koko ex",
+    "Tapu Lele",
+    "Tarragon",
+    "Tatsugiri",
+    "Tatsugiri ex",
+    "Tauros",
+    "Teal Mask Ogerpon",
+    "Teal Mask Ogerpon ex",
+    "Team Rocket's Ampharos",
+    "Team Rocket's Arbok",
+    "Team Rocket's Archer",
+    "Team Rocket's Ariana",
+    "Team Rocket's Articuno",
+    "Team Rocket's Blipbug",
+    "Team Rocket's Bother-Bot",
+    "Team Rocket's Chingling",
+    "Team Rocket's Crobat ex",
+    "Team Rocket's Diglett",
+    "Team Rocket's Dottler",
+    "Team Rocket's Drowzee",
+    "Team Rocket's Dugtrio",
+    "Team Rocket's Ekans",
+    "Team Rocket's Energy",
+    "Team Rocket's Exeggcute",
+    "Team Rocket's Exeggutor",
+    "Team Rocket's Factory",
+    "Team Rocket's Flaaffy",
+    "Team Rocket's Giovanni",
+    "Team Rocket's Golbat",
+    "Team Rocket's Great Ball",
+    "Team Rocket's Grimer",
+    "Team Rocket's Honchkrow",
+    "Team Rocket's Houndoom",
+    "Team Rocket's Houndour",
+    "Team Rocket's Hypno",
+    "Team Rocket's Hypnotizer",
+    "Team Rocket's Kangaskhan ex",
+    "Team Rocket's Koffing",
+    "Team Rocket's Larvitar",
+    "Team Rocket's Mareep",
+    "Team Rocket's Meowth",
+    "Team Rocket's Mewtwo ex",
+    "Team Rocket's Mimikyu",
+    "Team Rocket's Moltres ex",
+    "Team Rocket's Muk",
+    "Team Rocket's Murkrow",
+    "Team Rocket's Nidoking ex",
+    "Team Rocket's Nidoqueen",
+    "Team Rocket's Nidoran♀",
+    "Team Rocket's Nidoran♂",
+    "Team Rocket's Nidorina",
+    "Team Rocket's Nidorino",
+    "Team Rocket's Orbeetle",
+    "Team Rocket's Persian ex",
+    "Team Rocket's Petrel",
+    "Team Rocket's Porygon",
+    "Team Rocket's Porygon-Z",
+    "Team Rocket's Porygon2",
+    "Team Rocket's Proton",
+    "Team Rocket's Pupitar",
+    "Team Rocket's Raticate",
+    "Team Rocket's Rattata",
+    "Team Rocket's Sneasel",
+    "Team Rocket's Spidops",
+    "Team Rocket's Tarountula",
+    "Team Rocket's Transceiver",
+    "Team Rocket's Tyranitar",
+    "Team Rocket's Venture Bomb",
+    "Team Rocket's Watchtower",
+    "Team Rocket's Weezing",
+    "Team Rocket's Wobbuffet",
+    "Team Rocket's Zapdos",
+    "Team Rocket's Zubat",
+    "Technical Machine: Fluorite",
+    "Telepathic Psychic Energy",
+    "Tepig",
+    "Tera Orb",
+    "Terapagos",
+    "Terapagos ex",
+    "Terrakion",
+    "Thick Scale",
+    "Thievul",
+    "Throh",
+    "Thundurus",
+    "Thwackey",
+    "Timburr",
+    "Ting-Lu",
+    "Tinkatink",
+    "Tinkaton",
+    "Tinkatuff",
+    "Tirtouga",
+    "Toedscool",
+    "Toedscruel",
+    "Togedemaru",
+    "Togedemaru ex",
+    "Togekiss",
+    "Togepi",
+    "Togetic",
+    "Tool Scrapper",
+    "Torchic",
+    "Torkoal",
+    "Tornadus",
+    "Torracat",
+    "Torterra ex",
+    "Totodile",
+    "Toucannon",
+    "Toxel",
+    "Toxicroak",
+    "Toxtricity",
+    "Toxtricity ex",
+    "Tranquill",
+    "Transformation Tome",
+    "Trapinch",
+    "Treasure Tracker",
+    "Treecko",
+    "Tremendous Bomb",
+    "Trevenant",
+    "Tropius",
+    "Trubbish",
+    "Trumbeak",
+    "Turtonator",
+    "Turtwig",
+    "Tyme",
+    "Tympole",
+    "Tynamo",
+    "Type: Null",
+    "Tyranitar",
+    "Tyranitar ex",
+    "Tyrantrum",
+    "Tyrogue",
+    "Tyrunt",
+    "Ultra Ball",
+    "Umbreon ex",
+    "Unfair Stamp",
+    "Unfezant",
+    "Urbain",
+    "Uxie",
+    "Vanillish",
+    "Vanillite",
+    "Vanilluxe",
+    "Vaporeon ex",
+    "Varoom",
+    "Veluza",
+    "Veluza ex",
+    "Venipede",
+    "Vibrava",
+    "Victini",
+    "Vigoroth",
+    "Vikavolt",
+    "Vileplume",
+    "Virizion",
+    "Vivillon",
+    "Volbeat",
+    "Volcanion",
+    "Volcanion ex",
+    "Volcarona",
+    "Voltaic Lightning Energy",
+    "Voltorb ex",
+    "Vullaby",
+    "Vulpix",
+    "Wailmer",
+    "Wailord",
+    "Wailord ex",
+    "Waitress",
+    "Walking Wake",
+    "Walking Wake ex",
+    "Wally's Compassion",
+    "Walrein",
+    "Wash Rotom",
+    "Watchog",
+    "Water Energy",
+    "Wattrel",
+    "Weavile",
+    "Weedle",
+    "Weezing",
+    "Wellspring Mask Ogerpon",
+    "Wellspring Mask Ogerpon ex",
+    "Whimsicott",
+    "Whimsicott ex",
+    "Whirlipede",
+    "Wigglytuff",
+    "Wiglett",
+    "Wimpod",
+    "Wingull",
+    "Wo-Chien",
+    "Wondrous Patch",
+    "Woobat",
+    "Wooloo",
+    "Wooper",
+    "Wugtrio ex",
+    "Wurmple",
+    "Xerneas",
+    "Xerneas ex",
+    "Xerosic's Machinations",
+    "Yamask",
+    "Yamper",
+    "Yanma",
+    "Yanmega",
+    "Yanmega ex",
+    "Yungoos",
+    "Yveltal",
+    "Yveltal ex",
+    "Zacian",
+    "Zacian ex",
+    "Zamazenta",
+    "Zangoose",
+    "Zangoose ex",
+    "Zapdos",
+    "Zarude",
+    "Zebstrika",
+    "Zekrom ex",
+    "Zeraora",
+    "Zigzagoon",
+    "Zoroark",
+    "Zorua",
+    "Zubat",
+    "Zweilous"
+  ],
+  "provenance": "Reconstructed deterministic local evidence, 2026-10-02. Answers added separately are authored regression fixtures, never historical provider output."
+}
