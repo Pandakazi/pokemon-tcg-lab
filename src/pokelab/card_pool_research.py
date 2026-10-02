@@ -178,6 +178,56 @@ def build(request,sources,today=None):
     return envelope
 
 
+def numeric_supported(text, value):
+    """Check bounded numeric forms against their own fields, not a bag of digits.
+
+    Printed effects remain source text, not an executable mechanics model.
+    Unknown/ambiguous quantities fail rather than borrowing an unrelated number.
+    """
+    from collections import Counter
+    from .research_grounding import WORDS
+    def normalized(s):
+        s=re.sub(r'\b('+ '|'.join(WORDS)+r')\b',lambda m:str(WORDS[m[0].lower()]),s,flags=re.I)
+        return re.sub(r'\bstage(\d+)\b',r'stage \1',s,flags=re.I)
+    text=normalized(text)
+    components=value.get('components',[])
+    named=[c for c in components if c.get('name') and c['name'].casefold() in text.casefold()]
+    components=named or components
+    attacks=[c.get('structured',{}) for c in components if c.get('component')=='attack']
+    raw=normalized(' '.join(c.get('text') or '' for c in components))
+    energy_types=r'Fire|Water|Grass|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Colorless'
+    units=re.compile(r'\b(\d+)\s+(HP|damage|Energy|'+energy_types+r')(?:\s+Energy)?\b(?!\s+(?:counters?|cards?)\b)',re.I)
+    quantities=re.compile(r'\b(?:discards?|mills?|removes?)\s+(?:the top\s+)?(\d+)\s+cards?\b',re.I)
+    printed_quantities=re.findall(r'\bdiscard\s+(?:the top\s+)?(\d+)\s+cards?\b',raw,re.I)
+    if re.search(r'\bdiscard the top card\b',raw,re.I): printed_quantities.append('1')
+    spans=[]
+    for match in units.finditer(text):
+        number=int(match[1]);unit=match[2].casefold()
+        if unit=='hp': valid=str(value.get('properties',{}).get('hp'))==str(number)
+        elif unit=='damage': valid=bool(attacks) and all(str(a.get('damage'))==str(number) for a in attacks)
+        else:
+            valid=bool(attacks) and all(isinstance(a.get('cost'),list) and (
+                len(a['cost'])==number if unit=='energy' else
+                Counter(str(t).casefold() for t in a['cost'])[unit]==number) for a in attacks)
+        if not valid: return False
+        spans.append(match.span())
+    for match in quantities.finditer(text):
+        if match[1] not in printed_quantities: return False
+        spans.append(match.span())
+    for match in re.finditer(r'\b(\d+)\s+(?:coin flips?|coins?)\b',text,re.I):
+        if not re.search(r'\bflip\s+'+match[1]+r'\s+coins?\b',raw,re.I): return False
+        spans.append(match.span())
+    remaining=text
+    for start,end in sorted(spans,reverse=True): remaining=remaining[:start]+' '+remaining[end:]
+    # Retain the conservative numeric check for other wording, with counts
+    # derived only from this cited card's explicit structured cost arrays.
+    source=normalized(json.dumps(components)+json.dumps(value.get('properties',{})))
+    for attack in attacks:
+        if isinstance(attack.get('cost'),list):
+            source+=' '+str(len(attack['cost']))+' '+' '.join(map(str,Counter(attack['cost']).values()))
+    return all(re.search(r'\b'+n+r'\b',source) for n in re.findall(r'\b\d+\b',remaining))
+
+
 def violation(answer,envelope,diagnostics=None):
     """Bounded checks scoped to the cited subject of each sentence/clause.
 
@@ -206,7 +256,7 @@ def violation(answer,envelope,diagnostics=None):
                     return fail('uncited_candidate_claim')
             if field=='facts' and not cited and statement.evidence!=('active-deck',):
                 return fail('unsupported_candidate_fact')
-            clauses=re.split(r'(?<=[.!?;])\s+|\s+whereas\s+',statement.text,flags=re.I)
+            clauses=re.split(r'(?<=[.!?;])\s+|\s+(?:whereas|while)\s+',statement.text,flags=re.I)
             for clause_index,text in enumerate(clauses):
                 named=[v for v in cited if v.get('name','').casefold() in text.casefold() or any(
                     c.get('name') and c['name'].casefold() in text.casefold() for c in v.get('components',[]))]
@@ -229,9 +279,9 @@ def violation(answer,envelope,diagnostics=None):
                         typed=re.search(r'\b(Fire|Water|Grass|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Colorless) Energy',match.group(),re.I)
                         for attack in attacks:
                             cost=attack.get('cost')
-                            if not isinstance(cost,list) or len(cost)!=number:
+                            if not isinstance(cost,list) or (not typed and len(cost)!=number):
                                 return fail('unsupported_attack_cost',clause_index)
-                            if typed and any(str(t).casefold()!=typed.group(1).casefold() for t in cost):
+                            if typed and sum(str(t).casefold()==typed.group(1).casefold() for t in cost)!=number:
                                 return fail('unsupported_attack_cost',clause_index)
                     if free and any(a.get('cost')!=[] for a in attacks):
                         return fail('unsupported_attack_cost',clause_index)
@@ -251,9 +301,6 @@ def violation(answer,envelope,diagnostics=None):
                         return fail('unsupported_mill_direction',clause_index)
                     if re.search(r'\btools\b',text,re.I) and 'tool' not in raw:
                         return fail('unsupported_tool_claim',clause_index)
-                    if re.search(r'\b\d+\s*(?:hp|damage|energy)\b',remaining,re.I):
-                        numbers=re.findall(r'\b\d+\b',remaining)
-                        source=json.dumps(components)+json.dumps(value.get('properties',{}))
-                        if any(not re.search(r'\b'+n+r'\b',source) for n in numbers):
-                            return fail('unsupported_numeric_card_claim',clause_index)
+                    if not numeric_supported(remaining,value):
+                        return fail('unsupported_numeric_card_claim',clause_index)
     return None

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { Link } from 'react-router'
 import { useDeck } from './DeckBuilder'
 import { useCompetitiveTimeframe } from './Competitive'
+import { ResearchCardText, type ResearchCard } from './ResearchCardText'
 
 type Selected = {printing:string;name:string;identity?:string;variant?:string;pool?:boolean}
 const Context = createContext<{selected:Selected|null;select:(card:Selected|null)=>void}>({selected:null,select:()=>{}})
@@ -135,7 +136,14 @@ export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
  const envelope=result?.envelope
  const evidence=inspected==='active-deck'?envelope?.active_deck:envelope?.packet.evidence.find(e=>e.id===inspected)
  const refs=evidence?.references as string[]|undefined
- const statements=(items:Statement[])=>items.map((s,i)=><div key={i} className="research-statement"><p>{s.text}</p><div>{s.evidence.map((id,n)=><button key={id} aria-label={`Inspect evidence ${id}`} onClick={()=>setInspected(id)}>Evidence {n+1}</button>)}</div></div>)
+ const cards:ResearchCard[]=(envelope?.packet.evidence||[]).flatMap(e=>{
+  try {
+   const fields=Object.fromEntries((e.fields||[]).map(f=>[f.field,JSON.parse(f.value)]))
+   return typeof fields.name==='string'&&fields.name.length>0&&typeof fields.printing==='string'?[{id:e.id,name:fields.name,printing:fields.printing}]:[]
+  }catch{return []}
+ })
+ const citations=(s:Statement)=>s.evidence.map((id,n)=><button key={id} aria-label={`Inspect evidence ${id}`} onClick={()=>setInspected(id)}>{cards.find(c=>c.id===id)?.name||`Evidence ${n+1}`}</button>)
+ const statements=(items:Statement[])=>items.map((s,i)=><div key={i} className="research-statement"><p>{submitted?.pool?<ResearchCardText text={s.text} cards={cards.filter(c=>s.evidence.includes(c.id))} inspect={setInspected}/>:s.text}</p>{!submitted?.pool&&<div>{citations(s)}</div>}</div>)
  return <aside className={`agent-panel research-agent ${open?'':'collapsed'}`} aria-label="PokéLab Agent">
   <button aria-label="Toggle Agent panel" aria-expanded={open} onClick={toggle}>{open?'PokéLab Agent ›':'‹'}</button>
   <div hidden={!open}>
@@ -159,9 +167,10 @@ export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
    {result&&!result.answer&&['invalid_answer_contract','internal_assessment_failure'].includes(result.status)&&<ValidationDetails value={result.contract_diagnostics}/>}
    {result?.answer&&<article aria-label="Research answer">
     {result.answer.outcome!=='answered'&&<p>{result.answer.outcome==='unsupported_question'?'This question is outside the supported research scope.':'Available evidence is insufficient for a full answer.'}</p>}
-    {!!result.answer.facts.length&&<section><h3>{submitted?.pool?'Cards to explore':'Evidence-backed facts'}</h3>{statements(result.answer.facts)}</section>}
-    {!!result.answer.interpretation.length&&<section><h3>{submitted?.pool?'Why they might fit':'Plausible interpretation'}</h3>{!submitted?.pool&&<p>Interpretation is not evidence of the deck creator’s intent.</p>}{statements(result.answer.interpretation)}</section>}
+    {!!result.answer.facts.length&&<section><h3>{submitted?.pool?'Research':'Evidence-backed facts'}</h3>{statements(result.answer.facts)}</section>}
+    {!!result.answer.interpretation.length&&<section><h3>{submitted?.pool?'What the differences could mean':'Plausible interpretation'}</h3>{!submitted?.pool&&<p>Interpretation is not evidence of the deck creator’s intent.</p>}{statements(result.answer.interpretation)}</section>}
     <section><h3>What cannot be established</h3><ul>{result.answer.limitations.map((l,i)=><li key={i}>{l}</li>)}</ul></section>
+    {submitted?.pool&&<details><summary>Inspect supporting evidence</summary>{[...result.answer.facts,...result.answer.interpretation].map((s,i)=><div key={i}><p>{s.text}</p>{citations(s)}</div>)}</details>}
    </article>}
    {envelope&&<details><summary>Evidence coverage and snapshot</summary><p>As of {envelope.packet.request?.as_of||String(result?.snapshot?.as_of||'recorded snapshot')}. Statistics retain the populations recorded below.</p><EvidenceValue value={{omitted:[...envelope.packet.coverage.omitted,...envelope.omitted],unavailable:envelope.packet.coverage.unavailable}}/>
     {result?.snapshot&&<><EvidenceValue value={Object.fromEntries(Object.entries(result.snapshot).filter(([key])=>key!=='source_reference_sample'))}/>

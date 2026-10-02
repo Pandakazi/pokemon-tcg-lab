@@ -237,6 +237,7 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .research-agent button:disabled{opacity:.45;cursor:not-allowed}
 .research-context{display:grid;gap:4px;margin:12px 0;padding:9px;border:1px solid #ffffff18;border-radius:8px;font-size:12px}
 .research-agent .research-statement{margin:10px 0}.research-agent p{margin:8px 0;color:#bdc7d7}
+.research-agent .associated-card-name{display:inline;border:0;border-bottom:1px dotted currentColor;border-radius:0;background:none;padding:0;color:#93c5fd;font:inherit;cursor:help}
 .research-agent details,.research-evidence{margin-top:14px;padding:8px;border:1px solid #ffffff20;border-radius:8px}
 .research-evidence dl,.research-agent dd{margin:4px 0 6px 8px}.research-evidence dt{color:#ac98f5;font-size:12px}.research-evidence ul{padding-left:16px}.research-evidence{font-size:12px}
 .research-agent .source-note{font-size:11px}

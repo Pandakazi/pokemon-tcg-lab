@@ -31,6 +31,8 @@ test('open card-pool Ask works without any DeckProvider; citations and no auto c
  fireEvent.click(screen.getByRole('button',{name:'Ask'}))
  await screen.findByRole('article')
  expect(calls).toEqual([{scope:'card_pool_research',question:'What cards can mill my opponent?',revision:null,window:'30',include_deck:false}])
+ expect(screen.getByRole('button',{name:'Inspect evidence ev-pool-test',hidden:true})).not.toBeVisible()
+ fireEvent.click(screen.getByText('Inspect supporting evidence'))
  fireEvent.click(screen.getByRole('button',{name:'Inspect evidence ev-pool-test'}))
  expect(screen.getByRole('region',{name:'Inspected evidence'})).toBeVisible()
  expect(screen.getByText(/no deck context/)).toBeVisible()

@@ -228,6 +228,17 @@ Explain the printed effect's relevance before adding a strategic bridge. Omit a
 bridge if its supporting effect is absent. Do not invent a support card merely
 to provide a balanced list. Mechanical research can still answer the question
 when tournament evidence is unavailable; qualify that boundary naturally.
+Answer the practical question first, then compare useful supported distinctions
+rather than enumerate every candidate's text. Group by the job each effect could
+serve. Compare printed quantities, explicit conditions such as coin flips, and
+attack requirements where supplied; explain why those differences matter to the
+requested mechanic. Keep different subjects in separate clauses or statements
+and cite each subject. Do not repeat the facts in interpretation: use that space
+for a qualified synthesis, or leave it empty when no further inference is useful.
+Mechanical output or conditionality is not tournament quality. Do not infer
+competitive superiority, unprinted guarantees, or support synergy. Omit internal
+scores, classifications and rankings from prose. No fixed card list or ordering
+is required; choose a small useful explanation from this question's evidence.
 '''
 
 
