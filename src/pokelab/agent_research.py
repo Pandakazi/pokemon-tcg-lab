@@ -239,6 +239,11 @@ Mechanical output or conditionality is not tournament quality. Do not infer
 competitive superiority, unprinted guarantees, or support synergy. Omit internal
 scores, classifications and rankings from prose. No fixed card list or ordering
 is required; choose a small useful explanation from this question's evidence.
+In interpretation, use the supported differences rather than merely saying the
+cards vary. Contrast actual quantities, conditions, damage-plus-discard effects
+or Energy requirements and explain the resulting mechanical tradeoff. A generic
+summary of differences is not a substitute for comparison. Keep uncertainty
+explicit; these observations do not establish tournament superiority.
 '''
 
 

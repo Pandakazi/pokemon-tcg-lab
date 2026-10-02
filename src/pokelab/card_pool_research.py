@@ -197,7 +197,7 @@ def numeric_supported(text, value):
     raw=normalized(' '.join(c.get('text') or '' for c in components))
     energy_types=r'Fire|Water|Grass|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Colorless'
     units=re.compile(r'\b(\d+)\s+(HP|damage|Energy|'+energy_types+r')(?:\s+Energy)?\b(?!\s+(?:counters?|cards?)\b)',re.I)
-    quantities=re.compile(r'\b(?:discards?|mills?|removes?)\s+(?:the top\s+)?(\d+)\s+cards?\b',re.I)
+    quantities=re.compile(r'\b(?:discards?|mills?|removes?)\s+(?:the top\s+)?(\d+)\b(?:\s+cards?\b)?',re.I)
     printed_quantities=re.findall(r'\bdiscard\s+(?:the top\s+)?(\d+)\s+cards?\b',raw,re.I)
     if re.search(r'\bdiscard the top card\b',raw,re.I): printed_quantities.append('1')
     spans=[]
@@ -256,7 +256,18 @@ def violation(answer,envelope,diagnostics=None):
                     return fail('uncited_candidate_claim')
             if field=='facts' and not cited and statement.evidence!=('active-deck',):
                 return fail('unsupported_candidate_fact')
-            clauses=re.split(r'(?<=[.!?;])\s+|\s+(?:whereas|while)\s+',statement.text,flags=re.I)
+            clauses=[]
+            names='|'.join(re.escape(v['name']) for v in cited if v.get('name'))
+            for sentence in re.split(r'(?<=[.!?;])\s+|\s+(?:whereas|while)\s+',statement.text,flags=re.I):
+                start=0
+                # Split a new explicit card subject after an existing numeric
+                # predicate. Keep shared subjects ("X and Y mill 2") together
+                # so both must support the shared value; never pool numbers.
+                if names:
+                    for boundary in re.finditer(r'(?:,\s*(?:(?:and|but)\s+)?|\s+(?:and|but|versus)\s+)(?=(?:'+names+r')\b)',sentence,re.I):
+                        if re.search(r'\b(?:\d+|'+ '|'.join(WORDS)+r')\b',sentence[start:boundary.start()],re.I):
+                            clauses.append(sentence[start:boundary.start()]);start=boundary.end()
+                clauses.append(sentence[start:])
             for clause_index,text in enumerate(clauses):
                 named=[v for v in cited if v.get('name','').casefold() in text.casefold() or any(
                     c.get('name') and c['name'].casefold() in text.casefold() for c in v.get('components',[]))]
@@ -268,6 +279,11 @@ def violation(answer,envelope,diagnostics=None):
                     return fail('unsupported_action_or_piloting',clause_index)
                 attacks=[c['structured'] for v in relevant for c in v.get('components',[])
                     if c.get('component')=='attack' and c.get('name') and c['name'].casefold() in text.casefold()]
+                if not attacks and named:
+                    # A named card with exactly one projected attack has an
+                    # unambiguous cost source even without the attack's name.
+                    candidates=[[c['structured'] for c in v.get('components',[]) if c.get('component')=='attack'] for v in named]
+                    if all(len(group)==1 for group in candidates): attacks=[group[0] for group in candidates]
                 costs=list(COST.finditer(text))
                 free=bool(re.search(r'\b(?:is free|zero-cost|requires no energy|costs no energy)\b',text,re.I))
                 if costs or free:
