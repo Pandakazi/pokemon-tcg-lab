@@ -8,7 +8,7 @@ from pokelab import agent_research as a, card_pool_research as p
 from pokelab.agent_providers import Selection
 from pokelab.research_grounding import fields
 from pokelab.rules.models import digest
-from test_card_pool_research import offline, sources, setup, research, query
+from test_card_pool_research import offline, sources, setup, research, query, pool_response
 
 ROOT=Path(__file__).parent/'fixtures'
 PACKETS=json.loads((ROOT/'card_pool_pm_20261002.json').read_text(encoding='utf-8'))
@@ -111,7 +111,7 @@ def test_exact_pm_envelope_through_production_service(sources,monkeypatch,key):
         assert body['messages'][0]['content']==a.POOL_SYSTEM
         assert json.loads(body['messages'][1]['content'])==PACKETS[key]
         assert body['provider']=={'allow_fallbacks':False,'max_price':{'prompt':0,'completion':0,'request':0}}
-        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(case['answer'])},'finish_reason':'stop'}]})
+        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(pool_response(case['answer'],PACKETS[key]))},'finish_reason':'stop'}]})
     svc=a.ResearchService(sources.paths,selection=Selection(provider='openrouter',model='fixture/model:free'),transport=httpx.MockTransport(handle))
     result=svc.run(query(e.packet.request['question']))
     assert result['status']=='answered' and len(calls)==1
@@ -138,22 +138,16 @@ def test_prompt_teaches_pool_layout_and_supported_conversational_costs():
 
 @pytest.mark.parametrize('key',['simple','flagship'])
 @pytest.mark.parametrize('outcome',['answered','unsupported_question'])
-def test_recovered_limitation_failure_through_production_service(sources,monkeypatch,key,outcome):
-    """Authored reproduction of PM's reason code, not recovered rejected prose."""
+def test_recovered_limitation_failure_in_legacy_assessment(key,outcome):
+    """Historical strict boundary remains; v2 degradation is covered separately."""
     e=envelope(key);calls=[]
-    monkeypatch.setattr(p,'build',lambda *args,**kw:e)
     answer=reply('Centiskorch: Discard the top 2 cards of your opponent\'s deck.')
     answer['outcome']=outcome
     if outcome=='unsupported_question': answer['facts']=[]
     answer['limitations']=['Centiskorch uses Controlled Burn to discard cards from the opponent\'s deck.']
-    def handle(request):
-        calls.append(request)
-        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(answer)},'finish_reason':'stop'}]})
-    svc=a.ResearchService(sources.paths,selection=Selection(provider='openrouter',model='fixture/model:free'),transport=httpx.MockTransport(handle))
-    result=svc.run(query(e.packet.request['question']))
-    assert len(calls)==1 and result['status']=='invalid_answer_contract' and result['answer'] is None
-    assert result['contract_diagnostics']==dict(condition='uncited_limitation_claim',json_parsed=True,schema_valid=True)
-    assert answer['limitations'][0] not in json.dumps(result)
+    with pytest.raises(a.ContractError) as exc: a.assess(json.dumps(answer),e)
+    assert exc.value.diagnostics==dict(condition='uncited_limitation_claim',json_parsed=True,schema_valid=True)
+    assert answer['limitations'][0] not in json.dumps(exc.value.diagnostics)
 
 
 @pytest.mark.parametrize('text',[

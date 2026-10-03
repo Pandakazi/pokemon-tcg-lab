@@ -183,7 +183,7 @@ If comparison is unavailable, absence of detected deviations is not established.
 '''
 
 
-POOL_SYSTEM = SYSTEM.replace('selected-card research assistant', 'card-pool research partner').replace(
+LEGACY_POOL_SYSTEM = SYSTEM.replace('selected-card research assistant', 'card-pool research partner').replace(
     'Never propose replacements, compare\nwhole decks/composites, execute actions, or answer unrelated questions.',
     'Research cards across the supplied Standard pool candidates. Never execute deck changes or provide matchup piloting plans. Mark actions and unrelated questions unsupported_question.') + '''
 Answer the user's actual question early in natural Pokémon vocabulary. Explain a
@@ -245,6 +245,9 @@ or Energy requirements and explain the resulting mechanical tradeoff. A generic
 summary of differences is not a substitute for comparison. Keep uncertainty
 explicit; these observations do not establish tournament superiority.
 '''
+
+
+from .card_pool_answer import SYSTEM as POOL_SYSTEM
 
 
 def make_deck_envelope(request, sources, today=None):
@@ -387,7 +390,7 @@ def schema_diagnostics(text, error):
             isinstance(item, dict) and isinstance(item.get('text'), str) and bool(item['text'].strip())
             for field in ('facts', 'interpretation')
             for item in (parsed.get(field) if isinstance(parsed.get(field), list) else []))
-    known = set(Answer.model_fields) | set(Statement.model_fields)
+    known = set(Answer.model_fields) | set(Statement.model_fields) | {'candidates','synthesis','required'}
     allowed = {'json_invalid', 'model_type', 'missing', 'extra_forbidden', 'literal_error',
         'tuple_type', 'string_type', 'string_too_short', 'string_too_long', 'too_short', 'too_long'}
     errors = error.errors(include_input=False, include_context=False, include_url=False)
@@ -509,8 +512,16 @@ class ResearchService:
             answer=Answer(version='pokelab-research-answer-v1',outcome=outcome,facts=(),interpretation=(),
                 limitations=(envelope.boundary or 'This bounded local search cannot establish relevant candidates. Try an explicit mechanic or card context.',))
             return dict(status=outcome,answer=answer.model_dump(mode='json'),envelope=envelope.model_dump(mode='json'))
+        pool_facts=None
+        response_model=Answer
+        if request.scope=='card_pool_research':
+            from .card_pool_answer import PoolResponse, trusted_facts
+            response_model=PoolResponse
+            try: pool_facts=trusted_facts(envelope)
+            except ContractError:
+                return dict(status='context_unavailable',answer=None,contract_diagnostics={'condition':'invalid_fact_evidence'})
         result = providers.complete(selection, system, canonical(envelope), transport=self.transport, max_output=MAX_OUTPUT,
-            response_schema=Answer.model_json_schema() if selection.provider=='gemini' else None)
+            response_schema=response_model.model_json_schema() if selection.provider=='gemini' else None)
         # Do not expose arbitrary provider model labels or raw text in metadata.
         execution = {k: getattr(result, k) for k in ('latency_ms', 'input_tokens', 'output_tokens',
             'reasoning_tokens', 'estimated_cost_usd', 'actual_cost_usd')}
@@ -525,6 +536,12 @@ class ResearchService:
         if result.finish_reason not in ('stop', 'end_turn'):
             return dict(response, status='provider_failure', reason='completion_not_confirmed')
         try:
+            if request.scope=='card_pool_research':
+                from .card_pool_answer import assess as assess_pool
+                answer,omitted=assess_pool(result.text,envelope,pool_facts)
+                if providers.secret_present(canonical(answer)+canonical(omitted)):
+                    raise ContractError('secret_quarantined')
+                return dict(response,status=answer['outcome'],answer=answer,synthesis_diagnostics=dict(omitted=omitted))
             answer = assess(result.text, envelope)
         except ContractError as exc:
             diagnostics = exc.diagnostics

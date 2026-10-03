@@ -20,9 +20,10 @@ export function ResearchAgentProvider({children}:{children:ReactNode}) {
 }
 type Status={version:string;available:boolean;reason:string|null;provider:string|null;model:string|null;archetypes?:{id:string;name:string}[]}
 type Statement={text:string;evidence:string[]}
+type CardFact={evidence_id:string;name:string;printing:string;standard:boolean;components:{kind:string;name:string|null;cost:string[]|null;damage:number|string|null;text:string}[]}
 type Evidence={id:string;classification:string;payload?:Record<string,unknown>;kind?:string;fields?:{field:string;value:string}[];references:string[]}
 type Reference={id:string;source:string;resource:string;url?:string;checked_at?:string;event_date?:string;content_hash:string}
-type Result={status:string;reason?:string;contract_diagnostics?:unknown;answer:null|{outcome:string;facts:Statement[];interpretation:Statement[];limitations:string[]};
+type Result={status:string;reason?:string;contract_diagnostics?:unknown;synthesis_diagnostics?:{omitted:{field:string;index:number;condition:string}[]};answer:null|{version?:string;outcome:string;facts:Statement[];interpretation:Statement[];limitations:string[];card_facts?:CardFact[]};
  snapshot?:Record<string,unknown>&{source_reference_sample?:Reference[];source_reference_count?:number};
  envelope?:{content_hash:string;packet:{request?:{printing:string;window:string;as_of:string};evidence:Evidence[];references:Reference[];coverage:{omitted:string[];unavailable:string[]}};
  active_deck:{id:string;name:string;revision:number;dirty:boolean;references:string[];[key:string]:unknown};omitted:string[]};
@@ -143,6 +144,7 @@ export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
   }catch{return []}
  })
  const citations=(s:Statement)=>s.evidence.map((id,n)=><button key={id} aria-label={`Inspect evidence ${id}`} onClick={()=>setInspected(id)}>{cards.find(c=>c.id===id)?.name||`Evidence ${n+1}`}</button>)
+ const cardFacts=result?.answer?.version==='pokelab-card-pool-answer-v2'?result.answer.card_facts||[]:[]
  const statements=(items:Statement[])=>items.map((s,i)=><div key={i} className="research-statement"><p>{submitted?.pool?<ResearchCardText text={s.text} cards={cards.filter(c=>s.evidence.includes(c.id))} inspect={setInspected}/>:s.text}</p>{!submitted?.pool&&<div>{citations(s)}</div>}</div>)
  return <aside className={`agent-panel research-agent ${open?'':'collapsed'}`} aria-label="PokéLab Agent">
   <button aria-label="Toggle Agent panel" aria-expanded={open} onClick={toggle}>{open?'PokéLab Agent ›':'‹'}</button>
@@ -169,10 +171,21 @@ export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
     {result.answer.outcome!=='answered'&&<p>{result.answer.outcome==='unsupported_question'?'This question is outside the supported research scope.':'Available evidence is insufficient for a full answer.'}</p>}
     {!!result.answer.facts.length&&<section><h3>{submitted?.pool?'Research':'Evidence-backed facts'}</h3>{statements(result.answer.facts)}</section>}
     {!!result.answer.interpretation.length&&<section><h3>{submitted?.pool?'What the differences could mean':'Plausible interpretation'}</h3>{!submitted?.pool&&<p>Interpretation is not evidence of the deck creator’s intent.</p>}{statements(result.answer.interpretation)}</section>}
+    {!!cardFacts.length&&<section aria-label="Printed card facts"><h3>Printed card facts</h3>{cardFacts.map(card=><div className="research-statement" key={card.evidence_id}>
+     <h4><ResearchCardText text={card.name} cards={[{id:card.evidence_id,name:card.name,printing:card.printing}]} inspect={setInspected}/></h4>
+     <p className="source-note">{card.printing}{card.standard?' · Source-marked Standard':''}</p>
+     {card.components.map((component,i)=><div key={i}>
+      {component.name&&<strong>{component.name}</strong>}
+      {component.cost!==null&&<p>Energy: {component.cost.length?component.cost.join(' · '):'No Energy symbols printed'}</p>}
+      {component.damage!==null&&<p>Printed damage: {component.damage}</p>}
+      <p>{component.text}</p>
+     </div>)}
+    </div>)}</section>}
     <section><h3>What cannot be established</h3><ul>{result.answer.limitations.map((l,i)=><li key={i}>{l}</li>)}</ul></section>
-    {submitted?.pool&&<details><summary>Inspect supporting evidence</summary>{[...result.answer.facts,...result.answer.interpretation].map((s,i)=><div key={i}><p>{s.text}</p>{citations(s)}</div>)}</details>}
+    {submitted?.pool&&<details><summary>Inspect supporting evidence</summary>{cardFacts.map(card=><div key={card.evidence_id}>{citations({text:'',evidence:[card.evidence_id]})}</div>)}{[...result.answer.facts,...result.answer.interpretation].map((s,i)=><div key={i}><p>{s.text}</p>{citations(s)}</div>)}</details>}
    </article>}
    {envelope&&<details><summary>Evidence coverage and snapshot</summary><p>As of {envelope.packet.request?.as_of||String(result?.snapshot?.as_of||'recorded snapshot')}. Statistics retain the populations recorded below.</p><EvidenceValue value={{omitted:[...envelope.packet.coverage.omitted,...envelope.omitted],unavailable:envelope.packet.coverage.unavailable}}/>
+    {result?.synthesis_diagnostics&&<p>Optional synthesis items omitted: {Math.min(13,result.synthesis_diagnostics.omitted.length)}. Printed facts remain source-backed.</p>}
     {result?.snapshot&&<><EvidenceValue value={Object.fromEntries(Object.entries(result.snapshot).filter(([key])=>key!=='source_reference_sample'))}/>
      <details><summary>Population source sample ({result.snapshot.source_reference_sample?.length||0} of {result.snapshot.source_reference_count||0})</summary>
       {result.snapshot.source_reference_sample?.map(r=><div key={r.id}><EvidenceValue value={r}/>{r.url&&/^https:\/\/limitlesstcg\.com\//.test(r.url)&&<a href={r.url} target="_blank" rel="noreferrer">Open source list</a>}</div>)}</details></>}

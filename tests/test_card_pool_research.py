@@ -56,6 +56,14 @@ def answer(envelope):
         limitations=['The supplied evidence does not establish tournament success or a matchup plan.'])
 
 
+def pool_response(legacy,envelope):
+    """Test-only adaptation of authored v1 claim fixtures to required v2 items."""
+    return dict(version='pokelab-card-pool-answer-v2',outcome=legacy['outcome'],
+        candidates=[e['id'] for e in envelope['packet']['evidence'] if e['kind']=='card-pool-candidate'] if legacy['outcome']!='unsupported_question' else [],
+        synthesis=[dict(**s,required=True) for s in legacy['facts']+legacy['interpretation']],
+        limitations=legacy['limitations'])
+
+
 def service(sources,transform=lambda x:x,finish='stop'):
     calls=[]
     def handle(request):
@@ -66,7 +74,7 @@ def service(sources,transform=lambda x:x,finish='stop'):
         assert body['messages'][0]['content']==a.POOL_SYSTEM
         envelope=json.loads(body['messages'][1]['content'])
         assert len((a.POOL_SYSTEM+json.dumps(envelope,ensure_ascii=False,separators=(',',':'))).encode())<=32768
-        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(transform(answer(envelope)))},'finish_reason':finish}]})
+        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(pool_response(transform(answer(envelope)),envelope))},'finish_reason':finish}]})
     return a.ResearchService(sources.paths,selection=Selection(provider='openrouter',model='fixture/model:free'),transport=httpx.MockTransport(handle)),calls
 
 
@@ -149,7 +157,7 @@ def test_prompt_contract_examples_and_projection_determinism(sources):
     envelope=p.build(query(),sources,TODAY)
     assert envelope==p.build(query(),sources,TODAY)
     assert len(a.canonical(envelope).encode())<=24576
-    for example in re.findall(r'^\{.*\}$',a.POOL_SYSTEM,re.M):
+    for example in re.findall(r'^\{.*\}$',a.LEGACY_POOL_SYSTEM,re.M):
         assert a.assess(example,envelope).outcome=='insufficient_evidence'
 
 
