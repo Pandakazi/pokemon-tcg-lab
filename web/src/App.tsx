@@ -10,6 +10,7 @@ import { CompetitiveProvider, CompetitiveWindows } from './Competitive'
 import { DeckProvider, DeckTray, useBuilder } from './DeckBuilder'
 import { ArchetypeResearch, TournamentDeckResearch } from './ResearchPages'
 import { ResearchAgentProvider, ResearchPanel, useResearchAgent } from './ResearchAgent'
+import { ConversationPanel } from './ConversationPanel'
 
 type CategoryMemory = {current:Record<string,string>;filterOpen?:boolean;scroll?:Record<string,number>}
 function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
@@ -92,7 +93,7 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
   </main>
  </>
 }
-function ApplicationWorkspace() {
+function ApplicationWorkspace({agentPolicy}:{agentPolicy:'conversational_default'|'strict_research'}) {
  const categoryMemory=useRef<Record<string,string>>({})
  const builderMemory=useRef<Record<string,string>>({})
  const [agentOpen,setAgentOpen]=useState(true)
@@ -120,9 +121,9 @@ function ApplicationWorkspace() {
    <Route path="*" element={<main className="gallery-scroll"><h1>Page not found</h1><Link to="/">Open library</Link></main>}/>
   </Routes>
   <DeckTray/>
-  <ResearchPanel open={panelOpen} toggle={()=>builder?setBuilderAgentOpen(v=>!v):setAgentOpen(v=>!v)}/></div>
+  {agentPolicy==='strict_research'?<ResearchPanel open={panelOpen} toggle={()=>builder?setBuilderAgentOpen(v=>!v):setAgentOpen(v=>!v)}/>:<ConversationPanel open={panelOpen} toggle={()=>builder?setBuilderAgentOpen(v=>!v):setAgentOpen(v=>!v)}/>}</div>
  </div>
 }
-export function Application() {return <DeckProvider><ResearchAgentProvider><ApplicationWorkspace/></ResearchAgentProvider></DeckProvider>}
+export function Application({agentPolicy='conversational_default'}:{agentPolicy?:'conversational_default'|'strict_research'}={}) {return <DeckProvider><ResearchAgentProvider><ApplicationWorkspace agentPolicy={agentPolicy}/></ResearchAgentProvider></DeckProvider>}
 // Query controls must update synchronously with the URL, not in a delayed transition.
 export default function App() {return <BrowserRouter useTransitions={false}><CompetitiveProvider><Application/></CompetitiveProvider></BrowserRouter>}

@@ -19,7 +19,7 @@ function setup(reply:()=>Promise<unknown>,holdSave?:()=>Promise<void>,path='/dec
   return {ok:true,json:async()=>result}
  })
  vi.stubGlobal('fetch',fetch)
- render(<MemoryRouter initialEntries={[path]}><CompetitiveProvider><Application/></CompetitiveProvider></MemoryRouter>)
+ render(<MemoryRouter initialEntries={[path]}><CompetitiveProvider><Application agentPolicy="strict_research"/></CompetitiveProvider></MemoryRouter>)
  return fetch
 }
 async function select() {

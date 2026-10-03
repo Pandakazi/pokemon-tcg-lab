@@ -28,7 +28,8 @@ type Result={status:string;reason?:string;contract_diagnostics?:unknown;synthesi
  envelope?:{content_hash:string;packet:{request?:{printing:string;window:string;as_of:string};evidence:Evidence[];references:Reference[];coverage:{omitted:string[];unavailable:string[]}};
  active_deck:{id:string;name:string;revision:number;dirty:boolean;references:string[];[key:string]:unknown};omitted:string[]};
  execution?:{provider:string;model:string;latency_ms:number;input_tokens:number|null;output_tokens:number|null}}
-const messages:Record<string,string>={
+export const messages:Record<string,string>={
+ conversation_expired:'This conversation expired or the server restarted. Start a new conversation; no provider call was made.',
  comparison_unavailable:'Choose an explicit cached comparison archetype with eligible local lists. No provider call was made.',
  busy:'Another research request is still running. No additional request was sent to a provider.',
  context_changed:'The deck changed. Review the current deck and submit again.',
@@ -63,7 +64,7 @@ Object.assign(diagnosticLabels,{
 const issueLabels:Record<string,string>={json_invalid:'invalid JSON',model_type:'expected a statement/object',missing:'required field missing',extra_forbidden:'unexpected field',literal_error:'invalid fixed value',tuple_type:'expected an array',string_type:'expected a string',string_too_short:'string below minimum length',string_too_long:'string above maximum length',too_short:'below minimum count',too_long:'above maximum count',validation_error:'validation failed'}
 const fieldLabels:Record<string,string>={version:'version',outcome:'outcome',facts:'facts',interpretation:'interpretation',limitations:'limitations',text:'text',evidence:'evidence','<item>':'item','<unknown_field>':'unknown field'}
 const safeLabel=(labels:Record<string,string>,value:unknown)=>typeof value==='string'&&Object.prototype.hasOwnProperty.call(labels,value)?labels[value]:undefined
-function ValidationDetails({value}:{value:unknown}) {
+export function ValidationDetails({value}:{value:unknown}) {
  if(!value||typeof value!=='object'||Array.isArray(value))return null
  const d=value as Record<string,unknown>,condition=safeLabel(diagnosticLabels,d.condition)
  const count=(value:unknown)=>typeof value==='number'&&Number.isInteger(value)&&value>=0&&value<=9999?value:null
@@ -89,7 +90,7 @@ function ValidationDetails({value}:{value:unknown}) {
   <p>No rejected answer, provider message or exception text is displayed. No retry was made.</p>
  </details>
 }
-function EvidenceValue({value}:{value:unknown}) {
+export function EvidenceValue({value}:{value:unknown}) {
  if(value===null||value===undefined)return <span>Unknown</span>
  if(Array.isArray(value))return value.length?<ul>{value.map((v,i)=><li key={i}><EvidenceValue value={v}/></li>)}</ul>:<span>None recorded</span>
  if(typeof value==='object')return <dl>{Object.entries(value).map(([k,v])=><div key={k}><dt>{k.replace(/_/g,' ')}</dt><dd><EvidenceValue value={v}/></dd></div>)}</dl>

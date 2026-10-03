@@ -18,7 +18,8 @@ FLIGHT = Lock()
 
 
 class ResearchRequest(Frozen):
-    scope: Literal['selected_card_research', 'active_deck_research', 'card_pool_research'] = 'selected_card_research'
+    scope: Literal['selected_card_research', 'active_deck_research', 'card_pool_research', 'conversation'] = 'selected_card_research'
+    conversation_id: str | None = Field(None, pattern=r'^[a-f0-9]{32}$')
     question: str = Field(min_length=1, max_length=2000)
     printing: str | None = Field(None, min_length=1, max_length=100)
     archetype: str | None = Field(None, min_length=1, max_length=100)
@@ -29,6 +30,12 @@ class ResearchRequest(Frozen):
 
     @model_validator(mode='after')
     def context_shape(self):
+        if self.scope == 'conversation':
+            if self.variant and not self.printing or self.include_deck and self.revision is None:
+                raise ValueError('Selected finish/deck requires printing/revision')
+            return self
+        if self.conversation_id is not None:
+            raise ValueError('Conversation identifiers belong to conversational requests')
         if self.scope=='card_pool_research' and len(self.question)>1000:
             raise ValueError('Card-pool retrieval supports questions up to 1000 characters')
         if self.scope!='card_pool_research' and (self.scope=='selected_card_research') != (self.printing is not None):
@@ -438,6 +445,8 @@ class ResearchService:
     def __init__(self, paths, format_start=None, *, transport=None, selection=None):
         self.paths, self.format_start = paths, format_start
         self.transport, self.selection = transport, selection
+        from .agent_conversation import Conversations
+        self.conversations = Conversations()
 
     def configured(self):
         try:
@@ -474,7 +483,8 @@ class ResearchService:
         return dict(version='pokelab-research-v1', available=reason is None, reason=reason,
             provider=selection.provider if selection else None, model=selection.model if selection else None,
             max_output_tokens=MAX_OUTPUT, scope='selected_card_research',
-            scopes=['selected_card_research','active_deck_research','card_pool_research'],archetypes=archetypes[:500],read_only=True)
+            scopes=['selected_card_research','active_deck_research','card_pool_research','conversation'],archetypes=archetypes[:500],read_only=True,
+            evidence_policy='conversational_default', external_research=False)
 
     def run(self, request):
         if not FLIGHT.acquire(blocking=False):
@@ -490,6 +500,9 @@ class ResearchService:
         selection, reason = self.configured()
         if reason:
             return dict(status='unavailable', reason=reason, answer=None)
+        if request.scope == 'conversation':
+            from .agent_conversation import run
+            return run(self, request, selection)
         from .agent_context_sources import Sources
         snapshot=None
         try:

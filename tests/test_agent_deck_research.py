@@ -117,7 +117,8 @@ def test_current_sync_changes_population_without_code_or_fixture_changes(setup):
 def test_status_api_context_and_revision_protection(setup):
     sources,_=setup;svc,calls=service(sources)
     status=svc.status()
-    assert status['scopes']==['selected_card_research','active_deck_research','card_pool_research']
+    assert status['scopes']==['selected_card_research','active_deck_research','card_pool_research','conversation']
+    assert status['evidence_policy']=='conversational_default' and status['external_research'] is False
     assert status['archetypes']==[dict(id=KEY,name='Fixture Archetype')]
     app=create_app(database=sources.paths['cards'],state_database=sources.paths['collection'],competitive_database=sources.paths['competitive'],deck_database=sources.paths['workspace'])
     app.state.research_agent=svc

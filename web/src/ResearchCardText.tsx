@@ -2,12 +2,13 @@ import {useEffect,useRef,useState} from 'react'
 import {AssociatedCardPreview} from './AssociatedCardPreview'
 import {loadDetail} from './api'
 
-export type ResearchCard={id:string;name:string;printing:string}
+export type ResearchCard={id:string;name:string;printing:string;printedText?:string}
 function ResearchCardName({card,inspect}:{card:ResearchCard;inspect:(id:string)=>void}) {
  const [image,setImage]=useState<string|null>(null)
  const request=useRef<AbortController|null>(null)
  useEffect(()=>()=>request.current?.abort(),[])
  const preview=()=>{
+  if(card.printedText)return
   if(request.current)return
   const controller=new AbortController();request.current=controller
   // Artwork lookup only, using the exact printing in the submitted evidence.
@@ -16,7 +17,7 @@ function ResearchCardName({card,inspect}:{card:ResearchCard;inspect:(id:string)=
    if(!controller.signal.aborted)setImage(detail.card.image_url?.replace('/low.webp','/high.webp')||null)
   }).catch(()=>{/* Shared preview retains its accessible unavailable state. */})
  }
- return <span onPointerEnter={preview} onFocusCapture={preview}><AssociatedCardPreview name={card.name} imageUrl={image} onClick={()=>inspect(card.id)}/></span>
+ return <span onPointerEnter={preview} onFocusCapture={preview}><AssociatedCardPreview name={card.name} imageUrl={image} printedText={card.printedText} onClick={()=>inspect(card.id)}/></span>
 }
 
 export function ResearchCardText({text,cards,inspect}:{text:string;cards:ResearchCard[];inspect:(id:string)=>void}) {
