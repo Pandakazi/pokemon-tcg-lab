@@ -117,7 +117,8 @@ def test_zero_results_and_missing_card_store_still_reason(sources):
 @pytest.mark.parametrize('claim',['This is Tier 1.','This has a 62% win rate.','It dominated Worlds.','This is the most-played variant.'])
 def test_unsupported_empirical_claim_qualified_not_whole_answer_rejected(sources,claim):
     def edit(value):
-        value['paragraphs'].append(dict(text=claim,evidence=[]));return value
+        value['fact_ids']=None
+        value['paragraphs'].append(dict(text=claim,evidence=['unresolved']));return value
     svc,_=service(sources,edit)
     result=svc.run(request())
     assert result['status']=='answered' and result['empirical_qualification']
@@ -127,8 +128,6 @@ def test_unsupported_empirical_claim_qualified_not_whole_answer_rejected(sources
 
 
 @pytest.mark.parametrize('change',[
- lambda v:{**v,'fact_ids':['ref-invented']},
- lambda v:{**v,'paragraphs':[{'text':'Useful','evidence':['unknown']} ]},
  lambda v:{**v,'paragraphs':[{'text':'  ','evidence':[]} ]},
  lambda v:{**v,'facts':[{'damage':999}]},
 ])
@@ -175,3 +174,96 @@ def test_prompt_literal_example_validates():
     assert result['paragraphs'] and not qualified
     assert 'Strategic inference needs no database verdict' in c.SYSTEM
     assert 'compare' in c.SYSTEM and 'printed' in c.SYSTEM
+
+
+@pytest.mark.parametrize('annotation',[None,'bad-shape',{},[None,7,{},'unknown','ref-source'],['unknown']*20])
+def test_optional_annotations_degrade_without_changing_prose(sources,annotation):
+    def edit(value):
+        value['fact_ids']=annotation
+        value['paragraphs'][0]['evidence']=annotation
+        return value
+    svc,calls=service(sources,edit)
+    result=svc.run(request('What cards can move damage counters around, and which ones seem the most flexible?'))
+    assert result['status']=='answered',result
+    assert result['answer']['paragraphs']==[dict(text=output(result['envelope'])['paragraphs'][0]['text'],evidence=[])]
+    assert result['answer']['facts']==[] and len(calls)==1
+
+
+@pytest.mark.parametrize('question',[
+ 'What cards can move damage counters around, and which ones seem the most flexible?',
+ 'What cards can mill my own deck, and which ones look easiest to build around?',
+ 'What cards can help me punish or shut down Pokémon Tools?',
+])
+def test_missing_annotations_first_attempt_visible(sources,question):
+    def edit(value):
+        del value['fact_ids'];del value['paragraphs'][0]['evidence'];return value
+    svc,calls=service(sources,edit)
+    result=svc.run(request(question))
+    assert result['status']=='answered' and len(calls)==1
+    assert result['answer']['paragraphs'][0]['evidence']==[]
+
+
+def test_valid_annotations_survive_mixed_invalid_and_duplicate_metadata(sources):
+    def edit(value):
+        valid=value['fact_ids'][0]
+        value['fact_ids']=['unknown',valid,valid,{},None]
+        value['paragraphs'][0]['evidence']=[None,'ref-not-evidence',valid,valid,42]
+        return value
+    svc,calls=service(sources,edit)
+    result=svc.run(request('What cards can move damage counters?'))
+    assert result['status']=='answered' and len(calls)==1
+    assert len(result['answer']['facts'])==1
+    assert result['answer']['paragraphs'][0]['evidence']==[result['answer']['facts'][0]['id']]
+
+
+@pytest.mark.parametrize('text',[
+ 'Phantommon ex has an Ability that moves damage counters.',
+ 'The card Phantommon moves damage counters.',
+ 'Phantommon has an Ability that discards cards.',
+])
+def test_clear_invented_card_fact_is_not_saved_by_lenient_annotations(sources,text):
+    svc,calls=service(sources,lambda v:{**v,'fact_ids':None,'paragraphs':[dict(text=text,evidence=['unknown'])]})
+    result=svc.run(request())
+    assert result['status']=='invalid_answer_contract' and result['answer'] is None
+    assert result['contract_diagnostics']['condition']=='unsupported_card_identity'
+    assert not svc.conversations.items and len(calls)==1
+
+
+def test_known_component_and_ordinary_reasoning_are_not_identity_failures(sources):
+    envelope=c.context(request('What does Adrena-Brain do?'),sources,dict(turns=[],printings=[]))
+    for text in ['Munkidori has an Ability worth comparing.', 'Adrena-Brain moves damage counters.',
+                 'Setup requires patience.', 'A mill plan requires repeatability.',
+                 'A hypothetical Phantommon ex could illustrate the concept.']:
+        assert not c.unsupported_identity(text,envelope)
+
+
+@pytest.mark.parametrize('refs',[None,[],['missing'],[{'id':'active-deck'}]])
+def test_strict_research_references_still_fail_closed(refs):
+    from test_card_pool_remediation import envelope
+    value=dict(version='pokelab-research-answer-v1',outcome='answered',facts=[],
+        interpretation=[dict(text='Compare setup demands.',evidence=refs)],limitations=['Creator intent is unknown.'])
+    with pytest.raises(a.ContractError): a.assess(json.dumps(value),envelope())
+
+
+def test_optional_schema_and_hard_core_content():
+    schema=c.Answer.model_json_schema()
+    assert schema['required']==['version','paragraphs']
+    assert schema['$defs']['Paragraph']['required']==['text']
+    for bad in ['{', '{}', '{"version":"pokelab-conversation-answer-v1","paragraphs":[]}',
+                '{"version":"pokelab-conversation-answer-v1","paragraphs":[{"text":null}]}']:
+        with pytest.raises(a.ContractError):c.assess(bad,dict(evidence=[]))
+
+
+def test_gemini_receives_optional_annotation_schema_and_no_repair_call(sources):
+    calls=[]
+    def handle(req):
+        body=json.loads(req.content);calls.append(body)
+        schema=body['response_format']['json_schema']['schema']
+        assert schema==c.Answer.model_json_schema()
+        assert schema['required']==['version','paragraphs']
+        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(dict(
+            version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Compare repeatability and setup before choosing a direction.')]))},'finish_reason':'stop'}]})
+    svc=a.ResearchService(sources.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
+    result=svc.run(request('What cards can move damage counters around, and which ones seem the most flexible?'))
+    assert result['status']=='answered' and len(calls)==1
+    assert result['answer']['facts']==[] and result['answer']['paragraphs'][0]['evidence']==[]
