@@ -75,3 +75,19 @@ test('single flight disables duplicate submit and new conversation while pending
  fireEvent.submit(agent.getByRole('button',{name:'Ask'}).closest('form')!)
  expect(calls).toHaveLength(1);release(result);await agent.findByRole('article')
 })
+
+test('invalid proposal stays visible with separate construction and advisory review, no write actions',async()=>{
+ const proposal={status:'PROPOSED',lifecycle:'FINALIZE',kind:'list',name:'Experimental',source_revision:158,
+  validation_status:'NEEDS_REPAIR',legality_status:'INVALID',total_cards:60,cards:[{card_id:'x',printing_id:'test-1',canonical_name:'Example Card',quantity:4}],
+  adds:[],removes:[],unresolved:[],hard_validation:['Two ACE SPEC cards are not allowed.'],
+  strategic_diagnostics:['Review the Energy package.'],repair_notes:['Keep the core and replace the conflicting support slot.'],alternatives:[],premises:[],limitations:['Cached legality, not tournament certification.']}
+ const {calls,agent}=setup(async()=>({...result,answer:{...result.answer,proposal}}))
+ await ask('Give me the finished 60.');await agent.findByRole('region',{name:'Proposed deck review'})
+ expect(agent.getByText('Two ACE SPEC cards are not allowed.')).toBeVisible()
+ expect(agent.getByText('Review the Energy package.')).toBeVisible()
+ expect(agent.getByText(/nothing has been applied or saved/)).toBeVisible()
+ expect(agent.getByText(/Needs repair before use/)).toBeVisible()
+ expect(agent.queryByRole('button',{name:/Apply|Save deck/})).toBeNull()
+ expect(agent.getByRole('article')).toHaveTextContent('suggest a flexible concept')
+ expect(calls).toHaveLength(1)
+})

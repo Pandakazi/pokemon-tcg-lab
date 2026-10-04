@@ -224,9 +224,10 @@ def test_valid_annotations_survive_mixed_invalid_and_duplicate_metadata(sources)
 def test_clear_invented_card_fact_is_not_saved_by_lenient_annotations(sources,text):
     svc,calls=service(sources,lambda v:{**v,'fact_ids':None,'paragraphs':[dict(text=text,evidence=['unknown'])]})
     result=svc.run(request())
-    assert result['status']=='invalid_answer_contract' and result['answer'] is None
-    assert result['contract_diagnostics']['condition']=='unsupported_card_identity'
-    assert not svc.conversations.items and len(calls)==1
+    assert result['status']=='answered' and result['answer'] is not None
+    assert text not in a.canonical(result['answer'])
+    assert 'premise needs correction' in result['answer']['paragraphs'][0]['text']
+    assert len(calls)==1
 
 
 def test_known_component_and_ordinary_reasoning_are_not_identity_failures(sources):

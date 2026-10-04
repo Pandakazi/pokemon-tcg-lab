@@ -6,7 +6,9 @@ import {ResearchCardText,type ResearchCard} from './ResearchCardText'
 
 type Evidence={id:string;kind:'fact'|'evidence';title:string;printing?:string;value:Record<string,unknown>;[key:string]:unknown}
 type Envelope={content_hash:string;selected:{printing:string;variant?:string}|null;revision:number|null;window:string;as_of:string;proof_requested:boolean;evidence:Evidence[];omissions:string[]}
-type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[]};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
+type ProposedCard={card_id:string;printing_id:string;canonical_name:string;quantity:number;current_quantity?:number;validated?:boolean}
+type Proposal={status:string;lifecycle:string;kind:string;name:string;source_revision:number|null;validation_status:string;legality_status:string;total_cards:number;cards:ProposedCard[];adds:ProposedCard[];removes:ProposedCard[];unresolved:{name:string;quantity:number;role:string}[];hard_validation:string[];strategic_diagnostics:string[];repair_notes:string[];alternatives:unknown[];premises:unknown[];limitations?:string[]}
+type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[];proposal?:Proposal};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
 type Turn={question:string;result:Result;contextKey:string}
 
 function AnswerView({result}:{result:Result}) {
@@ -23,6 +25,7 @@ function AnswerView({result}:{result:Result}) {
  return <>
  {!result.answer&&<><p role="alert">{messages[result.status]||'No completed answer is available. No automatic retry was made.'}</p><ValidationDetails value={result.contract_diagnostics}/></>}
  {result.answer&&<article aria-label="Agent answer">
+  {result.answer.proposal&&<ProposalView proposal={result.answer.proposal} cards={aliases} inspect={inspect}/>}
   {result.answer.paragraphs.map((p,i)=><p key={i}><ResearchCardText text={p.text} cards={aliases} inspect={inspect}/>{p.evidence.length>0&&<button className="source-note" aria-label={`Inspect support for paragraph ${i+1}`} onClick={()=>inspect(p.evidence[0])}> · evidence</button>}</p>)}
   {result.answer.facts.length>0&&<details><summary>Printed facts &amp; recorded evidence</summary>{result.answer.facts.map(e=><section key={e.id}><h3>{e.title}</h3><EvidenceValue value={e.value}/></section>)}</details>}
  </article>}
@@ -37,6 +40,26 @@ function AnswerView({result}:{result:Result}) {
   {inspected&&<button onClick={()=>inspect(null)}>Close inspected evidence</button>}
  </details>}
  </>
+}
+
+function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:ResearchCard[];inspect:(id:string)=>void}){
+ const text=(s:string)=><ResearchCardText text={s} cards={cards} inspect={inspect}/>
+ return <section aria-label="Proposed deck review" className="research-context">
+  <h3>{p.kind==='diff'?'Proposed changes':p.kind==='list'?'Proposed deck':'Card premise review'}{p.name?` · ${p.name}`:''}</h3>
+  <p>Proposal only — nothing has been applied or saved.</p>
+  {p.source_revision!==null&&<p>Source revision: {p.source_revision}</p>}
+  {p.kind!=='premises'&&<><p>{p.total_cards} resolved cards · {p.validation_status==='VALIDATED'?'Passes supported construction checks':p.validation_status==='STALE'?'Source changed — needs review':p.lifecycle==='DRAFT'?'Partial shell — not a finished list':'Needs repair before use'}</p>
+   {p.kind==='diff'&&(['removes','adds'] as const).map(key=><div key={key}><h3>{key==='removes'?'Proposed cuts':'Proposed additions'}</h3><ul>{p[key].map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} · currently {c.current_quantity}{c.validated===false?' · cut not valid':''}</li>)}</ul></div>)}
+   <details open={p.kind==='list'}><summary>{p.kind==='list'?'Resolved list':'Resulting proposed list'}</summary><ul>{p.cards.map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} <small>{c.printing_id}</small></li>)}</ul></details>
+   {!!p.unresolved.length&&<ul>{p.unresolved.map((c,i)=><li key={i}>{c.quantity} slots — {c.role||c.name} [unresolved]</li>)}</ul>}
+  </>}
+  {p.repair_notes.map((s,i)=><p key={i}>{text(s)}</p>)}
+  {!!p.hard_validation.length&&<div><h3>Construction issues</h3><ul>{p.hard_validation.map((s,i)=><li key={i}>{text(s)}</li>)}</ul></div>}
+  {!!p.strategic_diagnostics.length&&<div><h3>Strategic checks — advisory</h3><ul>{p.strategic_diagnostics.map((s,i)=><li key={i}>{text(s)}</li>)}</ul></div>}
+  {!!p.alternatives.length&&<details><summary>Role-preserving alternatives</summary><EvidenceValue value={p.alternatives}/></details>}
+  {!!p.premises.length&&<details><summary>Resolved card premises</summary><EvidenceValue value={p.premises}/></details>}
+  <details><summary>Validation scope</summary><p>Legality: {p.legality_status.replace(/_/g,' ').toLowerCase()}. Strategic quality is a separate judgment.</p><EvidenceValue value={p.limitations}/></details>
+ </section>
 }
 
 export function ConversationPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
