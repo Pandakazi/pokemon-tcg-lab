@@ -44,7 +44,7 @@ def lifecycle(question):
     # Explicit partial intent wins over the word 60 in "not ready for a 60".
     if re.search(r'not ready|just.*(?:shell|core)|sketch|partial (?:list|deck)',q): return 'DRAFT'
     if re.search(r'finali[sz]|finished|give me (?:the |a )?(?:final )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
-    if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change',q): return 'RECOMMEND'
+    if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change|changes concrete|exactly.*(?:comes out|goes in)',q): return 'RECOMMEND'
     if re.search(r'\bshell\b|core look|draft',q): return 'DRAFT'
     return 'EXPLORE'
 
@@ -288,6 +288,8 @@ def evaluate(proposal, premises, sources, request, envelope):
         for entry in document['entries']:
             record=resolver.records.get(entry['allocations'][0]['printing_id'])
             if record:report['cards'].append(dict(**resolver.view(record),quantity=entry['quantity']))
+        for change in (*report['adds'],*report['removes']):
+            change['resulting_quantity']=sum(e['quantity'] for e in document['entries'] if e['identity']==change['card_id'])
         document['has_saved']=report['lifecycle'] in ('RECOMMEND','FINALIZE')
         validation=Decks(collection,sources.paths['workspace']).validation(document)
         report['hard_validation']+=validation['reasons']+validation['unknown']
@@ -311,3 +313,24 @@ def evaluate(proposal, premises, sources, request, envelope):
                 options=resolver.alternatives(candidate.role if candidate else '',resolver.records[row['printing_id']],exclude_ace=True)
                 report['alternatives'].append(dict(for_card=row['canonical_name'],role=candidate.role if candidate else '',candidates=[r for r in options if 'ACE SPEC' not in r['printed'].get('rarity','').upper()]))
         return report,new_evidence,rejected
+
+
+def diff_paragraphs(report):
+    """Render arithmetic only from the checked snapshot, never provider prose."""
+    if not report or report['kind']!='diff':
+        return [dict(text='No exact active-deck change was resolved. The replacement remains unresolved; no changes have been applied.',evidence=[])]
+    lines=[f"Proposed changes against revision {report['source_revision']}; nothing has been applied."]
+    if report['validation_status']=='STALE':
+        return [dict(text='The source snapshot changed. These changes are unresolved against the current deck; nothing has been applied.',evidence=[])]
+    for group,verb in (('removes','Remove'),('adds','Add')):
+        for row in report[group]:
+            if row.get('validated') is False:
+                lines.append(f"Cannot remove {row['quantity']} {row['canonical_name']}: the proposed cut is not valid for this source revision.")
+            else:
+                lines.append(f"{verb} {row['quantity']} {row['canonical_name']} -- currently {row['current_quantity']}, resulting quantity {row['resulting_quantity']} in the proposed list.")
+    if report['unresolved']:
+        lines.append(f"{len(report['unresolved'])} proposed component(s) remain unresolved; no exact replacement has been established for those slots.")
+    lines.append(f"Resulting resolved list: {report['total_cards']} cards. " + ('The supported construction checks pass.' if report['validation_status']=='VALIDATED' else 'This proposal still needs review or repair before use.'))
+    lines.extend(report['hard_validation'])
+    lines.extend(report['strategic_diagnostics'])
+    return [dict(text=line,evidence=[]) for line in lines]

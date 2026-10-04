@@ -106,14 +106,24 @@ class Answer(Frozen):
         return tuple(result)
 
 
-def provider_contract(stage):
+def provider_contract(stage, active_deck=False):
     """Keep ordinary conversation on the certified small wire contract.
 
     Local parsing remains a superset so nominated premises can still be resolved.
     Concrete schema expansion is independent of whether a deck is selected.
     """
     if stage != 'EXPLORE':
-        return SYSTEM, Answer.model_json_schema()
+        schema=Answer.model_json_schema()
+        system=SYSTEM
+        if active_deck and stage=='RECOMMEND':
+            schema['required']=[*schema['required'],'proposal']
+            schema['properties']['proposal']={'$ref':'#/$defs/Proposal'}
+            proposal=schema['$defs']['Proposal']
+            proposal['properties'].pop('cards')
+            proposal['properties']['kind']={'type':'string','const':'diff'}
+            proposal['required']=['kind','adds','removes','rationale']
+            system+='\nFor this exact active-deck request, proposal is required and kind must be diff. Supply adds/removes as quantity deltas, never ordinal target counts. Unresolved roles must be role-only entries. Do not substitute prose or an X-or-Y choice for an exact change. Local rendering owns current/resulting quantities.\n'
+        return system, schema
     schema=Answer.model_json_schema()
     for key in ('proposal','premises'):
         schema['properties'].pop(key)
@@ -327,7 +337,7 @@ def run(service, request, selection):
     except ResearchUnavailable as exc: return dict(status=exc.reason, answer=None)
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)
     from .agent_qualification_config import INPUT_BYTES
-    system, wire_schema = provider_contract(envelope['lifecycle'])
+    system, wire_schema = provider_contract(envelope['lifecycle'], request.include_deck)
     if len((system+canonical(envelope)).encode()) > INPUT_BYTES: return dict(status='budget_exceeded', answer=None)
     result = providers.complete(selection, system, canonical(envelope), transport=service.transport,
         max_output=MAX_OUTPUT, response_schema=wire_schema if selection.provider == 'gemini' else None)
@@ -364,6 +374,9 @@ def run(service, request, selection):
             if report['repair_notes']:answer['paragraphs'].append(dict(text=report['repair_notes'][0],evidence=[]))
         elif json.loads(result.text).get('proposal') is not None or envelope['lifecycle'] in ('RECOMMEND','FINALIZE'):
             answer['paragraphs'].append(dict(text='I have not established a validated concrete list or change object here. Treat this as a concept, not a finished legal 60 or an actionable deck change.',evidence=[]))
+        if (report and report['kind']=='diff') or (request.include_deck and envelope['lifecycle']=='RECOMMEND'):
+            from .agent_deck_proposals import diff_paragraphs
+            answer['paragraphs']=diff_paragraphs(report)
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})

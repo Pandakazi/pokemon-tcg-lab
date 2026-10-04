@@ -271,3 +271,46 @@ def test_concrete_wire_contract_stays_available():
     for question in ('Give me exact cards and quantities to add/remove.','Give me the final 60.'):
         system,schema=c.provider_contract(d.lifecycle(question))
         assert 'proposal' in schema['properties'] and 'Concrete-output extension' in system
+
+
+@pytest.mark.parametrize('question',[
+ 'Give me the exact card names and quantities you would change, what you would remove, and why.',
+ 'Okay. Make those changes concrete. What exactly comes out and what exactly goes in?',
+])
+def test_pm_counts_are_authoritative_in_final_answer(stores,question):
+    db=SQLiteCards(stores.paths['cards'])
+    for ident,name,category in [('area','Area Zero Underdepths','Trainer'),('grass','Grass Energy','Energy'),('night','Night Stretcher','Trainer'),('cyrano','Cyrano','Trainer'),('tower','Jamming Tower','Trainer'),('red','Special Red Card','Trainer')]:
+        db.put(dict(id=ident,name=name,category=category,energyType='Normal' if category=='Energy' else None,types=['Grass'] if category=='Energy' else [],legal={'standard':True},variants={'normal':True},set={'id':'qa'},localId=ident,rarity='Common'))
+    with sqlite3.connect(stores.paths['cards']) as conn:conn.execute("UPDATE cards SET game='tcg'")
+    active(stores,[('area',3),('grass',6),('night',2),('cyrano',2),('tower',1),('red',1),('qa-pikachu',4),('qa-energy',41)])
+    with sqlite3.connect(stores.paths['workspace']) as conn:conn.execute('UPDATE workspace SET revision=158')
+    before={k:p.read_bytes() for k,p in stores.paths.items()}
+    proposal=dict(kind='diff',adds=[row('area',1),row('grass',1),dict(name='',quantity=1,role='consistency tool')],removes=[row('tower',1),row('cyrano',1)])
+    calls=[]
+    def handle(req):
+        body=json.loads(req.content);calls.append(body)
+        schema=body['response_format']['json_schema']['schema']
+        assert 'proposal' in schema['required']
+        assert schema['$defs']['Proposal']['properties']['kind']['const']=='diff'
+        envelope=json.loads(body['messages'][1]['content'])
+        assert envelope['lifecycle']=='RECOMMEND'
+        value=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Add the 3rd Area Zero Underdepths and an 8th Grass Energy or an extra consistency tool.')],proposal=proposal)
+        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(value)},'finish_reason':'stop'}]})
+    svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
+    result=svc.run(a.ResearchRequest(scope='conversation',question=question,include_deck=True,revision=158))
+    assert result['status']=='answered'
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert '3rd' not in prose and '8th' not in prose and 'or an extra' not in prose
+    assert 'currently 3, resulting quantity 4' in prose
+    assert 'currently 6, resulting quantity 7' in prose
+    assert 'remain unresolved' in prose
+    assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
+
+
+def test_missing_concrete_diff_cannot_display_unchecked_prose(stores):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    svc,calls=service(stores,text='Add the 8th Grass Energy or a consistency tool.')
+    result=svc.run(a.ResearchRequest(scope='conversation',question='What exactly comes out and what exactly goes in?',include_deck=True,revision=7))
+    assert result['status']=='answered'
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert '8th' not in prose and 'unresolved' in prose and len(calls)==1
