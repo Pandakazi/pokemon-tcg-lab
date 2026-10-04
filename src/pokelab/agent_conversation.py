@@ -372,10 +372,19 @@ def run(service, request, selection):
                 from .agent_research import schema_diagnostics
                 raise ContractError('schema_validation',schema_diagnostics(result.text,exc)) from None
         premises=list(parsed.premises)
-        # Capture clear named factual subjects even if the model omitted premises.
-        subjects=re.findall(r'\b([A-Z][\w’\'-]*(?: (?:[A-Z][\w’\'-]*|ex)){0,3})\s+(?:has an? (?:Ability|attack)|uses|deals|discards|moves)\b',' '.join(p.text for p in parsed.paragraphs))
-        for name in subjects:
-            if name not in {p.name for p in premises} and len(premises)<12:premises.append(Premise(name=name))
+        from .agent_card_facts import reconcile
+        original=hybrid_prose if hybrid else '\n'.join(p.text for p in parsed.paragraphs)
+        fact_corrections=[]
+        corrected,factual_evidence=reconcile(original,Sources(**service.paths,format_start=service.format_start),request,envelope,fact_corrections)
+        if hybrid:hybrid_prose=corrected
+        elif corrected!=original:
+            parsed=parsed.model_copy(update={'paragraphs':tuple(Paragraph(text=line[:2000]) for line in corrected.split('\n') if line.strip())})
+        if factual_evidence:
+            envelope=envelope.copy()
+            envelope['evidence']=[*envelope['evidence'],*[f for f in factual_evidence if f['id'] not in {e['id'] for e in envelope['evidence']}]]
+            envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
+            if providers.secret_present(canonical(envelope)):raise ContractError('secret_quarantined')
+            response['envelope']=envelope
         report=None;rejected=set()
         if parsed.proposal or premises:
             report,extra,rejected=evaluate(parsed.proposal,premises,Sources(**service.paths,format_start=service.format_start),request,envelope)
@@ -429,6 +438,9 @@ def run(service, request, selection):
                 answer['paragraphs'].append(dict(text='The strategic discussion can continue, but the concrete changes remain unresolved or only partially validated. No changes have been applied.',evidence=[]))
             if qualified:answer['paragraphs'].append(dict(text=QUALIFICATION,evidence=[]))
             answer['action_diagnostics']=hybrid_issues
+            for correction in fact_corrections:
+                if correction not in ' '.join(p['text'] for p in answer['paragraphs']):
+                    answer['paragraphs'].append(dict(text=correction,evidence=[]))
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})

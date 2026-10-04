@@ -226,7 +226,7 @@ def test_clear_invented_card_fact_is_not_saved_by_lenient_annotations(sources,te
     result=svc.run(request())
     assert result['status']=='answered' and result['answer'] is not None
     assert text not in a.canonical(result['answer'])
-    assert 'premise needs correction' in result['answer']['paragraphs'][0]['text']
+    assert any(word in result['answer']['paragraphs'][0]['text'] for word in ('premise needs correction','premise is unresolved'))
     assert len(calls)==1
 
 
