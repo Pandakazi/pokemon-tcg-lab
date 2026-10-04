@@ -62,3 +62,27 @@ def test_hybrid_attack_correction_survives_quantity_filter(stores):
     assert result['status']=='answered' and 'Spark' in text and 'Printed damage: 20' in text
     assert 'Wrong Storm' not in text and '999' not in text and 'keep the core' in text
     assert result['answer']['proposal']['validation_status']=='VALIDATED'
+
+
+@pytest.mark.parametrize('draft,expected',[
+ ('Pikachu ex takes massive knockouts through its signature Wrong Storm attack. I would preserve the core.','Spark'),
+ ('Adding a third Recovery Tool recovers every Trainer. I would test recovery.','Put 2 Pokémon'),
+])
+def test_embedded_fact_replacement_is_a_whole_sentence(stores,draft,expected):
+    request=a.ResearchRequest(scope='conversation',question='Explain.')
+    envelope=c.context(request,stores,dict(turns=[],printings=[]))
+    text,_=reconcile(draft,stores,request,envelope)
+    assert expected in text and 'Wrong Storm' not in text and 'every Trainer' not in text
+    assert 'signature For' not in text and 'Adding a third' not in text
+    assert 'resolved printing states' not in text and 'For Recovery Tool' not in text
+    assert 'I would' in text
+
+
+def test_unresolved_attack_removes_attached_precision(stores):
+    request=a.ResearchRequest(scope='conversation',question='Explain.')
+    envelope=c.context(request,stores,dict(turns=[],printings=[]))
+    draft='The plan depends on Unknownmon uses Fake Storm. It deals 70 damage per Energy. You must discard 3 Energy. Strategically, pressure still matters.'
+    text,_=reconcile(draft,stores,request,envelope)
+    assert 'unresolved' in text and '70' not in text and '3 Energy' not in text
+    assert 'Strategically, pressure still matters.' in text
+    assert not text.startswith('The plan depends on I cannot')

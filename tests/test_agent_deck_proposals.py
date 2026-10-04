@@ -276,6 +276,8 @@ def test_concrete_wire_contract_stays_available():
 @pytest.mark.parametrize('question',[
  'Give me the exact card names and quantities you would change, what you would remove, and why.',
  'Okay. Make those changes concrete. What exactly comes out and what exactly goes in?',
+ 'What are the 3 weakest cards and what three cards would you replace them with and why?',
+ 'What would you replace these three slots with?',
 ])
 def test_pm_counts_are_authoritative_in_final_answer(stores,question):
     db=SQLiteCards(stores.paths['cards'])
@@ -391,3 +393,20 @@ def test_hybrid_reconciliation_keeps_causal_reasoning():
     ambiguous='I might cut Jamming Tower, although I could also keep it and shave Cyrano instead.'
     visible,proposal,issues=parse(ambiguous,True)
     assert proposal is None and strategic_prose(visible,c.EMPIRICAL,False)[0]==[ambiguous]
+
+
+@pytest.mark.parametrize('question',[
+ 'What three cards would you replace them with?',
+ 'What would you replace these slots with?',
+ 'What exact changes would you make?',
+ 'Replace the weakest two cards.',
+ 'What comes out and what goes in?',
+ 'Give me the exact cards and quantities.',
+])
+def test_explicit_substitution_routes_concrete(question):
+    assert d.lifecycle(question)=='RECOMMEND'
+    assert c.provider_contract(d.lifecycle(question),True)[1] is None
+
+
+def test_weakness_analysis_is_not_a_substitution_request():
+    assert d.lifecycle('What are the weakest parts of this deck?')=='EXPLORE'

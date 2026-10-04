@@ -41,12 +41,22 @@ def reconcile(text, sources, request, envelope, corrections=None):
             for match in reversed(matches):
                 if match.start()>=boundary:continue
                 name=match[1];verb=match[2]
+                start=max(text.rfind(delimiter,0,match.start()) for delimiter in '.!?\n')+1
+                while start<match.start() and text[start].isspace():start+=1
+                # An embedded component name is not a new card subject. Prefer
+                # a real card named earlier in this sentence, if unambiguous.
+                if resolver and start<match.start():
+                    prefix=text[start:match.start()]
+                    names={r['card']['name'] for r in resolver.records.values() if re.search(r'(?<!\w)'+re.escape(r['card']['name'])+r'(?!\w)',prefix,re.I)}
+                    if names:name=max(names,key=len)
                 end=re.search(r'[.!?\n]',text[match.end():])
                 stop=match.end()+end.start() if end else len(text)
-                clause=text[match.start():stop]
+                clause=text[start:stop]
                 tail=re.split(r'\s+(?:so|therefore|because|which means)\s+',clause,maxsplit=1,flags=re.I)
                 strategy=(' The strategic suggestion remains a hypothesis to reassess: '+tail[1]) if len(tail)==2 else ''
-                record=None;state='unavailable'
+                if strategy and re.search(r'\d|\b(?:per Energy|discard requirements?|knockout threshold)\b',strategy,re.I):
+                    strategy=' The exact damage or resource calculation still needs verification.'
+                record=None;state='unavailable';parts=[];components=[]
                 if resolver:
                     # Exact active allocations outrank catalogue representative selection.
                     entries=[e for e in (active or {}).get('entries',[]) if e.get('name','').casefold()==name.casefold()]
@@ -60,7 +70,7 @@ def reconcile(text, sources, request, envelope, corrections=None):
                     else:record,state,_=resolver.resolve(Candidate(name=name))
                 if not record:
                     reason='multiple materially different versions remain possible' if state=='ambiguous' else 'the exact local printed facts are unavailable for this snapshot'
-                    correction=f"For {name}, {reason}; that specific factual premise is unresolved"
+                    correction=f"I cannot verify the exact printed details for {name}: {reason}. That specific factual premise is unresolved"
                 else:
                     raw=record['card'];parts=[]
                     components=[]
@@ -80,13 +90,25 @@ def reconcile(text, sources, request, envelope, corrections=None):
                     if raw.get('effect'):parts.append(raw['effect'])
                     if verb=='evolves from':parts=[f"printed evolution predecessor: {raw.get('evolveFrom','not established locally')}"]
                     if verb.startswith('is '):parts=[f"cached Standard legality: {raw.get('legal',{}).get('standard','unknown')}; this is not a live tournament ruling"]
-                    correction=f"For {raw['name']}, the resolved printing states: "+'; '.join(parts) if parts else f"For {raw['name']}, the exact printed effect is unavailable locally"
+                    correction=f"{raw['name']}: "+'; '.join(parts) if parts else f"I cannot verify the exact printed effect for {raw['name']} in this snapshot"
                     if verb in ('blocks','prevents'):
                         correction+=' The specific interaction is not established by printed text alone; a reviewed ruling may be needed'
                     facts.append(dict(id='card-'+digest(raw)[:24],kind='fact',title=raw['name'],printing=raw['id'],value=printed(raw),source='TCGdex',checked_at=record.get('checked_at'),content_hash=digest(raw)))
+                unresolved=record is None or not parts or any(not c.get('effect') for c in components)
+                # Only immediately attached dependent precision is affected. Keep
+                # later strategic discussion; do not infer interactions from text.
+                if unresolved:
+                    remainder=text[stop:]
+                    dependent=re.match(r'[.!?]\s+((?:It|This attack|That attack|This means|That means|You must|You can)\b[^.!?\n]*[.!?])',remainder,re.I)
+                    while dependent and re.search(r'\d|discard|per Energy|knockout|damage',dependent[1],re.I):
+                        stop+=dependent.end()
+                        remainder=text[stop:]
+                        dependent=re.match(r'\s*((?:It|This attack|That attack|This means|That means|You must|You can)\b[^.!?\n]*[.!?])',remainder,re.I)
+                    if stop>match.end() and not text[stop:stop+1] in '.!?':
+                        correction=correction.rstrip('.')+'.'
                 if corrections is not None:corrections.append(correction)
-                text=text[:match.start()]+correction+strategy+text[stop:]
-                boundary=match.start()
+                text=text[:start]+correction+strategy+text[stop:]
+                boundary=start
     except (OSError,ValueError,KeyError,sqlite3.Error):
         # Storage/shape loss is not a reason to suppress the conversation.
         return text+' Exact named-card facts could not be refreshed locally; treat those premises as unverified.',[]
