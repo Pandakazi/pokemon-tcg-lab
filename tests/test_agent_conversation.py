@@ -23,7 +23,7 @@ def service(sources, transform=lambda value:value, finish='stop'):
         body=json.loads(req.content);calls.append(body)
         assert 'authorization' not in req.headers
         assert body['provider']=={'allow_fallbacks':False,'max_price':{'prompt':0,'completion':0,'request':0}}
-        assert body['max_tokens']==4096 and body['messages'][0]['content']==c.SYSTEM
+        assert body['max_tokens']==4096 and body['messages'][0]['content']==c.provider_contract(json.loads(body['messages'][1]['content'])['lifecycle'])[0]
         envelope=json.loads(body['messages'][1]['content'])
         assert len((c.SYSTEM+a.canonical(envelope)).encode())<=32768
         return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(transform(output(envelope)))},'finish_reason':finish}]})
@@ -260,7 +260,7 @@ def test_gemini_receives_optional_annotation_schema_and_no_repair_call(sources):
     def handle(req):
         body=json.loads(req.content);calls.append(body)
         schema=body['response_format']['json_schema']['schema']
-        assert schema==c.Answer.model_json_schema()
+        assert schema==c.provider_contract('EXPLORE')[1]
         assert schema['required']==['version','paragraphs']
         return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(dict(
             version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Compare repeatability and setup before choosing a direction.')]))},'finish_reason':'stop'}]})

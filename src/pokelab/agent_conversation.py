@@ -106,6 +106,22 @@ class Answer(Frozen):
         return tuple(result)
 
 
+def provider_contract(stage):
+    """Keep ordinary conversation on the certified small wire contract.
+
+    Local parsing remains a superset so nominated premises can still be resolved.
+    Concrete schema expansion is independent of whether a deck is selected.
+    """
+    if stage != 'EXPLORE':
+        return SYSTEM, Answer.model_json_schema()
+    schema=Answer.model_json_schema()
+    for key in ('proposal','premises'):
+        schema['properties'].pop(key)
+    schema['$defs']={key:value for key,value in schema['$defs'].items() if key=='Paragraph'}
+    schema['$defs']['Paragraph']['properties'].pop('depends_on')
+    return SYSTEM[:-len(INSTRUCTIONS)], schema
+
+
 class Conversations:
     """Process-local, 30-minute idle expiry, 32 sessions; no logs/files/database."""
     def __init__(self): self.items = OrderedDict()
@@ -311,15 +327,16 @@ def run(service, request, selection):
     except ResearchUnavailable as exc: return dict(status=exc.reason, answer=None)
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)
     from .agent_qualification_config import INPUT_BYTES
-    if len((SYSTEM+canonical(envelope)).encode()) > INPUT_BYTES: return dict(status='budget_exceeded', answer=None)
-    result = providers.complete(selection, SYSTEM, canonical(envelope), transport=service.transport,
-        max_output=MAX_OUTPUT, response_schema=Answer.model_json_schema() if selection.provider == 'gemini' else None)
+    system, wire_schema = provider_contract(envelope['lifecycle'])
+    if len((system+canonical(envelope)).encode()) > INPUT_BYTES: return dict(status='budget_exceeded', answer=None)
+    result = providers.complete(selection, system, canonical(envelope), transport=service.transport,
+        max_output=MAX_OUTPUT, response_schema=wire_schema if selection.provider == 'gemini' else None)
     execution = {k:getattr(result,k) for k in ('latency_ms','input_tokens','output_tokens','reasoning_tokens','estimated_cost_usd','actual_cost_usd')}
     execution.update(provider=selection.provider, model=selection.model,
         finish_reason=result.finish_reason if result.finish_reason in ('stop','end_turn','length','max_tokens') else None)
     response = dict(answer=None, envelope=envelope, execution=execution)
     if result.finish_reason in ('length','max_tokens'): return dict(response,status='output_token_limit_reached')
-    if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'): return dict(response,status='provider_failure')
+    if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'): return dict(response,status='provider_failure', provider_status=result.status if re.fullmatch(r'http_[0-9]{3}',result.status) or result.status in ('transport_or_response_error','empty_output','incomplete_or_blocked_output','output_too_large','response_too_large','secret_response_quarantined','tool_output_rejected') else 'other_provider_failure')
     try:
         from .agent_deck_proposals import evaluate
         if len(result.text.encode())>16384:raise ContractError('answer_budget_exceeded')

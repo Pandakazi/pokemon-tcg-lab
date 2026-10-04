@@ -236,3 +236,38 @@ def test_resolution_secret_is_quarantined_before_response_attachment(stores,monk
  ('Give me the PTCGL list.','FINALIZE'),('I hate that draw engine, but do not change the Pikachu concept.','EXPLORE'),
 ])
 def test_lifecycle_does_not_force_exploration_into_validation(question,stage):assert d.lifecycle(question)==stage
+
+
+@pytest.mark.parametrize('question,include_deck',[
+    ('How does this deck work?',True),
+    ('Can we make it better?',True),
+    ('Is there a way to make it better or is it pretty maxed out?',True),
+    ('Explain a weird deck concept.',False),
+])
+def test_gemini_ordinary_wire_contract_twice(stores,monkeypatch,question,include_deck):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    calls=[]
+    def no_resolution(*args,**kwargs):
+        raise AssertionError('Ordinary explanation must not require proposal evaluation')
+    monkeypatch.setattr(d,'evaluate',no_resolution)
+    def handle(req):
+        body=json.loads(req.content);calls.append(body)
+        schema=body['response_format']['json_schema']['schema']
+        assert set(schema['properties'])=={'version','paragraphs','fact_ids'}
+        assert set(schema['$defs'])=={'Paragraph'}
+        assert 'Concrete-output extension' not in body['messages'][0]['content']
+        value=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='The core has a coherent plan; consider consistency before changes.')])
+        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(value)},'finish_reason':'stop'}]})
+    svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
+    conversation=None
+    for _ in range(2):
+        result=svc.run(a.ResearchRequest(scope='conversation',question=question,include_deck=include_deck,revision=7 if include_deck else None,conversation_id=conversation))
+        assert result['status']=='answered' and 'proposal' not in result['answer']
+        conversation=result['conversation_id']
+    assert len(calls)==2
+
+
+def test_concrete_wire_contract_stays_available():
+    for question in ('Give me exact cards and quantities to add/remove.','Give me the final 60.'):
+        system,schema=c.provider_contract(d.lifecycle(question))
+        assert 'proposal' in schema['properties'] and 'Concrete-output extension' in system

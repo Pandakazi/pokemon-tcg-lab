@@ -43,7 +43,7 @@ def lifecycle(question):
     q=question.casefold()
     # Explicit partial intent wins over the word 60 in "not ready for a 60".
     if re.search(r'not ready|just.*(?:shell|core)|sketch|partial (?:list|deck)',q): return 'DRAFT'
-    if re.search(r'finali[sz]|finished|give me (?:the |a )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
+    if re.search(r'finali[sz]|finished|give me (?:the |a )?(?:final )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
     if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change',q): return 'RECOMMEND'
     if re.search(r'\bshell\b|core look|draft',q): return 'DRAFT'
     return 'EXPLORE'
