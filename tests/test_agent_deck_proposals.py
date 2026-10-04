@@ -174,7 +174,7 @@ def test_invalid_proposal_shape_does_not_remove_conversation(stores):
     svc,calls=service(stores,dict(kind='list',cards=[dict(name='Pikachu ex',quantity='two')]))
     result=svc.run(a.ResearchRequest(scope='conversation',question='Give me the finished 60.'))
     assert result['status']=='answered' and len(calls)==1
-    assert 'not established a validated' in result['answer']['paragraphs'][-1]['text']
+    assert 'unresolved' in result['answer']['paragraphs'][-1]['text']
 
 
 def test_add_another_and_excessive_cuts_use_actual_counts(stores):
@@ -270,7 +270,7 @@ def test_gemini_ordinary_wire_contract_twice(stores,monkeypatch,question,include
 def test_concrete_wire_contract_stays_available():
     for question in ('Give me exact cards and quantities to add/remove.','Give me the final 60.'):
         system,schema=c.provider_contract(d.lifecycle(question))
-        assert 'proposal' in schema['properties'] and 'Concrete-output extension' in system
+        assert schema is None and 'natural conversational prose' in system
 
 
 @pytest.mark.parametrize('question',[
@@ -289,13 +289,13 @@ def test_pm_counts_are_authoritative_in_final_answer(stores,question):
     calls=[]
     def handle(req):
         body=json.loads(req.content);calls.append(body)
-        schema=body['response_format']['json_schema']['schema']
-        assert 'proposal' in schema['required']
-        assert schema['$defs']['Proposal']['properties']['kind']['const']=='diff'
+        assert 'response_format' not in body
         envelope=json.loads(body['messages'][1]['content'])
         assert envelope['lifecycle']=='RECOMMEND'
         value=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Add the 3rd Area Zero Underdepths and an 8th Grass Energy or an extra consistency tool.')],proposal=proposal)
-        return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(value)},'finish_reason':'stop'}]})
+        actions={'changes':[{'action':'remove','card_name':'Jamming Tower','quantity':1},{'action':'remove','card_name':'Cyrano','quantity':1},{'action':'add','card_name':'Area Zero Underdepths','quantity':1},{'action':'add','card_name':'Grass Energy','quantity':1},{'action':'add','role':'consistency tool','quantity':1}]}
+        text=value['paragraphs'][0]['text']+' This is a consistency hypothesis. <POKELAB_ACTIONS>'+json.dumps(actions)+'</POKELAB_ACTIONS>'
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}]})
     svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
     result=svc.run(a.ResearchRequest(scope='conversation',question=question,include_deck=True,revision=158))
     assert result['status']=='answered'
@@ -350,3 +350,44 @@ def test_role_only_proposal_retains_strategy_without_proof(stores):
     assert result['status']=='answered'
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
     assert rationale in prose and 'remain unresolved' in prose and len(calls)==1
+
+
+@pytest.mark.parametrize('block,expected',[
+ ('<POKELAB_ACTIONS>{"changes":[{"action":"remove","card_name":"Lightning Energy","quantity":1},{"action":"add","card_name":"Draw Helper","quantity":1}]}</POKELAB_ACTIONS>','valid'),
+ ('','missing'),
+ ('<POKELAB_ACTIONS>{broken}</POKELAB_ACTIONS>','malformed'),
+ ('<POKELAB_ACTIONS>{"changes":[{"action":"add","card_name":"Draw Helper","quantity":1},{"action":"remove","quantity":"bad"}]}</POKELAB_ACTIONS>','partial'),
+ ('<POKELAB_ACTIONS>{"changes":[{"action":"add","role":"single-prize draw support","quantity":1}]}</POKELAB_ACTIONS>','role'),
+])
+def test_hybrid_natural_prose_survives_optional_actions(stores,block,expected):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    calls=[]
+    def handle(req):
+        body=json.loads(req.content);calls.append(body)
+        assert 'response_format' not in body
+        assert 'Return JSON only' not in body['messages'][0]['content']
+        prose='I would test a draw engine. This looks like a consistency hypothesis. '
+        return httpx.Response(200,json={'choices':[{'message':{'content':prose+block},'finish_reason':'stop'}]})
+    svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
+    before={k:p.read_bytes() for k,p in stores.paths.items()}
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7))
+    assert result['status']=='answered'
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert 'consistency hypothesis' in prose and 'POKELAB_ACTIONS' not in a.canonical(result)
+    if expected in ('missing','malformed'):
+        assert 'proposal' not in result['answer'] and 'unresolved' in prose
+    elif expected=='valid':assert result['answer']['proposal']['validation_status']=='VALIDATED'
+    else:assert result['answer']['proposal']['validation_status']=='NEEDS_REPAIR'
+    assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
+
+
+def test_hybrid_reconciliation_keeps_causal_reasoning():
+    from pokelab.agent_hybrid import parse,strategic_prose
+    prose='Add the 3rd Area Zero because the stadium supports the core. Add 8th Grass. This improves setup flexibility. This raises win rate by 8%.'
+    kept,qualified=strategic_prose(prose,c.EMPIRICAL)
+    text=' '.join(kept)
+    assert '3rd' not in text and '8th' not in text and '8%' not in text
+    assert 'stadium supports the core' in text and 'setup flexibility' in text and qualified
+    ambiguous='I might cut Jamming Tower, although I could also keep it and shave Cyrano instead.'
+    visible,proposal,issues=parse(ambiguous,True)
+    assert proposal is None and strategic_prose(visible,c.EMPIRICAL,False)[0]==[ambiguous]

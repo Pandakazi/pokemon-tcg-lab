@@ -122,17 +122,8 @@ def provider_contract(stage, active_deck=False):
     Concrete schema expansion is independent of whether a deck is selected.
     """
     if stage != 'EXPLORE':
-        schema=Answer.model_json_schema()
-        system=SYSTEM
-        if active_deck and stage=='RECOMMEND':
-            schema['required']=[*schema['required'],'proposal']
-            schema['properties']['proposal']={'$ref':'#/$defs/Proposal'}
-            proposal=schema['$defs']['Proposal']
-            proposal['properties'].pop('cards')
-            proposal['properties']['kind']={'type':'string','const':'diff'}
-            proposal['required']=['kind','adds','removes','rationale']
-            system+='\nFor this exact active-deck request, proposal is required and kind must be diff. Supply adds/removes as quantity deltas, never ordinal target counts. Unresolved roles must be role-only entries. Do not substitute prose or an X-or-Y choice for an exact change. Local rendering owns current/resulting quantities.\n'
-        return system, schema
+        from .agent_hybrid import INSTRUCTIONS as HYBRID
+        return SYSTEM.split('Return JSON only.')[0]+HYBRID, None
     schema=Answer.model_json_schema()
     for key in ('proposal','premises'):
         schema['properties'].pop(key)
@@ -359,10 +350,27 @@ def run(service, request, selection):
     try:
         from .agent_deck_proposals import evaluate
         if len(result.text.encode())>16384:raise ContractError('answer_budget_exceeded')
-        try:parsed=Answer.model_validate_json(result.text)
-        except ValidationError as exc:
-            from .agent_research import schema_diagnostics
-            raise ContractError('schema_validation',schema_diagnostics(result.text,exc)) from None
+        hybrid=envelope['lifecycle']!='EXPLORE'
+        hybrid_issues=[];hybrid_prose=''
+        if hybrid:
+            from .agent_hybrid import parse
+            hybrid_prose,proposal,hybrid_issues=parse(result.text,request.include_deck)
+            # Historical fixtures/accepted session values can still use the old
+            # object, but it is no longer requested or enforced at the provider.
+            try:legacy=Answer.model_validate_json(result.text)
+            except ValidationError:legacy=None
+            if legacy:
+                parsed=legacy
+                hybrid_prose=' '.join(p.text for p in parsed.paragraphs)
+                hybrid_issues=[] if parsed.proposal else ['action_summary_missing']
+            else:
+                parsed=Answer(version='pokelab-conversation-answer-v1',paragraphs=(Paragraph(text='Hybrid recommendation'),),proposal=proposal)
+            if not hybrid_prose and not parsed.proposal:raise ContractError('empty_statement')
+        else:
+            try:parsed=Answer.model_validate_json(result.text)
+            except ValidationError as exc:
+                from .agent_research import schema_diagnostics
+                raise ContractError('schema_validation',schema_diagnostics(result.text,exc)) from None
         premises=list(parsed.premises)
         # Capture clear named factual subjects even if the model omitted premises.
         subjects=re.findall(r'\b([A-Z][\w’\'-]*(?: (?:[A-Z][\w’\'-]*|ex)){0,3})\s+(?:has an? (?:Ability|attack)|uses|deals|discards|moves)\b',' '.join(p.text for p in parsed.paragraphs))
@@ -381,7 +389,7 @@ def run(service, request, selection):
         if report:
             answer['proposal']=report
             if report['repair_notes']:answer['paragraphs'].append(dict(text=report['repair_notes'][0],evidence=[]))
-        elif json.loads(result.text).get('proposal') is not None or envelope['lifecycle'] in ('RECOMMEND','FINALIZE'):
+        elif parsed.proposal is not None or envelope['lifecycle'] in ('RECOMMEND','FINALIZE'):
             answer['paragraphs'].append(dict(text='I have not established a validated concrete list or change object here. Treat this as a concept, not a finished legal 60 or an actionable deck change.',evidence=[]))
         if (report and report['kind']=='diff') or (request.include_deck and envelope['lifecycle']=='RECOMMEND'):
             from .agent_deck_proposals import diff_paragraphs
@@ -396,6 +404,31 @@ def run(service, request, selection):
                     answer['paragraphs'].append(dict(text=QUALIFICATION,evidence=[]))
                 elif not quantity_claim(rationale) and not any(name and name.casefold() in rationale.casefold() for name in rejected):
                     answer['paragraphs'].append(dict(text='Strategic hypothesis (not a proven tournament improvement): '+rationale,evidence=[]))
+        if hybrid:
+            from .agent_hybrid import strategic_prose
+            strategy,empirical=strategic_prose(hybrid_prose,EMPIRICAL,bool(report))
+            if parsed.proposal and parsed.proposal.rationale:
+                rationale_lines,rationale_empirical=strategic_prose(parsed.proposal.rationale,EMPIRICAL)
+                strategy += ['Strategic hypothesis (not a proven tournament improvement): '+line for line in rationale_lines]
+                empirical=empirical or rationale_empirical
+            if report and hybrid_issues:
+                report['validation_status']='NEEDS_REPAIR'
+                report['resolution_status']='UNRESOLVED'
+                if report['legality_status']=='LEGAL_SUPPORTED_CHECKS':report['legality_status']='UNKNOWN'
+            qualified=qualified or empirical
+            strategy=[line for line in strategy if not any(name and name.casefold() in line.casefold() for name in rejected)]
+            answer['paragraphs']=[dict(text=line,evidence=[]) for line in strategy]
+            if report and report['kind']=='diff':
+                from .agent_deck_proposals import diff_paragraphs
+                answer['paragraphs']+=diff_paragraphs(report)
+            elif report:
+                answer['paragraphs'].append(dict(text='The proposed list below has been checked locally; review its construction status and unresolved slots before treating it as finished.',evidence=[]))
+            if hybrid_issues:
+                if report:
+                    report['repair_notes'].append('The action summary was incomplete; the resolved subset is not a complete validated recommendation.')
+                answer['paragraphs'].append(dict(text='The strategic discussion can continue, but the concrete changes remain unresolved or only partially validated. No changes have been applied.',evidence=[]))
+            if qualified:answer['paragraphs'].append(dict(text=QUALIFICATION,evidence=[]))
+            answer['action_diagnostics']=hybrid_issues
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})
