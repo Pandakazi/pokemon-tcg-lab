@@ -54,6 +54,10 @@ Concrete-output extension: THE MODEL BUILDS IT. POKÉLAB VALIDATES IT.
 The envelope's lifecycle is inferred, not a user mode. EXPLORE freely; DRAFT may
 contain unresolved roles. RECOMMEND exact cards/changes; FINALIZE requests a complete
 60 with no placeholders. The server, not you, decides validation/legality status.
+No empirical evidence, matchup target or creator intent is required to propose
+specific changes. rationale is your strategic hypothesis, not a proof obligation.
+Explain the intended role/setup/consistency tradeoff without current/resulting counts
+or empirical performance claims. PokéLab renders authoritative quantities separately.
 Keep ordinary prose conversational. Never claim a list is validated/tournament
 legal before local checks. Put exact list quantities in proposal, not in prose.
 proposal is optional: {kind:"list" or "diff",name,cards,adds,removes,rationale}.
@@ -334,3 +338,8 @@ def diff_paragraphs(report):
     lines.extend(report['hard_validation'])
     lines.extend(report['strategic_diagnostics'])
     return [dict(text=line,evidence=[]) for line in lines]
+
+
+def quantity_claim(text):
+    """Keep model arithmetic out of the exact-diff rationale channel only."""
+    return bool(re.search(r'\d|\b(?:currently|already|resulting|total|copies)\b|\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b|\b(?:one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:copies|cards|energy|slots)\b',text,re.I))

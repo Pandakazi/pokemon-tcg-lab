@@ -314,3 +314,39 @@ def test_missing_concrete_diff_cannot_display_unchecked_prose(stores):
     assert result['status']=='answered'
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
     assert '8th' not in prose and 'unresolved' in prose and len(calls)==1
+
+
+@pytest.mark.parametrize('rationale,shown',[
+ ('I would test a draw engine to reduce setup pressure while preserving the core.',True),
+ ('This improves the Dragapult matchup by 8%.',False),
+ ('Add the 8th Grass Energy.',False),
+])
+def test_strategy_without_empirical_permission_gate(stores,rationale,shown):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    proposal=dict(kind='diff',adds=[row('qa-draw',2)],removes=[row('qa-energy',2)],rationale=rationale)
+    svc,calls=service(stores,proposal)
+    before={k:p.read_bytes() for k,p in stores.paths.items()}
+    first=svc.run(a.ResearchRequest(scope='conversation',question='Is there a way to make it better?',include_deck=True,revision=7))
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7,conversation_id=first['conversation_id']))
+    assert first['status']==result['status']=='answered'
+    envelope=json.loads(calls[-1]['messages'][1]['content'])
+    assert 'empirical-tournament-evidence-not-supplied' in envelope['omissions']
+    assert 'creator intent, or declared matchup target' in calls[-1]['messages'][0]['content']
+    report=result['answer']['proposal']
+    assert report['validation_status']=='VALIDATED' and report['source_revision']==7
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert (rationale in prose)==shown
+    if shown:assert 'Strategic hypothesis (not a proven tournament improvement)' in prose
+    if '8%' in rationale:assert result['empirical_qualification'] is True
+    assert 'currently 56, resulting quantity 54' in prose
+    assert len(calls)==2 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
+
+
+def test_role_only_proposal_retains_strategy_without_proof(stores):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    rationale='I would test a consistency slot before changing the main attacker.'
+    svc,calls=service(stores,dict(kind='diff',removes=[row('qa-energy',1)],adds=[dict(name='',quantity=1,role='consistency')],rationale=rationale))
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7))
+    assert result['status']=='answered'
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert rationale in prose and 'remain unresolved' in prose and len(calls)==1
