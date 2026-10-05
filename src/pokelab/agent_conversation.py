@@ -371,6 +371,16 @@ def run(service, request, selection):
             except ValidationError as exc:
                 from .agent_research import schema_diagnostics
                 raise ContractError('schema_validation',schema_diagnostics(result.text,exc)) from None
+        if hybrid and request.include_deck:
+            from .agent_hybrid import explicit_cut
+            cut=explicit_cut(request.question)
+            source=next((e['value'] for e in envelope['evidence'] if e['id']=='active-deck'),{})
+            present=bool(cut and any(e.get('name','').casefold()==cut.name.casefold() for e in source.get('entries',[])))
+            if cut and not present and (parsed.proposal is None or parsed.proposal.kind=='diff'):
+                intent=parsed.proposal or Proposal(kind='diff')
+                if not any(c.name.casefold()==cut.name.casefold() for c in intent.removes):
+                    intent=intent.model_copy(update={'removes':(*intent.removes,cut)})
+                parsed=parsed.model_copy(update={'proposal':intent})
         premises=list(parsed.premises)
         from .agent_card_facts import reconcile
         original=hybrid_prose if hybrid else '\n'.join(p.text for p in parsed.paragraphs)
@@ -415,9 +425,9 @@ def run(service, request, selection):
                     answer['paragraphs'].append(dict(text='Strategic hypothesis (not a proven tournament improvement): '+rationale,evidence=[]))
         if hybrid:
             from .agent_hybrid import strategic_prose
-            strategy,empirical=strategic_prose(hybrid_prose,EMPIRICAL,bool(report))
+            strategy,empirical=strategic_prose(hybrid_prose,EMPIRICAL,bool(report),rejected)
             if parsed.proposal and parsed.proposal.rationale:
-                rationale_lines,rationale_empirical=strategic_prose(parsed.proposal.rationale,EMPIRICAL)
+                rationale_lines,rationale_empirical=strategic_prose(parsed.proposal.rationale,EMPIRICAL,True,rejected)
                 strategy += ['Strategic hypothesis (not a proven tournament improvement): '+line for line in rationale_lines]
                 empirical=empirical or rationale_empirical
             if report and hybrid_issues:

@@ -278,6 +278,8 @@ def test_concrete_wire_contract_stays_available():
  'Okay. Make those changes concrete. What exactly comes out and what exactly goes in?',
  'What are the 3 weakest cards and what three cards would you replace them with and why?',
  'What would you replace these three slots with?',
+ 'Add another Area Zero and another Grass Energy.',
+ 'What would you replace those three with?',
 ])
 def test_pm_counts_are_authoritative_in_final_answer(stores,question):
     db=SQLiteCards(stores.paths['cards'])
@@ -410,3 +412,42 @@ def test_explicit_substitution_routes_concrete(question):
 
 def test_weakness_analysis_is_not_a_substitution_request():
     assert d.lifecycle('What are the weakest parts of this deck?')=='EXPLORE'
+
+
+@pytest.mark.parametrize('payload',[
+ '<POKELAB_ACTIONS>{"changes":[{"action":"remove","card_name":"Draw Helper","quantity":1},{"action":"add","card_name":"Recovery Tool","quantity":1}]}</POKELAB_ACTIONS>',
+ '<POKELAB_ACTIONS>{bad}</POKELAB_ACTIONS>',
+ '',
+])
+def test_absent_explicit_cut_cannot_survive_as_strategy(stores,payload):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    calls=[]
+    def handle(req):
+        body=json.loads(req.content);calls.append(body)
+        assert 'response_format' not in body
+        text='Draw Helper is a liability in this deck. This makes the proposed cut worthwhile. Improving consistency is a reasonable goal. '+payload
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}]})
+    svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
+    before={k:p.read_bytes() for k,p in stores.paths.items()}
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Cut Draw Helper and add another Recovery Tool.',include_deck=True,revision=7))
+    assert result['status']=='answered'
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert 'is a liability' not in prose and 'worthwhile' not in prose
+    assert 'not in revision 7' in prose and 'consistency is a reasonable goal' in prose
+    assert result['answer']['proposal']['removes'][0]['validated'] is False
+    assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
+
+
+def test_integrity_intents_and_empirical_audit_route():
+    for q in ['Cut Squawkabilly ex and add another Boss\'s Orders.','Add another Area Zero.','Add another Grass Energy.','What would you replace those three with?']:
+        assert d.lifecycle(q)=='RECOMMEND'
+    q='Which of these recommendations are proven by tournament results and which are just your structural judgment?'
+    assert d.lifecycle(q)=='EXPLORE'
+    assert c.provider_contract(d.lifecycle(q))[1] is not None
+
+
+def test_stale_another_and_ordinals_do_not_survive():
+    from pokelab.agent_hybrid import strategic_prose
+    for state in ['A second Area Zero Underdepths helps.','A third Area Zero Underdepths helps.','A fourth or fifth Grass Energy helps.','Another Area Zero is already present.']:
+        kept,_=strategic_prose(state+' Consistency is a hypothesis.',c.EMPIRICAL)
+        assert state not in kept and 'Consistency is a hypothesis.' in kept

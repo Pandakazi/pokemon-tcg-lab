@@ -41,10 +41,11 @@ class Proposal(Frozen):
 
 def lifecycle(question):
     q=question.casefold()
+    if re.search(r'^\s*(?:please\s+)?(?:add|cut|remove|swap)\b',q): return 'RECOMMEND'
     # Explicit partial intent wins over the word 60 in "not ready for a 60".
     if re.search(r'not ready|just.*(?:shell|core)|sketch|partial (?:list|deck)',q): return 'DRAFT'
     if re.search(r'finali[sz]|finished|give me (?:the |a )?(?:final )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
-    if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change|changes concrete|(?:exact|specific) changes|replace.*(?:cards?|slots?|them|these)|cards?.*replace|what comes out.*what goes in|exactly.*(?:comes out|goes in)',q): return 'RECOMMEND'
+    if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change|changes concrete|(?:exact|specific) changes|replace.*(?:cards?|slots?|them|these|those)|cards?.*replace|what comes out.*what goes in|exactly.*(?:comes out|goes in)',q): return 'RECOMMEND'
     if re.search(r'\bshell\b|core look|draft',q): return 'DRAFT'
     return 'EXPLORE'
 
@@ -264,8 +265,9 @@ def evaluate(proposal, premises, sources, request, envelope):
             valid=entry is not None and entry['quantity']>=candidate.quantity
             report['removes'].append(dict(**resolver.view(record),quantity=candidate.quantity,current_quantity=original['quantity'] if original else 0,validated=valid))
             if not valid:
+                rejected.update((candidate.name,record['card']['name']))
                 report['hard_validation'].append(f"I cannot cut {candidate.quantity} {candidate.name}: the source revision has {original['quantity'] if original else 0}, or earlier proposed cuts already use them.")
-                report['repair_notes'].append('Keep the existing card; choose a cut from the actual source list. No alternative cut has been silently substituted.')
+                report['repair_notes'].append('Choose a cut from the actual source list; no alternative cut has been silently substituted.')
                 alternatives=[dict(card_id=e['identity'],name=e.get('name'),current_quantity=e['quantity']) for e in active['entries']][:8]
                 report['alternatives'].append(dict(for_card=candidate.name,role='choose a cut from the source revision',source_candidates=alternatives))
                 continue
@@ -329,7 +331,7 @@ def diff_paragraphs(report):
     for group,verb in (('removes','Remove'),('adds','Add')):
         for row in report[group]:
             if row.get('validated') is False:
-                lines.append(f"Cannot remove {row['quantity']} {row['canonical_name']}: the proposed cut is not valid for this source revision.")
+                lines.append(f"{row['canonical_name']} is not in revision {report['source_revision']}, so there is nothing to cut there." if row['current_quantity']==0 else f"Cannot remove {row['quantity']} {row['canonical_name']}: this source revision has {row['current_quantity']}, or earlier proposed cuts already use them.")
             else:
                 lines.append(f"{verb} {row['quantity']} {row['canonical_name']} -- currently {row['current_quantity']}, resulting quantity {row['resulting_quantity']} in the proposed list.")
     if report['unresolved']:
@@ -342,4 +344,4 @@ def diff_paragraphs(report):
 
 def quantity_claim(text):
     """Keep model arithmetic out of the exact-diff rationale channel only."""
-    return bool(re.search(r'\d|\b(?:currently|already|resulting|total|copies)\b|\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b|\b(?:one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:copies|cards|energy|slots)\b',text,re.I))
+    return bool(re.search(r'\d|\b(?:currently|already|resulting|total|copies|another)\b|\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b|\b(?:one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:copies|cards|energy|slots)\b',text,re.I))

@@ -55,16 +55,21 @@ def parse(text, active):
     return prose.strip(),proposal,issues
 
 
-def strategic_prose(text, empirical, has_report=True):
+def strategic_prose(text, empirical, has_report=True, invalid_names=()):
     """Reconcile state-bearing sentences, not a prose-to-action parser.
 
     Retain separate strategic sentences and causal tails. No action is created here.
     Exact action/state wording is replaced by the canonical diff rendered elsewhere.
     """
-    kept=[];qualified=False
+    kept=[];qualified=False;invalid_dependency=False
     for sentence in re.split(r'(?<=[.!?])\s+|\n+',text):
         sentence=sentence.strip()
         if not sentence:continue
+        if any(name and name.casefold() in sentence.casefold() for name in invalid_names):
+            invalid_dependency=True
+            continue
+        if invalid_dependency and re.match(r'(?:It|This|That|Doing so|They)\b',sentence,re.I):continue
+        invalid_dependency=False
         if empirical.search(sentence):qualified=True;continue
         state=quantity_claim(sentence) or re.search(r'\b(?:legal|illegal|validated|deck size|copy limit|contains|deck has|deck includes)\b',sentence,re.I) or (has_report and re.search(r'\b(?:add|remove|cut|swap|replace)\b',sentence,re.I))
         if state:
@@ -74,3 +79,11 @@ def strategic_prose(text, empirical, has_report=True):
             continue
         kept.append(sentence)
     return kept,qualified
+
+
+def explicit_cut(question):
+    """Only a direct user cut command, never model prose or a hypothetical."""
+    match=re.match(r"^\s*(?:please\s+)?(?:cut|remove)\s+(?:(\d+)\s+)?(.+?)(?=\s+and\s+|[.!?]|$)",question,re.I)
+    if not match:return None
+    try:return Candidate(name=match[2].strip(),quantity=int(match[1] or 1))
+    except ValueError:return None
