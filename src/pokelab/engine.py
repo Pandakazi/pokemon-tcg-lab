@@ -21,7 +21,7 @@ def normalized_name(value: str) -> str:
     return unicodedata.normalize("NFKC", value).casefold().replace("’", "'").strip()
 
 
-def functional_signature(card: dict) -> str:
+def functional_signature(card: dict, *, normalize_formatting: bool = False) -> str:
     """Conservatively group identical gameplay records, never names alone.
 
     Artwork, rarity, set, and regulation mark are printing properties. Missing
@@ -36,6 +36,14 @@ def functional_signature(card: dict) -> str:
     has_rules = any(card.get(key) for key in ("abilities", "attacks", "effect", "rules"))
     if not has_rules and not (card.get("category") == "Energy" and card.get("energyType") == "Normal"):
         identity["unresolved_printing"] = card["id"]
+    if normalize_formatting:
+        # Comparison only: persisted identity callers retain their existing hashes.
+        def compact(value):
+            if isinstance(value, str): return " ".join(value.split())
+            if isinstance(value, list): return [compact(item) for item in value]
+            if isinstance(value, dict): return {key: compact(item) for key, item in value.items()}
+            return value
+        identity = compact(identity)
     return json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 

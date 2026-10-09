@@ -344,6 +344,14 @@ def run(service, request, selection, *, _repair=None):
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})
+    if (requirements and report and report['kind']=='list' and report['validation_status']!='VALIDATED'
+            and report['total_cards']<requirements.get('total',0)):
+        # Do not commit the inferior artifact before its caller can retain the baseline.
+        if _repair is not None:return dict(response,status='repair_regressed',answer=None)
+        if pending:
+            retained=recount(history,'generated_deck')
+            retained['completion']={'status':'incomplete','repair_attempts':1,'reason':'repair_regressed'}
+            return dict(response,status='answered',answer=retained,conversation_id=request.conversation_id)
     completing=envelope['lifecycle']=='FINALIZE' and (report is None or report['kind']=='list')
     incomplete=report is None or report['validation_status']!='VALIDATED'
     if completing and incomplete and _repair is None:

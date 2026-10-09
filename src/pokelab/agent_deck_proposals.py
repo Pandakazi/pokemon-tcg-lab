@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import Field
 from .agent_context_models import Frozen
 from .decks import Decks, DeckProvider, deck_identity, check_allocations
-from .engine import normalized_name
+from .engine import normalized_name, functional_signature
 from .library_identity import BASIC_NAMES
 from .quantities import variant_names
 from .rules.models import digest
@@ -61,18 +61,28 @@ class Resolver:
         self.records=self.provider.records
         self.path=path
         self.index=None
+        self.format_groups={}
+        for record in self.records.values():
+            self.format_groups.setdefault(functional_signature(record['card'],normalize_formatting=True),[]).append(record)
 
-    def resolve(self, candidate, active=None):
+    def resolve(self, candidate, active=None, *, generated=False):
         if candidate.printing_id:
             record=self.records.get(candidate.printing_id)
             matches=[record] if record else []
-            if record and candidate.name and normalized_name(record['card']['name'])!=normalized_name(candidate.name):
-                return None,'name_printing_mismatch',[]
+            mismatch=bool(record and candidate.name and normalized_name(record['card']['name'])!=normalized_name(candidate.name))
+            if generated and candidate.name and (record is None or mismatch):
+                resolved,state,options=self.resolve(candidate.model_copy(update={'printing_id':None}),generated=True)
+                if state=='resolved':return resolved,state,options
+                if state!='unresolved':return resolved,state,options
+            if mismatch:return None,'name_printing_mismatch',[]
         else:
             name=normalized_name(candidate.name)
             energy=BASIC_NAMES.get(name)
             matches=[r for r in self.records.values() if r.get('game')!='pocket' and
                 (normalized_name(r['card']['name'])==name or energy and deck_identity(r)=='deck-basic-energy:'+energy)]
+        if generated:
+            # Formatting-only gameplay comparison; return an established printing/key.
+            matches=list({r['card']['id']:r for record in matches for r in self.format_groups[functional_signature(record['card'],normalize_formatting=True)]}.values())
         groups={}
         for record in matches: groups.setdefault(deck_identity(record),[]).append(record)
         if active and not candidate.printing_id:
@@ -81,6 +91,13 @@ class Resolver:
             if chosen: groups=chosen
         legal={k:v for k,v in groups.items() if self.provider.get(k)['card'].get('legal',{}).get('standard') is True}
         if len(groups)>1 and legal: groups=legal
+        if generated and len(groups)>1:
+            signatures={functional_signature(r['card'],normalize_formatting=True) for rows in groups.values() for r in rows}
+            if len(signatures)==1:
+                legal_records=[r for rows in groups.values() for r in rows if r.get('game')!='pocket' and r['card'].get('legal',{}).get('standard') is True]
+                if legal_records:
+                    chosen=min(legal_records,key=lambda r:r['card']['id'])
+                    groups={deck_identity(chosen):[chosen]}
         if len(groups)!=1:
             options=[self.view(sorted(v,key=lambda r:r['card']['id'])[0]) for _,v in sorted(groups.items())][:5]
             return None,'ambiguous' if groups else 'unresolved',options
@@ -198,7 +215,7 @@ def evaluate(proposal, premises, sources, request, envelope):
             if not any(e['id']==item['id'] for e in new_evidence):new_evidence.append(item)
 
         def resolve(candidate, cutting=False):
-            record,state,choices=resolver.resolve(candidate,active if cutting else None)
+            record,state,choices=resolver.resolve(candidate,active if cutting else None,generated=bool(proposal and proposal.kind=='list' and not cutting))
             if record:evidence(record)
             if state!='resolved' and not (cutting and record is not None and state in ('illegal','unknown_legality')):
                 label=candidate.name or candidate.role or 'Unresolved slot'
