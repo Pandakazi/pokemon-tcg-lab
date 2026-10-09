@@ -29,7 +29,10 @@ test('default conversational UI needs no deck or taxonomy and sends one explicit
  expect(agent.queryByLabelText('Research area')).toBeNull()
  await ask();await agent.findByRole('article',{name:'Agent answer'})
  expect(calls).toHaveLength(1);expect(calls[0]).toMatchObject({scope:'conversation',include_deck:false})
- expect(agent.getByText('Evidence underneath').closest('details')).not.toHaveAttribute('open')
+ expect(agent.queryByRole('region',{name:'Sources and card facts'})).toBeNull()
+ expect(agent.queryByText(/Evidence underneath|Coverage boundaries|Validation scope|Printed facts/)).toBeNull()
+ fireEvent.click(agent.getByRole('button',{name:'Show sources'}))
+ expect(agent.getByRole('region',{name:'Sources and card facts'})).toBeVisible()
  fireEvent.click(agent.getByRole('button',{name:'Toggle Agent panel'}));fireEvent.click(agent.getByRole('button',{name:'Toggle Agent panel'}))
  expect(calls).toHaveLength(1)
 })
@@ -51,14 +54,14 @@ test('component hover reuses exact printed text without artwork or inference req
  expect(await screen.findByRole('tooltip',{name:'Example Ability printed text'})).toHaveTextContent('Exact locally supplied text.')
  expect(artworkCalls()).toBe(baseline);expect(calls).toHaveLength(1)
  fireEvent.click(agent.getByRole('button',{name:'Example Ability'}))
- expect(agent.getByText('Evidence underneath').closest('details')).toHaveAttribute('open')
+ expect(agent.getByRole('region',{name:'Sources and card facts'})).toBeVisible()
 })
 
 test('proof opens existing evidence and keeps inference distinct',async()=>{
  const {agent}=setup(async()=>({...result,envelope:{...result.envelope,proof_requested:true}}))
  await ask('Prove it.');await agent.findByRole('article')
- expect(agent.getByText('Evidence underneath').closest('details')).toHaveAttribute('open')
- expect(agent.getByText(/Inference: the Agent/)).toBeVisible()
+ expect(agent.getByRole('region',{name:'Sources and card facts'})).toBeVisible()
+ expect(agent.getByText(/Recommendations are judgment/)).toBeVisible()
 })
 
 test.each(['output_token_limit_reached','provider_failure','conversation_expired','internal_assessment_failure'])('failure %s never shows partial answer or retries',async status=>{
@@ -84,6 +87,9 @@ test('invalid proposal stays visible with separate construction and advisory rev
   strategic_diagnostics:['Review the Energy package.'],repair_notes:['Keep the core and replace the conflicting support slot.'],alternatives:[],premises:[],limitations:['Cached legality, not tournament certification.']}
  const {calls,agent}=setup(async()=>({...result,answer:{...result.answer,proposal}}))
  await ask('Give me the finished 60.');await agent.findByRole('region',{name:'Proposed deck review'})
+ expect(agent.queryByText('Two ACE SPEC cards are not allowed.')).toBeNull()
+ expect(agent.queryByText('Validation scope')).toBeNull()
+ fireEvent.click(agent.getByRole('button',{name:'Review deck details'}))
  expect(agent.getByText('Two ACE SPEC cards are not allowed.')).toBeVisible()
  expect(agent.getByText('Review the Energy package.')).toBeVisible()
  expect(agent.getByText(/nothing has been applied or saved/)).toBeVisible()
@@ -97,6 +103,7 @@ test('role alternatives reuse the existing card preview without changing proposa
  const proposal={status:'PROPOSED',lifecycle:'DRAFT',kind:'list',name:'Concept',source_revision:null,validation_status:'NEEDS_REPAIR',legality_status:'UNKNOWN',total_cards:0,cards:[],adds:[],removes:[],unresolved:[],hard_validation:[],strategic_diagnostics:[],repair_notes:[],premises:[],alternatives:[{role:'draw support',candidates:[{canonical_name:'Alternative Card',printing_id:'test-1'}]}]}
  const {calls,agent}=setup(async()=>({...result,answer:{...result.answer,proposal}}))
  await ask();await agent.findByRole('region',{name:'Proposed deck review'})
+ fireEvent.click(agent.getByRole('button',{name:'Review deck details'}))
  fireEvent.click(agent.getByText('Role-preserving alternatives'))
  fireEvent.pointerEnter(agent.getByRole('button',{name:'Alternative Card'}))
  const tooltip=await screen.findByRole('tooltip',{name:'Alternative Card card preview'})
@@ -121,7 +128,7 @@ test('factual and missing-artifact notices remain separate from natural prose',a
  const {agent}=setup(async()=>({...result,answer:{paragraphs:[{text:'I would preserve the core.',evidence:[]}],facts:[evidence],notices:['printed_fact_review','missing_artifact']}}))
  await ask();await agent.findByRole('article')
  expect(agent.getByText('I would preserve the core.')).toBeVisible()
- expect(agent.getByText(/Check the local printed facts below/)).toBeVisible()
+ expect(agent.getByText(/That card detail needs a closer look/)).toBeVisible()
  expect(agent.getByText(/No structured list or changes were supplied/)).toBeVisible()
  expect(agent.queryByText(/I cannot verify the exact printed details/)).toBeNull()
 })

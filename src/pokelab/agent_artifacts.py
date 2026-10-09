@@ -19,7 +19,7 @@ def remember(history, report, envelope):
             saved[group]=[{k:v for k,v in r.items() if k not in ('printed','checked_at','source','content_hash')} for r in saved[group]]
         saved['alternatives']=[]
         turn=history.get('turn_number',0)+1
-        item=dict(type=kind,source_turn=turn,source_snapshot=envelope['content_hash'],report=saved)
+        item=dict(type=kind,pending=report['validation_status']!='VALIDATED',source_turn=turn,source_snapshot=envelope['content_hash'],report=saved)
         item['id']=digest(item)
         if len(json.dumps(item).encode())<=65536:artifacts[kind]=item
         else:
@@ -58,6 +58,10 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
     from .agent_card_facts import review
     from .agent_research import ContractError
     answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[],facts=[],notices=[],fact_reviews=[])
+    resolution=report if report and report['kind']=='list' else envelope.get('artifacts',{}).get('generated_deck',{}).get('report',{})
+    envelope['resolution_artifact']={key:resolution.get(key,[]) for key in ('cards','unresolved')}
+    unresolved={r['name'].casefold() for r in resolution.get('unresolved',[]) if r.get('name')}
+    envelope['evidence']=[e for e in envelope['evidence'] if not e.get('printing') or e['title'].casefold() not in unresolved]
     qualified=False;known={e['id'] for e in envelope['evidence']};fact_ids=set(parsed.fact_ids)&known
     concrete=bool(report and report['kind'] in ('list','diff')) or envelope['lifecycle'] in ('RECOMMEND','FINALIZE')
     texts=[prose]
@@ -101,3 +105,25 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
     if not prose.strip() and not report:raise ContractError('empty_statement')
     envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     return answer,qualified
+
+
+def pending_repair(question, history):
+    """A small confirmation dispatcher, gated by an actual unresolved artifact."""
+    artifact=history.get('artifacts',{}).get('generated_deck')
+    if not artifact or not artifact.get('pending'):return None
+    words=set(re.findall(r"[a-z]+",question.casefold()))
+    if words & {'why','explain','not','dont','don','never','cancel','instead','new','different'}:return None
+    action=bool(words & {'finish','fix','complete','fill','resolve','repair'}) or ('make' in words and 'legal' in words)
+    confirmation=bool(words & {'do','proceed','yes','okay','ok','sure'}) and not (words & {'think','what','how'})
+    reference='60' in question or bool(words & {'it','that','those','list','deck','rest','slots','them'}) or words<= {'yes','okay','ok','sure','please','proceed'}
+    return artifact if reference and (action or confirmation) else None
+
+
+def repair_requirements(report):
+    """Compact local failures and legal candidates, never chosen replacement slots."""
+    if not report:return dict(format='standard',target_total=60,failures=['A generated_deck artifact is required.'])
+    return dict(format='standard',target_total=60,name=report['name'],
+        cards=[{k:r.get(k) for k in ('canonical_name','printing_id','quantity','category')} for r in report['cards']],
+        total=report['total_cards'],unresolved=report['unresolved'],
+        failures=report['hard_validation'][:12],
+        alternatives=[dict(for_card=g.get('for_card'),role=g.get('role'),candidates=[{k:r.get(k) for k in ('canonical_name','printing_id','tier','printed')} for r in g.get('candidates',[]) if r.get('standard') is True][:3]) for g in report['alternatives'][:8]])

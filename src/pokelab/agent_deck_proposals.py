@@ -85,7 +85,10 @@ class Resolver:
             options=[self.view(sorted(v,key=lambda r:r['card']['id'])[0]) for _,v in sorted(groups.items())][:5]
             return None,'ambiguous' if groups else 'unresolved',options
         key,records=next(iter(groups.items()))
-        record=sorted(records,key=lambda r:(r['card'].get('legal',{}).get('standard') is not True,r['card']['id']))[0]
+        # Reuse the established functional group; never equate cards by name alone.
+        equivalents=[self.records[p] for p in self.provider.groups[key]]
+        legal_printings=[r for r in equivalents if r.get('game')!='pocket' and r['card'].get('legal',{}).get('standard') is True]
+        record=sorted(legal_printings or records,key=lambda r:r['card']['id'])[0]
         canonical=self.provider.get(key)
         standard=canonical['card'].get('legal',{}).get('standard')
         state='resolved' if standard is True and record.get('game')!='pocket' else 'illegal' if standard is False or record.get('game')=='pocket' else 'unknown_legality'
@@ -117,7 +120,8 @@ class Resolver:
         results=[];seen=set()
         for tier,query in lookups[:5]:
             for hit in self.index.search(query[:1000],limit=10)['results']:
-                printing=hit['representative']['printing'];record=self.records.get(printing)
+                printing=hit['representative']['printing'];record,state,_=self.resolve(Candidate(printing_id=printing))
+                if state!='resolved':continue
                 if not record:continue
                 key=deck_identity(record);raw=record['card']
                 if exclude_ace and 'ACE SPEC' in raw.get('rarity','').upper():continue
@@ -159,7 +163,7 @@ def diagnostics(rows):
 def evaluate(proposal, premises, sources, request, envelope):
     from .agent_context_sources import SnapshotCards, SnapshotCollection, stamp
     report=dict(version='pokelab-proposal-v1',status='PROPOSED',lifecycle=envelope['lifecycle'],
-        format='standard',kind=proposal.kind if proposal else 'premises',name=proposal.name if proposal else '',
+        format=envelope.get('build_constraints',{}).get('format','standard'),kind=proposal.kind if proposal else 'premises',name=proposal.name if proposal else '',
         deck_id=None,source_revision=request.revision if request.include_deck else None,
         source_content_hash=None,validation_status='UNRESOLVED',legality_status='UNRESOLVED',
         resolution_status='RESOLVED',cards=[],adds=[],removes=[],unresolved=[],premises=[],
@@ -252,7 +256,7 @@ def evaluate(proposal, premises, sources, request, envelope):
             if not entry['quantity']:document['entries'].remove(entry)
         for candidate in proposal.cards if proposal.kind=='list' else proposal.adds:
             record,state=resolve(candidate)
-            if record is None:continue
+            if record is None or state!='resolved':continue
             key=deck_identity(record);raw=record['card'];view=resolver.view(record)
             original=next((e for e in (active or {}).get('entries',[]) if e['identity']==key),None)
             if proposal.kind=='diff':report['adds'].append(dict(**view,quantity=candidate.quantity,current_quantity=original['quantity'] if original else 0,role=candidate.role))

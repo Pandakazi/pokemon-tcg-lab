@@ -8,11 +8,12 @@ type Evidence={id:string;kind:'fact'|'evidence';title:string;printing?:string;va
 type Envelope={content_hash:string;selected:{printing:string;variant?:string}|null;revision:number|null;window:string;as_of:string;proof_requested:boolean;evidence:Evidence[];omissions:string[]}
 type ProposedCard={card_id:string;printing_id:string;canonical_name:string;quantity:number;current_quantity?:number;validated?:boolean}
 type Proposal={status:string;lifecycle:string;kind:string;name:string;source_revision:number|null;validation_status:string;legality_status:string;total_cards:number;category_subtotals?:Record<string,number>;cards:ProposedCard[];adds:ProposedCard[];removes:ProposedCard[];unresolved:{name:string;quantity:number;role:string}[];hard_validation:string[];strategic_diagnostics:string[];repair_notes:string[];alternatives:unknown[];premises:unknown[];limitations?:string[]}
-type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[];proposal?:Proposal;notices?:string[];historical_snapshot?:boolean;artifact_id?:string};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
+type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[];proposal?:Proposal;notices?:string[];historical_snapshot?:boolean;artifact_id?:string;completion?:{status:string;repair_attempts:number}};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
 type Turn={question:string;result:Result;contextKey:string}
 
 function AnswerView({result}:{result:Result}) {
- const [inspected,inspect]=useState<string|null>(null)
+ const [inspected,inspect]=useState<string|null>(null),[requestedEvidence,setRequestedEvidence]=useState(false)
+ const showEvidence=requestedEvidence||!!inspected||!!result.envelope?.proof_requested||!!result.answer?.notices?.some(code=>['printed_fact_review','empirical_claim_unverified'].includes(code))||!!result.answer?.facts.some(e=>e.kind==='evidence')
  const evidence=result.envelope?.evidence||[]
  const cards:ResearchCard[]=evidence.filter(e=>e.printing).map(e=>({id:e.id,name:e.title,printing:e.printing!}))
  const components:ResearchCard[]=[]
@@ -25,26 +26,25 @@ function AnswerView({result}:{result:Result}) {
  return <>
  {!result.answer&&<><p role="alert">{messages[result.status]||'No completed answer is available. No automatic retry was made.'}</p><ValidationDetails value={result.contract_diagnostics}/></>}
  {result.answer&&<article aria-label="Agent answer">
+  {result.answer.completion?.status==='incomplete'&&<p role="status">I could not finish a legal 60-card list within the bounded repair pass. This is still an incomplete proposal.</p>}
   {result.answer.historical_snapshot&&<p className="source-note">Previously proposed artifact — original validation snapshot, separate from the active deck.</p>}
-  {result.answer.notices?.map(code=><p className="source-note" key={code}>{({missing_artifact:'No structured list or changes were supplied. This remains a discussion, not a completed deck.',empirical_claim_unverified:'A tournament-performance claim was withheld because its evidence was not established.',printed_fact_review:'Check the local printed facts below before relying on that mechanical premise.'} as Record<string,string>)[code]}</p>)}
+  {result.answer.notices?.map(code=><p className="source-note" key={code}>{({missing_artifact:'No structured list or changes were supplied. This remains a discussion, not a completed deck.',empirical_claim_unverified:'I do not have tournament evidence establishing that claim.',printed_fact_review:'That card detail needs a closer look; I have kept the relevant card information available below.'} as Record<string,string>)[code]}</p>)}
   {result.answer.proposal&&<ProposalView proposal={result.answer.proposal} cards={aliases} inspect={inspect}/>}
   {result.answer.paragraphs.map((p,i)=><p key={i}><ResearchCardText text={p.text} cards={aliases} inspect={inspect}/>{p.evidence.length>0&&<button className="source-note" aria-label={`Inspect support for paragraph ${i+1}`} onClick={()=>inspect(p.evidence[0])}> · evidence</button>}</p>)}
-  {result.answer.facts.length>0&&<details><summary>Printed facts &amp; recorded evidence</summary>{result.answer.facts.map(e=><section key={e.id}><h3>{e.title}</h3><EvidenceValue value={e.value}/></section>)}</details>}
+  {!showEvidence&&evidence.length>0&&<button className="source-note" onClick={()=>setRequestedEvidence(true)}>Show sources</button>}
  </article>}
- {result.envelope&&<details className="research-evidence" open={result.envelope.proof_requested||!!inspected||undefined}>
-  <summary>Evidence underneath</summary><p>Fact: local card/deck data. Evidence: recorded sources. Inference: the Agent’s strategic reasoning, not a proven result.</p>
-  <p>Snapshot: {result.envelope.as_of} · {result.envelope.revision===null?'no active deck':`revision ${result.envelope.revision}`} · {result.envelope.window} window</p>
-  {result.envelope.selected&&<p>{result.envelope.selected.printing} · {result.envelope.selected.variant}</p>}
-  <p className="source-note">Evidence hash: {result.envelope.content_hash}</p>
-  {evidence.map(e=><details key={e.id} open={inspected===e.id||undefined}><summary>{e.kind==='fact'?'Fact':'Evidence'} · {e.title}</summary><EvidenceValue value={e}/></details>)}
-  {!evidence.length&&<p>No local facts were retrieved. This answer is general reasoning.</p>}
-  <details><summary>Coverage boundaries</summary><EvidenceValue value={result.envelope.omissions}/><p>External research is unavailable. Nothing is saved or changed by the Agent.</p></details>
-  {inspected&&<button onClick={()=>inspect(null)}>Close inspected evidence</button>}
- </details>}
+ {result.envelope&&showEvidence&&<section className="research-evidence" aria-label="Sources and card facts">
+  <h3>Sources and card facts</h3><p>Card data and recorded results support factual claims. Recommendations are judgment, not proof of an improvement.</p>
+  {evidence.map(e=><details key={e.id} open={inspected===e.id||undefined}><summary>{e.title} · {e.source==='TCGdex'?'Printed card data':'Local recorded evidence'}</summary><EvidenceValue value={Object.fromEntries(Object.entries(e.value).filter(([key])=>!['id','schema_version','content_hash','references','execution_authorized'].includes(key)))}/>{typeof e.url==='string'&&e.url.startsWith('https://')&&<a href={e.url} target="_blank" rel="noreferrer">Source</a>}</details>)}
+  {!evidence.length&&<p>No local source establishes this point; the answer is strategic judgment.</p>}
+  {(inspected||requestedEvidence)&&<button onClick={()=>{inspect(null);setRequestedEvidence(false)}}>Close sources</button>}
+ </section>}
+
  </>
 }
 
 function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:ResearchCard[];inspect:(id:string)=>void}){
+ const [showChecks,setShowChecks]=useState(false)
  const alternatives=p.alternatives.flatMap(group=>{
   if(!group||typeof group!=='object'||!('candidates' in group)||!Array.isArray(group.candidates))return []
   return group.candidates.flatMap(candidate=>candidate&&typeof candidate.canonical_name==='string'&&typeof candidate.printing_id==='string'?[{id:`alternative-${candidate.printing_id}`,name:candidate.canonical_name,printing:candidate.printing_id}]:[])
@@ -62,14 +62,18 @@ function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:Resear
    {p.kind==='diff'&&(['removes','adds'] as const).map(key=><div key={key}><h3>{key==='removes'?'Proposed cuts':'Proposed additions'}</h3><ul>{p[key].map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} · currently {c.current_quantity}{c.validated===false?' · cut not valid':''}</li>)}</ul></div>)}
    {p.category_subtotals&&<p aria-label="Calculated category subtotals">{Object.entries(p.category_subtotals).map(([category,count])=>`${category==='Pokemon'?'Pokémon':category}: ${count}`).join(' · ')} · Total: {p.total_cards}</p>}
    <details open={p.kind==='list'}><summary>{p.kind==='list'?'Resolved list':'Resulting proposed list'}</summary><ul>{p.cards.map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} <small>{c.printing_id}</small></li>)}</ul></details>
-   {!!p.unresolved.length&&<ul>{p.unresolved.map((c,i)=><li key={i}>{c.quantity} slots — {c.role||c.name} [unresolved]</li>)}</ul>}
+   {showChecks&&!!p.unresolved.length&&<ul>{p.unresolved.map((c,i)=><li key={i}>{c.quantity} slots — {c.role||c.name} [unresolved]</li>)}</ul>}
   </>}
+  {(p.hard_validation.length>0||p.unresolved.length>0||p.strategic_diagnostics.length>0||p.alternatives.length>0||p.premises.length>0||p.repair_notes.length>0)&&<button className="source-note" onClick={()=>setShowChecks(v=>!v)}>{showChecks?'Hide details':'Review deck details'}</button>}
+  {showChecks&&<div aria-label="Deck review details">
   {p.repair_notes.map((s,i)=><p key={i}>{text(s)}</p>)}
   {!!p.hard_validation.length&&<div><h3>Construction issues</h3><ul>{p.hard_validation.map((s,i)=><li key={i}>{text(s)}</li>)}</ul></div>}
   {!!p.strategic_diagnostics.length&&<div><h3>Strategic checks — advisory</h3><ul>{p.strategic_diagnostics.map((s,i)=><li key={i}>{text(s)}</li>)}</ul></div>}
   {!!p.alternatives.length&&<details><summary>Role-preserving alternatives</summary><EvidenceValue value={p.alternatives} renderString={alternativeText}/></details>}
   {!!p.premises.length&&<details><summary>Resolved card premises</summary><EvidenceValue value={p.premises}/></details>}
   <details><summary>Validation scope</summary><p>Legality: {p.legality_status.replace(/_/g,' ').toLowerCase()}. Strategic quality is a separate judgment.</p><EvidenceValue value={p.limitations}/></details>
+  </div>}
+
  </section>
 }
 
@@ -90,7 +94,7 @@ export function ConversationPanel({open,toggle}:{open:boolean;toggle:()=>void}) 
   if(flight.current||!ready||!question.trim())return
   flight.current=true;setPending(true);setError('')
   const submitted=question.trim(),snapshot=contextKey
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),105000)
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),205000)
   try{
    const response=await fetch('/api/v1/agent/research',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
     body:JSON.stringify({scope:'conversation',question:submitted,conversation_id:session.current,printing:selected?.printing,variant:selected?.variant,include_deck:usesDeck,revision:usesDeck?deck?.data?.revision:undefined,window})})
@@ -103,7 +107,7 @@ export function ConversationPanel({open,toggle}:{open:boolean;toggle:()=>void}) 
  return <aside className={`agent-panel research-agent conversation-agent ${open?'':'collapsed'}`} aria-label="PokéLab Agent">
   <button aria-label="Toggle Agent panel" aria-expanded={open} onClick={toggle}>{open?'PokéLab Agent ›':'‹'}</button>
   <div hidden={!open}><h2>Let’s talk Pokémon</h2><p>Explore ideas, compare cards, or talk through a plan.</p>
-   <p className="source-note">Read-only · One request per Ask · This conversation lasts only in this session.</p>
+   <p className="source-note">Read-only · Completion may use one repair pass · This conversation lasts only in this session.</p>
    <button disabled={pending} onClick={()=>{session.current=undefined;setTurns([]);setQuestion('');setError('')}}>New conversation</button>
    {selected&&<div className="research-context">{selected.name} · {selected.printing} · {selected.variant}<button onClick={()=>select(null)}>Clear selected card</button></div>}
    {deck?.data&&<label className="research-deck-option"><input type="checkbox" checked={includeDeck} onChange={e=>setIncludeDeck(e.target.checked)}/>Use active deck: {deck.data.deck.name} · revision {deck.data.revision}</label>}

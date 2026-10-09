@@ -40,7 +40,7 @@ def test_finalize_structured_totals_and_local_recount(stores,monkeypatch,energy,
         assert again['answer']['proposal']['total_cards']==total
         assert [(r['printing_id'],r['quantity']) for r in again['answer']['proposal']['cards']]==[(r['printing_id'],r['quantity']) for r in report['cards']]
         assert again['answer']['artifact_id']==answer['artifact_id']
-    assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
+    assert len(calls)==(1 if total==60 else 2) and before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
 def test_generated_deck_separate_from_active_deck(stores):
