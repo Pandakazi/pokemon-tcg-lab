@@ -122,7 +122,7 @@ def pending_repair(question, history):
 def repair_requirements(report):
     """Compact local failures and legal candidates, never chosen replacement slots."""
     if not report:return dict(format='standard',target_total=60,failures=['A generated_deck artifact is required.'])
-    return dict(format='standard',target_total=60,name=report['name'],
+    return dict(format='standard',target_total=60,name=report['name'],candidate_sandbox=report.get('candidate_sandbox'),
         cards=[{k:r.get(k) for k in ('canonical_name','printing_id','quantity','category')} for r in report['cards']],
         total=report['total_cards'],unresolved=report['unresolved'],
         failures=report['hard_validation'][:12],

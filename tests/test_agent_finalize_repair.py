@@ -122,7 +122,7 @@ def test_resolved_generated_identity_controls_facts_over_active_deck(stores):
     active(stores,[('qa-alakazam2',1),('qa-energy',59)])
     rows=[FULL[0],('Alakazam','qa-alakazam1',4,'draw support'),FULL[2]]
     svc,calls=service(stores,[deck(rows),'Alakazam has an Ability called First.'])
-    first=svc.run(a.ResearchRequest(scope='conversation',question='Create a complete 60-card deck.',include_deck=True,revision=7))
+    first=svc.run(a.ResearchRequest(scope='conversation',question='Create a complete 60-card deck with Alakazam.',include_deck=True,revision=7))
     assert first['answer']['proposal']['validation_status']=='VALIDATED'
     result=svc.run(a.ResearchRequest(scope='conversation',question='Explain that support.',include_deck=True,revision=7,conversation_id=first['conversation_id']))
     facts=result['answer']['facts']

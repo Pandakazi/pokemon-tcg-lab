@@ -144,12 +144,22 @@ def context(request, sources, history):
     from .agent_context_sources import Unavailable, stamp
     before = stamp(sources.paths['cards'])
     omissions = []; evidence = []; active = None; selected = None
+    building=bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE'
+    sandbox=None
     try:
-        index = RetrievalIndex.from_database(sources.paths['cards'])
+        if building:
+            from .agent_deck_sandbox import build
+            pending=pending_repair(request.question,history)
+            sandbox=(pending['report'].get('candidate_sandbox') if pending else None) or build(sources.paths['cards'],request.question,history['printings'])
+            if not sandbox['candidates']:raise ResearchUnavailable('context_unavailable')
+            index=None
+        else:index = RetrievalIndex.from_database(sources.paths['cards'])
     except (OSError, ValueError, sqlite3.Error):
+        if building:raise ResearchUnavailable('context_unavailable') from None
         index = None
         omissions.append('standard-retrieval-unavailable')
     printings = [request.printing] if request.printing else []
+    if sandbox:printings += [r['printing_id'] for r in sandbox['candidates'] if r['role']=='requested-core']
     question = request.question.casefold()
     if index:
         # Exact card/component names are local lookup keys, not model knowledge.
@@ -223,6 +233,7 @@ def context(request, sources, history):
         as_of=str(date.today()), history=history['turns'], evidence=evidence, omissions=omissions,
         external_research=False, history_is_not_authority=True,
         proof_requested=bool(re.search(r'prove|proven|evidence|sources?|tournament data|where.*(?:getting|say|from)|basing.*on|why', question)))
+    if sandbox:envelope['candidate_sandbox']=sandbox
     # Preserve selected card and complete deck; shed optional cards then older turns.
     while len(canonical(envelope).encode()) > CONTEXT_BYTES:
         removable = next((e for e in reversed(evidence) if e.get('printing') and e['printing'] != request.printing), None)
@@ -275,10 +286,18 @@ def run(service, request, selection, *, _repair=None):
     try: envelope = context(request, Sources(**service.paths, format_start=service.format_start), history)
     except ResearchUnavailable as exc: return dict(status=exc.reason, answer=None)
     pending=pending_repair(request.question,history)
+    if pending and pending['report'].get('lifecycle')=='DRAFT':pending=None
+    from .agent_deck_sandbox import small_repair
+    if pending and not small_repair(pending['report']):
+        retained=recount(history,'generated_deck')
+        retained['completion']={'status':'incomplete','repair_attempts':0,'reason':'generation_failure_exceeds_small_repair'}
+        retained['notices'].append('This incomplete list needs fresh generation from the legal candidate sandbox, not a small repair.')
+        return dict(status='answered',answer=retained,conversation_id=request.conversation_id,execution={'provider_called':False})
     requirements=_repair or (repair_requirements(pending['report']) if pending else None)
     if requirements:
-        envelope['repair']=requirements
-        envelope['repair_instruction']='Repair this same generated deck now. Return a complete generated_deck artifact; do not merely explain. Preserve valid engine cards, repair failed roles using Standard-legal candidates. Broader redesign only if necessary.'
+        envelope['repair']={k:v for k,v in requirements.items() if k!='candidate_sandbox'}
+        if requirements.get('candidate_sandbox'):envelope['candidate_sandbox']=requirements['candidate_sandbox']
+        envelope['repair_instruction']='Repair this same generated deck now. Return a complete generated_deck artifact; do not merely explain. Preserve valid engine cards, repair failed roles using Standard-legal candidates. Change at most 8 card copies; no broader redesign. Choose only candidate_sandbox cards.'
         envelope['lifecycle']='FINALIZE'
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)
@@ -344,6 +363,9 @@ def run(service, request, selection, *, _repair=None):
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})
+    from .agent_deck_sandbox import small_repair, repair_distance, MAX_REPAIR_SLOTS
+    if requirements and report and report['kind']=='list' and repair_distance(requirements,report)>MAX_REPAIR_SLOTS:
+        return dict(response,status='repair_scope_exceeded',answer=None)
     if (requirements and report and report['kind']=='list' and report['validation_status']!='VALIDATED'
             and report['total_cards']<requirements.get('total',0)):
         # Do not commit the inferior artifact before its caller can retain the baseline.
@@ -354,7 +376,10 @@ def run(service, request, selection, *, _repair=None):
             return dict(response,status='answered',answer=retained,conversation_id=request.conversation_id)
     completing=envelope['lifecycle']=='FINALIZE' and (report is None or report['kind']=='list')
     incomplete=report is None or report['validation_status']!='VALIDATED'
-    if completing and incomplete and _repair is None:
+    if completing and incomplete and _repair is None and not small_repair(report):
+        answer['completion']={'status':'incomplete','repair_attempts':0,'reason':'generation_failure_exceeds_small_repair'}
+        execution['repair_calls']=0
+    elif completing and incomplete and _repair is None:
         repaired=run(service,request,selection,_repair=repair_requirements(report))
         if repaired.get('status')=='answered' and repaired.get('answer',{}).get('proposal',{}).get('kind')=='list':
             repaired.setdefault('execution',{})['initial_attempt']=execution

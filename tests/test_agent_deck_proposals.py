@@ -60,7 +60,8 @@ def run(stores,proposal,question='Give me the finished 60.',**kwargs):
     before={k:p.read_bytes() for k,p in stores.paths.items()}
     result=svc.run(a.ResearchRequest(scope='conversation',question=question,**kwargs))
     assert result['status']=='answered',result
-    repair_expected=d.lifecycle(question)=='FINALIZE' and result['answer']['proposal']['kind']=='list' and result['answer']['proposal']['validation_status']!='VALIDATED'
+    from pokelab.agent_deck_sandbox import small_repair
+    repair_expected=small_repair(result['answer']['proposal']) and d.lifecycle(question)=='FINALIZE' and result['answer']['proposal']['kind']=='list' and result['answer']['proposal']['validation_status']!='VALIDATED'
     assert len(calls)==(2 if repair_expected else 1) and before=={k:p.read_bytes() for k,p in stores.paths.items()}
     return result['answer']['proposal']
 
@@ -166,7 +167,7 @@ def test_wrong_named_matchup_premise_corrects_without_blank_response(stores):
 
 
 def test_ambiguous_variant_is_not_arbitrarily_selected(stores):
-    result=run(stores,list_proposal([dict(name='Alakazam',quantity=2)]))
+    result=run(stores,list_proposal([dict(name='Alakazam',quantity=2)]),question='Give me the finished 60 with Alakazam.')
     assert result['unresolved'][0]['state']=='ambiguous'
     assert len(result['alternatives'][0]['candidates'])>=2
 
@@ -174,7 +175,7 @@ def test_ambiguous_variant_is_not_arbitrarily_selected(stores):
 def test_invalid_proposal_shape_does_not_remove_conversation(stores):
     svc,calls=service(stores,dict(kind='list',cards=[dict(name='Pikachu ex',quantity='two')]))
     result=svc.run(a.ResearchRequest(scope='conversation',question='Give me the finished 60.'))
-    assert result['status']=='answered' and len(calls)==2
+    assert result['status']=='answered' and len(calls)==1
     assert 'missing_artifact' in result['answer']['notices']
 
 

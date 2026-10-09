@@ -44,6 +44,7 @@ def lifecycle(question):
     if re.search(r'^\s*(?:please\s+)?(?:add|cut|remove|swap)\b',q): return 'RECOMMEND'
     # Explicit partial intent wins over the word 60 in "not ready for a 60".
     if re.search(r'not ready|just.*(?:shell|core)|sketch|partial (?:list|deck)',q): return 'DRAFT'
+    if re.search(r'(?:create|build|make).*?Standard.*?deck',question,re.I):return 'FINALIZE'
     if re.search(r'(?:create|build|make).*?(?:complete|legal|60.card).*?(?:deck|list)|finali[sz]|finished|give me (?:the |a )?(?:final )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
     if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change|changes concrete|(?:exact|specific) changes|replace.*(?:cards?|slots?|them|these|those)|cards?.*replace|what comes out.*what goes in|exactly.*(?:comes out|goes in)',q): return 'RECOMMEND'
     if re.search(r'\bshell\b|core look|draft',q): return 'DRAFT'
@@ -61,6 +62,7 @@ class Resolver:
         self.records=self.provider.records
         self.path=path
         self.index=None
+        self.allowed=None
 
     def resolve(self, candidate, active=None, *, generated=False):
         if generated:return self.resolve_functional(candidate)
@@ -131,7 +133,11 @@ class Resolver:
     def alternatives(self, role, original=None, *, exclude_ace=False):
         if not role and original is None:return []
         from .alternative_retrieval import RetrievalIndex
-        if self.index is None:self.index=RetrievalIndex.from_database(self.path)
+        if self.index is None:
+            if self.allowed is not None:
+                from .agent_deck_sandbox import legal_pool,retrieval
+                self.index=retrieval([r for r in legal_pool(self.path) if r['functional_id'] in self.allowed])
+            else:self.index=RetrievalIndex.from_database(self.path)
         # Accepted retrieval supplies mechanical candidates, never a strategic verdict.
         lookups=[('same_role',role)] if role else []
         if original:
@@ -197,6 +203,7 @@ def evaluate(proposal, premises, sources, request, envelope):
         resolution_status='RESOLVED',cards=[],adds=[],removes=[],unresolved=[],premises=[],
         total_cards=0,hard_validation=[],strategic_diagnostics=[],repair_notes=[],alternatives=[],
         rationale=proposal.rationale if proposal else '',writes_performed=False)
+    if proposal and proposal.kind=='list' and envelope.get('candidate_sandbox'):report['candidate_sandbox']=envelope['candidate_sandbox']
     rejected=set();new_evidence=[]
     with sources.snapshot() as (dbs,errors):
         if 'cards' in errors:
@@ -206,6 +213,8 @@ def evaluate(proposal, premises, sources, request, envelope):
         # catalog() is read-only; collection tables are not required to resolve facts.
         collection=SnapshotCollection(cards,sources.paths['collection'],dbs.get('collection'))
         resolver=Resolver(collection,sources.paths['cards'])
+        if proposal and proposal.kind=='list' and envelope.get('candidate_sandbox'):
+            resolver.allowed={r['functional_id'] for r in envelope['candidate_sandbox']['candidates']}
         active=None
         if request.include_deck:
             row=None if 'workspace' in errors else dbs['workspace'].execute('SELECT revision,document FROM workspace WHERE id=1').fetchone()
@@ -227,6 +236,9 @@ def evaluate(proposal, premises, sources, request, envelope):
 
         def resolve(candidate, cutting=False):
             record,state,choices=resolver.resolve(candidate,active if cutting else None,generated=bool(proposal and proposal.kind=='list' and not cutting))
+            sandbox=envelope.get('candidate_sandbox') if proposal and proposal.kind=='list' and not cutting else None
+            if sandbox and state=='resolved' and deck_identity(record) not in {r['functional_id'] for r in sandbox['candidates']}:
+                record=None;state='outside_candidate_sandbox';choices=[]
             if record:evidence(record)
             if state!='resolved' and not (cutting and record is not None and state in ('illegal','unknown_legality')):
                 label=candidate.name or candidate.role or 'Unresolved slot'
@@ -234,6 +246,7 @@ def evaluate(proposal, premises, sources, request, envelope):
                 report['unresolved'].append(dict(name=label,quantity=candidate.quantity,role=candidate.role,state=state))
                 if len(report['alternatives'])<8:
                     options=choices or resolver.alternatives(candidate.role,record)
+                    if sandbox:options=[r for r in options if r['card_id'] in {c['functional_id'] for c in sandbox['candidates']}]
                     report['alternatives'].append(dict(for_card=label,role=candidate.role,candidates=options))
                 report['repair_notes'].append(f"{label}: {'several different printed versions match; choose the intended one' if state=='ambiguous' else 'not established as a current legal card for this role'}. Keep the role; review the local alternatives instead of treating this as finished.")
             return record,state
