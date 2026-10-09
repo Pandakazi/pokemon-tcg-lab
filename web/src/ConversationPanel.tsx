@@ -43,7 +43,14 @@ function AnswerView({result}:{result:Result}) {
 }
 
 function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:ResearchCard[];inspect:(id:string)=>void}){
+ const alternatives=p.alternatives.flatMap(group=>{
+  if(!group||typeof group!=='object'||!('candidates' in group)||!Array.isArray(group.candidates))return []
+  return group.candidates.flatMap(candidate=>candidate&&typeof candidate.canonical_name==='string'&&typeof candidate.printing_id==='string'?[{id:`alternative-${candidate.printing_id}`,name:candidate.canonical_name,printing:candidate.printing_id}]:[])
+ })
+ // Only unambiguous exact-printing alternatives receive a preview.
+ const alternativeCards=alternatives.filter(c=>!alternatives.some(other=>other.name===c.name&&other.printing!==c.printing))
  const text=(s:string)=><ResearchCardText text={s} cards={cards} inspect={inspect}/>
+ const alternativeText=(s:string)=><ResearchCardText text={s} cards={alternativeCards} inspect={()=>{}}/>
  return <section aria-label="Proposed deck review" className="research-context">
   <h3>{p.kind==='diff'?'Proposed changes':p.kind==='list'?'Proposed deck':'Card premise review'}{p.name?` · ${p.name}`:''}</h3>
   <p>Proposal only — nothing has been applied or saved.</p>
@@ -56,7 +63,7 @@ function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:Resear
   {p.repair_notes.map((s,i)=><p key={i}>{text(s)}</p>)}
   {!!p.hard_validation.length&&<div><h3>Construction issues</h3><ul>{p.hard_validation.map((s,i)=><li key={i}>{text(s)}</li>)}</ul></div>}
   {!!p.strategic_diagnostics.length&&<div><h3>Strategic checks — advisory</h3><ul>{p.strategic_diagnostics.map((s,i)=><li key={i}>{text(s)}</li>)}</ul></div>}
-  {!!p.alternatives.length&&<details><summary>Role-preserving alternatives</summary><EvidenceValue value={p.alternatives}/></details>}
+  {!!p.alternatives.length&&<details><summary>Role-preserving alternatives</summary><EvidenceValue value={p.alternatives} renderString={alternativeText}/></details>}
   {!!p.premises.length&&<details><summary>Resolved card premises</summary><EvidenceValue value={p.premises}/></details>}
   <details><summary>Validation scope</summary><p>Legality: {p.legality_status.replace(/_/g,' ').toLowerCase()}. Strategic quality is a separate judgment.</p><EvidenceValue value={p.limitations}/></details>
  </section>

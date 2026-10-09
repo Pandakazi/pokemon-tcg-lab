@@ -92,3 +92,15 @@ test('invalid proposal stays visible with separate construction and advisory rev
  expect(agent.getByRole('article')).toHaveTextContent('suggest a flexible concept')
  expect(calls).toHaveLength(1)
 })
+
+test('role alternatives reuse the existing card preview without changing proposal layout or submitting again',async()=>{
+ const proposal={status:'PROPOSED',lifecycle:'DRAFT',kind:'list',name:'Concept',source_revision:null,validation_status:'NEEDS_REPAIR',legality_status:'UNKNOWN',total_cards:0,cards:[],adds:[],removes:[],unresolved:[],hard_validation:[],strategic_diagnostics:[],repair_notes:[],premises:[],alternatives:[{role:'draw support',candidates:[{canonical_name:'Alternative Card',printing_id:'test-1'}]}]}
+ const {calls,agent}=setup(async()=>({...result,answer:{...result.answer,proposal}}))
+ await ask();await agent.findByRole('region',{name:'Proposed deck review'})
+ fireEvent.click(agent.getByText('Role-preserving alternatives'))
+ fireEvent.pointerEnter(agent.getByRole('button',{name:'Alternative Card'}))
+ const tooltip=await screen.findByRole('tooltip',{name:'Alternative Card card preview'})
+ expect(tooltip).toHaveStyle({width:'350px'})
+ expect(within(tooltip).getByRole('img')).toHaveAttribute('src','/local-art.webp')
+ expect(calls).toHaveLength(1)
+})

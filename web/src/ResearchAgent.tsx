@@ -90,11 +90,11 @@ export function ValidationDetails({value}:{value:unknown}) {
   <p>No rejected answer, provider message or exception text is displayed. No retry was made.</p>
  </details>
 }
-export function EvidenceValue({value}:{value:unknown}) {
+export function EvidenceValue({value,renderString}:{value:unknown;renderString?:(value:string)=>ReactNode}) {
  if(value===null||value===undefined)return <span>Unknown</span>
- if(Array.isArray(value))return value.length?<ul>{value.map((v,i)=><li key={i}><EvidenceValue value={v}/></li>)}</ul>:<span>None recorded</span>
- if(typeof value==='object')return <dl>{Object.entries(value).map(([k,v])=><div key={k}><dt>{k.replace(/_/g,' ')}</dt><dd><EvidenceValue value={v}/></dd></div>)}</dl>
- return <span>{String(value)}</span>
+ if(Array.isArray(value))return value.length?<ul>{value.map((v,i)=><li key={i}><EvidenceValue value={v} renderString={renderString}/></li>)}</ul>:<span>None recorded</span>
+ if(typeof value==='object')return <dl>{Object.entries(value).map(([k,v])=><div key={k}><dt>{k.replace(/_/g,' ')}</dt><dd><EvidenceValue value={v} renderString={renderString}/></dd></div>)}</dl>
+ return <span>{typeof value==='string'&&renderString?renderString(value):String(value)}</span>
 }
 export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
  const {selected,select}=useResearchAgent(),deck=useDeck(),{window:period}=useCompetitiveTimeframe()

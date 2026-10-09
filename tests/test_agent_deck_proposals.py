@@ -486,10 +486,23 @@ def test_evidence_boundary_names_recent_swaps(stores):
 
 
 def test_concrete_referents_are_explicit(stores):
-    active(stores,[('qa-pikachu',4),('qa-energy',56)])
-    svc,_=service(stores,dict(kind='diff',adds=[row('qa-draw',1)],removes=[row('qa-energy',1)]))
-    result=svc.run(a.ResearchRequest(scope='conversation',question='What would you replace those three with?',include_deck=True,revision=7))
-    assert 'treating your reference as Lightning Energy' in result['answer']['paragraphs'][0]['text']
+    active(stores,[('qa-pikachu',4),('qa-draw',1),('qa-recover',1),('qa-dark',1),('qa-energy',53)])
+    svc,calls=service(stores,text='The three situational slots to review are Draw Helper, Recovery Tool, and Darkness Energy.')
+    first=svc.run(a.ResearchRequest(scope='conversation',question='Which three slots would you review?',include_deck=True,revision=7))
+    def followup(req):
+        body=json.loads(req.content);calls.append(body)
+        assert 'Draw Helper, Recovery Tool, and Darkness Energy' in json.dumps(body)
+        assert 'explicitly name the cards' in body['messages'][0]['content']
+        actions={'changes':[{'action':'remove','card_name':name,'quantity':1} for name in ['Draw Helper','Recovery Tool','Darkness Energy']]+[{'action':'add','card_name':'Lightning Energy','quantity':3}]}
+        text='I would test simplifying the support package. <POKELAB_ACTIONS>'+json.dumps(actions)+'</POKELAB_ACTIONS>'
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}]})
+    svc.transport=httpx.MockTransport(followup)
+    before={k:p.read_bytes() for k,p in stores.paths.items()}
+    result=svc.run(a.ResearchRequest(scope='conversation',question='What would you replace those three with?',include_deck=True,revision=7,conversation_id=first['conversation_id']))
+    assert result['status']=='answered',result
+    assert 'treating your reference as Draw Helper, Recovery Tool, Darkness Energy' in result['answer']['paragraphs'][0]['text']
+    assert result['answer']['proposal']['total_cards']==60
+    assert before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
 def test_ambiguous_reference_can_ask_without_actions(stores):

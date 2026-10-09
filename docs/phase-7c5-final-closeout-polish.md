@@ -36,3 +36,15 @@ Auto-cut strategy and resolving conversational ambiguity remain model-guided. Fa
 PM should check one full-deck addition proposes defensible balancing cuts and explains the sacrifice, a follow-up names the intended cards or asks for clarification, factual corrections remain intact, and the empirical answer discusses the actual swaps. Verify the stacked artwork/statistics popup on Library and Deck Builder, and image-only previews on Variations/Collection/Card Detail. No live call was performed as part of this pass.
 
 READY FOR 7C.5 CERTIFICATION, subject to final PM QA and separate authorization. No certification performed.
+
+## Completion audit follow-up
+
+Compared every item in the repeated PM brief against implementation and coverage. The approved stacked card/statistics layout is unchanged byte-for-byte, including Competitive.tsx, AssociatedCardPreview.tsx, CardTile.tsx, FinishImage.tsx, DeckBuilder.tsx and index.css.
+
+Closed one remaining practical hover gap: role-preserving alternative candidate names now use the existing ResearchCardText/AssociatedCardPreview through optional string rendering in EvidenceValue. Existing list/detail markup is preserved. Candidates without a unique exact printing remain plain text rather than selecting misleading artwork.
+
+Strengthened the follow-up regression from a single-card assertion to two real conversation turns identifying three distinct cards, forwarding that history, explicitly naming all three in the proposed response, preserving 60 cards, and proving no store writes.
+
+Follow-up verification: 111 frontend tests passed in one full run; TypeScript passed; strengthened backend test passed with fake transport; git diff --check passed. Production backend is unchanged, so the earlier single 306-test network-blocked gate remains applicable and was not repeated. Previously verified browser popup layout is unchanged. No live provider calls, merge, tag, or certification.
+
+All five bounded implementation items are covered. Auto-cut strategy and clarification remain model-guided rather than a deterministic strategic optimizer; PM must still judge live conversational quality. Ready for final PM QA/certification decision.
