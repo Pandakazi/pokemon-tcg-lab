@@ -58,6 +58,9 @@ $env:POKELAB_COMPETITIVE_DB_PATH = Join-Path $SourceRepository 'data\competitive
 $env:POKELAB_USER_DB_PATH = $collectionCopy
 $env:POKELAB_DECK_DB_PATH = Join-Path $qaRoot 'deck-workspace.sqlite3'
 $env:PYTHONPATH = Join-Path $phase5Root 'src'
+# Prepare derived gameplay/format mappings offline before the read-only API starts.
+& $python -c 'import os; from tcg_lab.card_db import SQLiteCards; SQLiteCards(os.environ["TCG_CARDS_DB_PATH"])'
+if ($LASTEXITCODE -ne 0) { throw 'Unable to prepare the local gameplay index.' }
 $revision = git -c "safe.directory=$($phase5Root.Replace('\','/'))" -C $phase5Root rev-parse HEAD
 if ($LASTEXITCODE -ne 0 -or -not $revision) { throw 'Unable to identify the current QA commit.' }
 $env:POKELAB_BUILD_REVISION = $revision.Trim()

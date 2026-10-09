@@ -89,6 +89,8 @@ class PokeLabEngine:
                 db.execute("INSERT OR REPLACE INTO printing_identity VALUES (?,?)", (row["id"], identity))
                 count += 1
             db.execute("INSERT OR REPLACE INTO app_settings VALUES ('identity_version', '1')")
+            from .functional_index import rebuild
+            rebuild(db)
         return count
 
     def identity(self, printing_id: str) -> str:

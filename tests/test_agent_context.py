@@ -27,7 +27,7 @@ def setup(research):
     seed(research,[4]*16,unmapped=1)
     root=research.collection.path.parent
     cards=SQLiteCards(research.collection.cards.path)
-    basic=cards.get('sm2-1')['card']; basic['variants']={'normal':True}; cards.put(basic)
+    basic=cards.get('sm2-1')['card']; basic['variants']={'normal':True}; basic['regulationMark']='H'; cards.put(basic)
     for key,raw in reviewed_sources().items():
         record=deepcopy(raw); record.update(set={'id':key.rsplit('-',1)[0]},localId=key.rsplit('-',1)[1],variants={'normal':True,'holo':True})
         cards.put(record)

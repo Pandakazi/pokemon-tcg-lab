@@ -97,9 +97,13 @@ class Collection:
                 records, functions, libraries = {}, {}, {}
                 with closing(self.cards.connect()) as db:
                     self.cards._ready(db)
-                    for row in db.execute('SELECT id,raw,game,checked_at FROM cards'):
+                    indexed=bool(db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='gameplay_printings'").fetchone())
+                    query='SELECT c.id,c.raw,c.game,c.checked_at,p.legacy_id,p.library_id FROM cards c LEFT JOIN gameplay_printings p ON p.printing_id=c.id' if indexed else 'SELECT id,raw,game,checked_at FROM cards'
+                    for row in db.execute(query):
                         raw = json.loads(row['raw'])
-                        fid, lid = identity(functional_signature(raw)), identity(library_signature(raw))
+                        if indexed and row['legacy_id']:
+                            fid,lid=row['legacy_id'],row['library_id']
+                        else:fid,lid=identity(functional_signature(raw)),identity(library_signature(raw))
                         records[row['id']] = {'card': raw, 'functional_id': fid, 'library_id': lid,
                                               'game': row['game'], 'checked_at': row['checked_at']}
                         functions.setdefault(fid, []).append(row['id'])

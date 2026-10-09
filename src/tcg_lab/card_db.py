@@ -58,6 +58,9 @@ class SQLiteCards:
                 PRAGMA user_version=1;
             """)
 
+            from pokelab.functional_index import initialize
+            initialize(db)
+
     def connect(self):
         db = sqlite3.connect(self.path, timeout=30)
         db.row_factory = sqlite3.Row
@@ -84,6 +87,9 @@ class SQLiteCards:
             serie = record["serie"].get("id")
             game = "pocket" if serie == "tcgp" else "tcg" if serie else "unknown"
             db.execute("UPDATE cards SET game=? WHERE set_id=?", (game, record["id"]))
+            from pokelab.functional_index import index_card
+            for row in db.execute('SELECT raw FROM cards WHERE set_id=?',(record['id'],)).fetchall():
+                index_card(db,json.loads(row['raw']),game)
 
     def put(self, card, *, fetched_at=None, etag=None, modified=None):
         card = parse_card(card)
@@ -102,6 +108,8 @@ class SQLiteCards:
                       json.dumps(text_fields, ensure_ascii=False).casefold(),
                       json.dumps(card, ensure_ascii=False, separators=(",", ":")), stamp, stamp, etag, modified)
             db.execute("INSERT OR REPLACE INTO cards VALUES (" + ",".join("?" for _ in values) + ")", values)
+            from pokelab.functional_index import index_card
+            index_card(db,card,game)
 
     def cached(self):
         with closing(self.connect()) as db:

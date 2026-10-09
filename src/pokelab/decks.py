@@ -18,13 +18,15 @@ from tcg_lab.cards import CardLookupError
 from tcg_lab.models import Deck, DeckEntry
 from tcg_lab.service import Lab
 from .engine import normalized_name
-from .library_identity import library_signature
+from .library_identity import BASIC_NAMES
 
 
 def deck_identity(record):
-    signature = library_signature(record['card'])
-    if signature.startswith('library-basic-energy:'):
-        return signature.replace('library-', 'deck-', 1)
+    if record.get('deck_functional_id'):return record['deck_functional_id']
+    raw=record['card']
+    if raw.get('category')=='Energy' and raw.get('energyType')=='Normal':
+        kind=BASIC_NAMES.get(normalized_name(raw['name']))
+        if kind and (not raw.get('types') or raw['types']==[kind]):return 'deck-basic-energy:'+kind
     return record['functional_id']
 
 
@@ -69,23 +71,41 @@ class DeckProvider:
         self.groups = {}
         for printing, record in self.records.items():
             self.groups.setdefault(deck_identity(record), []).append(printing)
+        from .functional_index import require_current
+        with closing(self.cards.connect()) as db:
+            require_current(db)
+            self.functional={r['id']:dict(r) for r in db.execute('SELECT * FROM gameplay_functions')}
+            self.printing_map={r['printing_id']:r['functional_id'] for r in db.execute('SELECT printing_id,functional_id FROM gameplay_printings')}
+        self.aliases={}
+        for key,ids in list(self.groups.items()):
+            targets={self.printing_map[p] for p in ids if p in self.printing_map}
+            if len(targets)==1:self.aliases[key]=next(iter(targets))
+        for printing,key in self.printing_map.items():
+            if printing in self.records and printing not in self.groups.setdefault(key,[]):self.groups[key].append(printing)
+
+    def candidates(self,name):
+        # Name lookup uses the ingestion-built index, not signature calculation.
+        with closing(self.cards.connect()) as db:
+            return [r[0] for r in db.execute('SELECT id FROM gameplay_functions WHERE name=? ORDER BY id',(normalized_name(name),))]
+
+    def functional_record(self,key):
+        item=self.functional[key]
+        record=deepcopy(self.records[item['canonical_printing']])
+        record['deck_functional_id']=key
+        return record
 
     def get(self, key):
-        ids = self.groups.get(key)
-        if not ids:
-            raise CardLookupError('Functional card is missing from the current cache.')
-        records = [self.records[id] for id in sorted(ids)]
-        # Stable selection; unknown evidence takes precedence over a false flag
-        # when no printing establishes legality, so it cannot be called verified.
-        record = next((r for r in records if r['card'].get('legal', {}).get('standard') is True and r.get('game') != 'pocket'), None)
-        if record is None:
-            record = next((r for r in records if 'standard' not in r['card'].get('legal', {})), records[0])
-        record = deepcopy(self.cards.get(record['card']['id']))
-        card = record['card']
-        card['name'] = normalized_name(card['name'])
-        if card.get('category') == 'Energy' and card.get('energyType') == 'Normal' and not key.startswith('deck-basic-energy:'):
-            # Ambiguous upstream Normal is not an unlimited Basic Energy card.
-            card['energyType'] = 'Special'
+        target=self.aliases.get(key,key)
+        item=self.functional.get(target)
+        if item is None:raise CardLookupError('Functional card is missing from the current gameplay index.')
+        record=deepcopy(self.cards.get(item['canonical_printing']))
+        card=record['card']
+        card['legal']=dict(card.get('legal',{}))
+        if item['standard'] is None:card['legal'].pop('standard',None)
+        else:card['legal']['standard']=bool(item['standard'])
+        card['name']=normalized_name(card['name'])
+        if card.get('category')=='Energy' and card.get('energyType')=='Normal' and not target.startswith('deck-basic-energy:'):
+            card['energyType']='Special'
         return record
 
 

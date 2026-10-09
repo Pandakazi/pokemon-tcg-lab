@@ -14,7 +14,7 @@ from test_card_pool_research import sources,setup,research,offline
 
 def install(stores,records):
     cards=SQLiteCards(stores.paths['cards'])
-    for raw in records:cards.put(dict(rarity='Uncommon',set={'id':'qa'},localId=raw['id'],**raw))
+    for raw in records:cards.put(dict(rarity='Uncommon',set={'id':'qa'},localId='1' if raw['id']=='legal-a' else raw['id'],**raw))
     with sqlite3.connect(stores.paths['cards']) as db:
         db.executemany("UPDATE cards SET game='tcg' WHERE id=?",[(r['id'],) for r in records])
 
@@ -43,7 +43,7 @@ def test_different_effects_remain_ambiguous_and_illegal_old_not_equated(stores):
     with stores.snapshot() as (dbs,_):
         r=Resolver(SnapshotCollection(SnapshotCards(stores.paths['cards'],dbs['cards']),stores.paths['collection'],dbs['collection']),stores.paths['cards'])
         assert r.resolve(Candidate(name='Ultra Ball'),generated=True)[1]=='ambiguous'
-        assert r.resolve(Candidate(name='Ultra Ball',printing_id='old-ball'),generated=True)[1]=='illegal'
+        assert r.resolve(Candidate(name='Ultra Ball',printing_id='old-ball'),generated=True)[1]=='ambiguous'  # Old hint cannot choose between distinct legal identities.
         assert r.resolve(Candidate(name='Ultra Ball',printing_id='qa-pikachu'),generated=True)[1]=='ambiguous'
 
 

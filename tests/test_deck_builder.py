@@ -14,8 +14,8 @@ from test_card_data import card, set_record
 @pytest.fixture
 def setup(tmp_path):
     cards = SQLiteCards(tmp_path/'cards.sqlite3'); cards.put_set(set_record())
-    first = card('sm2-1','Test Basic'); first.update(legal={'standard':True},variants={'normal':True,'reverse':True})
-    second = deepcopy(first); second.update(id='sm2-2',localId='2',legal={'standard':False})
+    first = card('sm2-1','Test Basic'); first.update(regulationMark='H',legal={'standard':True},variants={'normal':True,'reverse':True})
+    second = deepcopy(first); second.update(id='sm2-2',localId='2',regulationMark='G',legal={'standard':False})
     distinct = deepcopy(first); distinct.update(id='sm2-3',localId='3'); distinct['attacks'][0]['damage']=90
     for raw in (first,second,distinct): cards.put(raw)
     for id,name,kind,effect in [('sm2-4','Water Energy','Normal','old'),('sm2-5','Basic Water Energy','Normal','new'),
@@ -23,9 +23,9 @@ def setup(tmp_path):
                                 ('sm2-8','Ambiguous Energy','Normal','ambiguous')]:
         cards.put(dict(id=id,name=name,localId=id.split('-')[1],set={'id':'sm2'},category='Energy',energyType=kind,
                        effect=effect,rarity='Common',legal={'standard':True},variants={'normal':True}))
-    ace=card('sm2-9','Restricted'); ace.update(category='Trainer',rarity='ACE SPEC',legal={'standard':True}); cards.put(ace)
+    ace=card('sm2-9','Restricted'); ace.update(category='Trainer',regulationMark='H',rarity='ACE SPEC',legal={'standard':True}); cards.put(ace)
     illegal=card('sm2-10','Illegal'); cards.put(illegal)
-    unknown=card('sm2-11','Unknown'); unknown['legal']={}; cards.put(unknown)
+    unknown=card('sm2-11','Unknown'); unknown['legal']={}; unknown.pop('regulationMark'); cards.put(unknown)
     state=tmp_path/'state.sqlite3'
     client=TestClient(create_app(cards.path,state))
     client.get('/api/v1/cards')  # Initialize certified collection before byte checks.

@@ -11,7 +11,7 @@ from typing import Literal
 from pydantic import Field
 from .agent_context_models import Frozen
 from .decks import Decks, DeckProvider, deck_identity, check_allocations
-from .engine import normalized_name, functional_signature
+from .engine import normalized_name
 from .library_identity import BASIC_NAMES
 from .quantities import variant_names
 from .rules.models import digest
@@ -61,28 +61,19 @@ class Resolver:
         self.records=self.provider.records
         self.path=path
         self.index=None
-        self.format_groups={}
-        for record in self.records.values():
-            self.format_groups.setdefault(functional_signature(record['card'],normalize_formatting=True),[]).append(record)
 
     def resolve(self, candidate, active=None, *, generated=False):
+        if generated:return self.resolve_functional(candidate)
         if candidate.printing_id:
             record=self.records.get(candidate.printing_id)
             matches=[record] if record else []
             mismatch=bool(record and candidate.name and normalized_name(record['card']['name'])!=normalized_name(candidate.name))
-            if generated and candidate.name and (record is None or mismatch):
-                resolved,state,options=self.resolve(candidate.model_copy(update={'printing_id':None}),generated=True)
-                if state=='resolved':return resolved,state,options
-                if state!='unresolved':return resolved,state,options
             if mismatch:return None,'name_printing_mismatch',[]
         else:
             name=normalized_name(candidate.name)
             energy=BASIC_NAMES.get(name)
             matches=[r for r in self.records.values() if r.get('game')!='pocket' and
                 (normalized_name(r['card']['name'])==name or energy and deck_identity(r)=='deck-basic-energy:'+energy)]
-        if generated:
-            # Formatting-only gameplay comparison; return an established printing/key.
-            matches=list({r['card']['id']:r for record in matches for r in self.format_groups[functional_signature(record['card'],normalize_formatting=True)]}.values())
         groups={}
         for record in matches: groups.setdefault(deck_identity(record),[]).append(record)
         if active and not candidate.printing_id:
@@ -91,13 +82,6 @@ class Resolver:
             if chosen: groups=chosen
         legal={k:v for k,v in groups.items() if self.provider.get(k)['card'].get('legal',{}).get('standard') is True}
         if len(groups)>1 and legal: groups=legal
-        if generated and len(groups)>1:
-            signatures={functional_signature(r['card'],normalize_formatting=True) for rows in groups.values() for r in rows}
-            if len(signatures)==1:
-                legal_records=[r for rows in groups.values() for r in rows if r.get('game')!='pocket' and r['card'].get('legal',{}).get('standard') is True]
-                if legal_records:
-                    chosen=min(legal_records,key=lambda r:r['card']['id'])
-                    groups={deck_identity(chosen):[chosen]}
         if len(groups)!=1:
             options=[self.view(sorted(v,key=lambda r:r['card']['id'])[0]) for _,v in sorted(groups.items())][:5]
             return None,'ambiguous' if groups else 'unresolved',options
@@ -110,6 +94,33 @@ class Resolver:
         standard=canonical['card'].get('legal',{}).get('standard')
         state='resolved' if standard is True and record.get('game')!='pocket' else 'illegal' if standard is False or record.get('game')=='pocket' else 'unknown_legality'
         return record,state,[]
+
+    def resolve_functional(self,candidate):
+        hint=self.records.get(candidate.printing_id)
+        name=candidate.name or (hint['card']['name'] if hint else '')
+        keys=self.provider.candidates(name) if name else []
+        energy=BASIC_NAMES.get(normalized_name(name))
+        if energy and 'deck-basic-energy:'+energy in self.provider.functional:keys=['deck-basic-energy:'+energy]
+        legal=[key for key in keys if self.provider.functional[key]['standard']==1]
+        if not legal:
+            record=self.provider.functional_record(keys[0]) if len(keys)==1 else None
+            state='illegal' if keys and all(self.provider.functional[k]['standard']==0 for k in keys) else 'unknown_legality' if keys else 'unresolved'
+            if not keys and hint and candidate.name:state='name_printing_mismatch'
+            return record,state,[]
+        if len(legal)>1:
+            # A valid same-name printing is a disambiguation hint, never authority.
+            hinted=self.provider.printing_map.get(candidate.printing_id)
+            if hint and normalized_name(hint['card']['name'])==normalized_name(name) and hinted in legal:legal=[hinted]
+            elif candidate.role:
+                role=normalized_name(candidate.role)
+                matched=[]
+                for key in legal:
+                    raw=self.provider.functional_record(key)['card']
+                    components=[v.get('name','') for field in ('attacks','abilities') for v in raw.get(field,[])]
+                    if any(re.search(r'(?<!\w)'+re.escape(normalized_name(v))+r'(?!\w)',role) for v in components if v):matched.append(key)
+                if len(matched)==1:legal=matched
+        if len(legal)!=1:return None,'ambiguous',[self.view(self.provider.functional_record(k)) for k in legal[:5]]
+        return self.provider.functional_record(legal[0]),'resolved',[]
 
     def view(self, record):
         raw=record['card'];key=deck_identity(record)
@@ -137,7 +148,7 @@ class Resolver:
         results=[];seen=set()
         for tier,query in lookups[:5]:
             for hit in self.index.search(query[:1000],limit=10)['results']:
-                printing=hit['representative']['printing'];record,state,_=self.resolve(Candidate(printing_id=printing))
+                printing=hit['representative']['printing'];record,state,_=self.resolve(Candidate(printing_id=printing),generated=True)
                 if state!='resolved':continue
                 if not record:continue
                 key=deck_identity(record);raw=record['card']
