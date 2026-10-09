@@ -124,7 +124,7 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .competitive-windows button,.trend-legend button {padding:5px 12px;border:1px solid #64748b;border-radius:6px}
 .competitive-windows button[aria-pressed=true] {background:#2563eb;color:white}
 .competitive-windows button:disabled {opacity:.45;cursor:not-allowed}
-.competitive-popup {position:fixed;z-index:1000;width:322px;max-height:430px;overflow:auto;padding:16px;background:#172033;color:#f1f5f9;border:1px solid #64748b;border-radius:10px;box-shadow:0 12px 36px #0008;font-size:13px}
+.competitive-popup {position:fixed;z-index:1000;width:min(350px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;padding:10px;background:#172033;color:#f1f5f9;border:1px solid #64748b;border-radius:10px;box-shadow:0 12px 36px #0008;font-size:13px}
 .competitive-popup p {margin:7px 0}.competitive-popup h3 {font-size:12px;text-transform:uppercase;margin:12px 0 4px}
 .competitive-popup ol {list-style:none;padding:0}.competitive-popup li {display:flex;justify-content:space-between;gap:8px;padding:3px 0}
 .competitive-popup dl,.competitive-dashboard dl {display:grid;grid-template-columns:1fr 1fr;gap:8px}.competitive-popup dd {text-align:right}
@@ -242,3 +242,5 @@ select:focus-visible,summary:focus-visible{outline:2px solid #a78bfa;outline-off
 .research-evidence dl,.research-agent dd{margin:4px 0 6px 8px}.research-evidence dt{color:#ac98f5;font-size:12px}.research-evidence ul{padding-left:16px}.research-evidence{font-size:12px}
 .research-agent .source-note{font-size:11px}
 @media(max-width:1200px){.agent-panel.research-agent:not(.collapsed){position:fixed;right:0;top:64px;bottom:0;z-index:40;width:min(360px,92vw);box-shadow:-12px 0 32px #0008}}
+
+.competitive-preview-art {display:block;width:100%;height:auto;border-radius:8px;margin-bottom:10px;object-fit:contain}

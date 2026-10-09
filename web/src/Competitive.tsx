@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { useBuilder, detailPath } from './DeckBuilder'
-import { AssociatedCardPreview } from './AssociatedCardPreview'
+import { AssociatedCardPreview, CARD_PREVIEW_WIDTH, CARD_PREVIEW_DELAY } from './AssociatedCardPreview'
 
 type Window = '7'|'30'|'90'|'format'
 type Archetype = {id:string;research_id?:string;name:string;decks:number;eligible_decks:number;share_percent:number|null;prevalence_percent:number|null;status:string}
@@ -61,7 +61,7 @@ function Sample({data}:{data:Research}) {
  <span title="Any list with an unresolved card is excluded in full so an unknown mapping cannot count as absence.">{data.excluded_unmapped} unmapped/excluded lists</span> · <span title="Published results without a decklist never enter the usage denominator.">{data.results_without_lists} results without lists</span></p>
 }
 export function useCompetitiveHover(enabled:boolean) {
- const [open,setOpen]=useState(false),[position,setPosition]=useState({left:0,top:0})
+ const [open,setOpen]=useState(false),[position,setPosition]=useState({left:0,top:0}),[art,setArt]=useState<string|null>(null)
  const delay=useRef<ReturnType<typeof setTimeout>|undefined>(undefined), grace=useRef<ReturnType<typeof setTimeout>|undefined>(undefined)
  const clear=()=>{clearTimeout(delay.current);clearTimeout(grace.current)}
  useEffect(()=>()=>clear(),[])
@@ -69,17 +69,17 @@ export function useCompetitiveHover(enabled:boolean) {
  const enter=(element:HTMLElement)=>{
   if(!enabled||element.tagName!=='IMG')return;clearTimeout(grace.current);if(open)return
   clearTimeout(delay.current)
-  delay.current=setTimeout(()=>{const rect=element.getBoundingClientRect();setPosition({left:Math.max(8,Math.min(rect.left,window.innerWidth-338)),top:Math.max(8,Math.min(rect.bottom+6,window.innerHeight-440))});setOpen(true)},500)
+  delay.current=setTimeout(()=>{const rect=element.getBoundingClientRect(),width=Math.min(CARD_PREVIEW_WIDTH,window.innerWidth-24);setArt((element as HTMLImageElement).src.replace('/low.webp','/high.webp'));setPosition({left:rect.right+12+width<=window.innerWidth?rect.right+12:Math.max(12,rect.left-width-12),top:12});setOpen(true)},CARD_PREVIEW_DELAY)
  }
  const leave=()=>{clearTimeout(delay.current);clearTimeout(grace.current);grace.current=setTimeout(()=>setOpen(false),180)}
- return {open,position,enter,leave,keep:()=>clearTimeout(grace.current),close:()=>{clear();setOpen(false)}}
+ return {open,position,art,enter,leave,keep:()=>clearTimeout(grace.current),close:()=>{clear();setOpen(false)}}
 }
 export function CompetitivePopup({id,name,deckIdentity,hover}:{id:string;name:string;deckIdentity?:string;hover:ReturnType<typeof useCompetitiveHover>}) {
  const builder=useBuilder(),location=useLocation()
  const {data,error,window}=useResearch(id,hover.open,false)
  if(!hover.open)return null
  return createPortal(<aside role="dialog" aria-label={`${name} competitive preview`} className="competitive-popup" style={hover.position} onPointerEnter={hover.keep} onPointerLeave={hover.leave} onFocus={hover.keep} onBlur={hover.leave} onKeyDown={e=>{if(e.key==='Escape')hover.close()}}>
-  <strong>{name}</strong>{builder?.data&&deckIdentity&&<p><strong>{(()=>{const n=builder.data.deck.entries.find(e=>e.identity===deckIdentity)?.quantity||0;return `${n} ${n===1?'Card':'Cards'} in deck`})()}</strong></p>}<p>Competitive • {window==='format'?'Current Format':`Last ${window} Days`}</p><State data={data} error={error}/>
+  <img className="competitive-preview-art" src={hover.art||undefined} alt={`${name} card artwork`}/><strong>{name}</strong>{builder?.data&&deckIdentity&&<p><strong>{(()=>{const n=builder.data.deck.entries.find(e=>e.identity===deckIdentity)?.quantity||0;return `${n} ${n===1?'Card':'Cards'} in deck`})()}</strong></p>}<p>Competitive • {window==='format'?'Current Format':`Last ${window} Days`}</p><State data={data} error={error}/>
   {data&&<><dl><dt>Usage</dt><dd>{pct(data.usage_percent)}</dd><dt>Average copies</dt><dd>{decimal(data.average_copies)}</dd></dl>
    <h3>Top five archetypes</h3><ol>{data.top_archetypes.slice(0,5).map(a=><li key={a.id}><ArchetypeLink archetype={a}/> <span>{pct(a.share_percent)}</span></li>)}</ol>{!data.top_archetypes.length&&<p>No archetype observations.</p>}<Sample data={data}/></>}
   <p>Source: Limitless</p><Link to={detailPath(id,!!builder)} state={{library:location.pathname+location.search}} onClick={hover.close}>Click for full research →</Link>

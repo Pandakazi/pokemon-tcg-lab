@@ -106,8 +106,11 @@ def reconcile(text, sources, request, envelope, corrections=None):
                         dependent=re.match(r'\s*((?:It|This attack|That attack|This means|That means|You must|You can)\b[^.!?\n]*[.!?])',remainder,re.I)
                     if stop>match.end() and not text[stop:stop+1] in '.!?':
                         correction=correction.rstrip('.')+'.'
+                correction=re.sub(r'([.!?])\1+',r'\1',' '.join(correction.split())).rstrip('.')
                 if corrections is not None:corrections.append(correction)
-                text=text[:start]+correction+strategy+text[stop:]
+                replacement=correction+strategy
+                if text[stop:stop+1] not in ('.','!','?'):replacement=replacement.rstrip('.')+'.'
+                text=text[:start]+replacement+text[stop:]
                 boundary=start
     except (OSError,ValueError,KeyError,sqlite3.Error):
         # Storage/shape loss is not a reason to suppress the conversation.

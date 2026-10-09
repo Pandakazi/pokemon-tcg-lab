@@ -45,10 +45,11 @@ test('followups use server session; new conversation resets it without a request
 
 test('component hover reuses exact printed text without artwork or inference requests',async()=>{
  const {calls,fetch,agent}=setup();await ask();await agent.findByRole('article')
- const baseline=fetch.mock.calls.length
+ const artworkCalls=()=>fetch.mock.calls.filter(([url])=>String(url).startsWith('/api/v1/cards/test-1')).length
+ const baseline=artworkCalls()
  fireEvent.pointerEnter(agent.getByRole('button',{name:'Example Ability'}))
  expect(await screen.findByRole('tooltip',{name:'Example Ability printed text'})).toHaveTextContent('Exact locally supplied text.')
- expect(fetch.mock.calls).toHaveLength(baseline);expect(calls).toHaveLength(1)
+ expect(artworkCalls()).toBe(baseline);expect(calls).toHaveLength(1)
  fireEvent.click(agent.getByRole('button',{name:'Example Ability'}))
  expect(agent.getByText('Evidence underneath').closest('details')).toHaveAttribute('open')
 })

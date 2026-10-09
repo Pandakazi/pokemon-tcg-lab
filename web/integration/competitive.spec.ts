@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test('Library delay, popup crossing, Card Detail research and frozen artwork',async({page,request},testInfo)=>{
+for(const width of [1440,900])test(`Library delay, popup crossing, Card Detail research and frozen artwork at ${width}`,async({page,request},testInfo)=>{
+ await page.setViewportSize({width,height:1000})
+ await page.route('**/*',route=>{const url=new URL(route.request().url());if(!['127.0.0.1','localhost'].includes(url.hostname)){if(route.request().resourceType()==='image')return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="350" height="490"><rect width="350" height="490" fill="#345"/><text x="30" y="80" fill="white">Card artwork fixture</text></svg>'});return route.abort()}return route.continue()})
  const cards=await (await request.get('/api/v1/cards?category=Trainer&q=Ultra+Ball')).json()
  const card=cards.cards[0]
  const result=await (await request.get(`/api/v1/competitive/cards/${card.id}`)).json()
@@ -21,6 +23,13 @@ test('Library delay, popup crossing, Card Detail research and frozen artwork',as
  const popup=page.getByRole('dialog',{name:/competitive preview/})
  await expect(popup).toBeVisible();await expect(popup.getByRole('listitem')).toHaveCount(5)
  await expect(popup).toContainText('1.56');await expect(popup).toContainText('43.47%');await expect(popup).not.toContainText('1.5611')
+ const art=popup.locator('.competitive-preview-art');await expect(art).toBeVisible()
+ await expect.poll(()=>art.evaluate((e:HTMLImageElement)=>e.naturalWidth)).toBeGreaterThan(0)
+ const artBox=(await art.boundingBox())!,statsBox=(await popup.locator('dl').boundingBox())!,popupBox=(await popup.boundingBox())!
+ expect(statsBox.y).toBeGreaterThanOrEqual(artBox.y+artBox.height)
+ expect(popupBox.width).toBe(350);expect(popupBox.x+popupBox.width).toBeLessThanOrEqual(width)
+ await expect(page.getByRole('tooltip')).toHaveCount(0)
+ await page.screenshot({path:testInfo.outputPath(`stacked-hover-${width}.png`)})
  await popup.hover();await page.clock.runFor(500);await expect(popup).toBeVisible()
  await page.mouse.move(1,1);await page.clock.runFor(181);await expect(popup).toHaveCount(0)
  await tile.locator('.card-link').click();await expect(page.getByRole('heading',{name:'Competitive research'})).toBeVisible()

@@ -18,6 +18,16 @@ With an active deck, changes are a proposed diff. Without one, add entries descr
 a proposed list; remove entries cannot be resolved. DRAFT may leave role-only slots.
 RECOMMEND encourages actions; FINALIZE needs complete resolvable intent before the
 list can be called finished. No automatic changes, writes or retries occur.
+When the active deck is a full 60, an addition requires space: propose balancing
+cuts in this SAME response and action block, without waiting for a follow-up.
+Prefer situational current slots, redundant roles, then the smallest consistency
+compromise. Preserve core concept cards; broader structural changes are a last resort.
+Explain the sacrifice and tradeoff in rationale. Use actual source cards/counts.
+Do not claim a 60 until local validation passes. If no defensible cut is established,
+state the unresolved sacrifice instead of silently choosing a core card.
+For a concrete follow-up such as 'those three', explicitly name the cards you mean
+before proposing replacements. If recent context supports materially different sets,
+ask one concise clarification question and emit no actions; do not invent a set.
 Missing/uncertain replacements should be roles, never invented names or X-or-Y cards.
 '''
 

@@ -58,6 +58,10 @@ Do not assert win rates, usage percentages, Tier rankings, event wins/dominance 
 most-played status in conversational prose: select the relevant empirical fact_ids
 instead, preserving their window, denominator and limitations. Without such evidence
 say tournament strength is unestablished and continue with mechanical judgment.
+When asked which recommendations are empirical versus structural, name the actual
+recent swaps or roles and explain their support individually. Absence of empirical
+proof does not prohibit recommending them. Do not substitute generic policy text
+for discussing the recommendations. Observational association is not swap efficacy.
 No external research capability is available; never claim to have browsed or read a guide.
 
 Return JSON only. version and paragraphs are required; no extra fields.
@@ -149,7 +153,7 @@ class Conversations:
         # Facts are freshly retrieved through printings, not copied into history.
         # Keep bounded accepted reasoning for referents, never provider raw output.
         turns = [dict(question=t['question'], snapshot=t.get('snapshot'),
-            answer={'paragraphs':t['answer']['paragraphs'][:3]},
+            answer={'paragraphs':t['answer']['paragraphs'][:3], 'recommendation_cards':t['answer'].get('recommendation_cards', list(dict.fromkeys(r['canonical_name'] for group in ('adds','removes') for r in t['answer'].get('proposal',{}).get(group,[])))[:12])},
             history_compacted=t.get('history_compacted',False) or len(t['answer']['paragraphs'])>3) if isinstance(t.get('answer'),dict) else t for t in turns]
         # Drop whole older turns, never truncate an answer mid-sentence.
         size = lambda:len(json.dumps(turns,ensure_ascii=False).encode())
@@ -425,7 +429,10 @@ def run(service, request, selection):
                     answer['paragraphs'].append(dict(text='Strategic hypothesis (not a proven tournament improvement): '+rationale,evidence=[]))
         if hybrid:
             from .agent_hybrid import strategic_prose
-            strategy,empirical=strategic_prose(hybrid_prose,EMPIRICAL,bool(report),rejected)
+            strategy_input=hybrid_prose
+            for correction in fact_corrections:
+                strategy_input=strategy_input.replace(correction,'')
+            strategy,empirical=strategic_prose(strategy_input,EMPIRICAL,bool(report),rejected)
             if parsed.proposal and parsed.proposal.rationale:
                 rationale_lines,rationale_empirical=strategic_prose(parsed.proposal.rationale,EMPIRICAL,True,rejected)
                 strategy += ['Strategic hypothesis (not a proven tournament improvement): '+line for line in rationale_lines]
@@ -451,6 +458,19 @@ def run(service, request, selection):
             for correction in fact_corrections:
                 if correction not in ' '.join(p['text'] for p in answer['paragraphs']):
                     answer['paragraphs'].append(dict(text=correction,evidence=[]))
+        if report and report['kind']=='diff' and re.search(r'\b(?:those|these)\b',request.question,re.I):
+            referents=list(dict.fromkeys(r['canonical_name'] for r in report['removes']))
+            if referents:
+                answer['paragraphs'].insert(0,dict(text='For this proposed change, I am treating your reference as '+', '.join(referents)+'.',evidence=[]))
+        if re.search(r'recommendations|swaps|changes',request.question,re.I) and re.search(r'proven|empirical|structural judgment',request.question,re.I):
+            prior=next((t['answer'].get('recommendation_cards') for t in reversed(history['turns']) if t['answer'].get('recommendation_cards')),None)
+            if prior:
+                names=prior[:12]
+                if names:
+                    text='The proposed changes involving '+', '.join(names)+' are structural hypotheses to test; the supplied context does not establish that these specific swaps improve tournament performance.'
+                    observations=[e for e in envelope['evidence'] if e['kind']=='evidence']
+                    if observations:text+=' Recorded evidence is available for '+', '.join(dict.fromkeys(e['title'] for e in observations))+', but those observations alone do not prove these swaps are upgrades.'
+                    answer['paragraphs'].append(dict(text=text,evidence=[e['id'] for e in observations][:12]))
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})

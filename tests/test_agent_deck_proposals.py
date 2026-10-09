@@ -451,3 +451,50 @@ def test_stale_another_and_ordinals_do_not_survive():
     for state in ['A second Area Zero Underdepths helps.','A third Area Zero Underdepths helps.','A fourth or fifth Grass Energy helps.','Another Area Zero is already present.']:
         kept,_=strategic_prose(state+' Consistency is a hypothesis.',c.EMPIRICAL)
         assert state not in kept and 'Consistency is a hypothesis.' in kept
+
+
+
+def test_full_deck_addition_requests_balancing_cuts_and_preserves_core(stores):
+    active(stores,[('qa-pikachu',4),('qa-draw',2),('qa-recover',4),('qa-energy',50)])
+    calls=[]
+    def handle(req):
+        body=json.loads(req.content);calls.append(body)
+        assert 'propose balancing' in body['messages'][0]['content']
+        assert 'Preserve core concept cards' in body['messages'][0]['content']
+        actions={'changes':[{'action':'add','card_name':'Draw Helper','quantity':2},{'action':'remove','card_name':'Recovery Tool','quantity':2}],'rationale':'I would test trimming redundant recovery to preserve the main attacker and draw engine.'}
+        text='I would preserve the core and test a support change. <POKELAB_ACTIONS>'+json.dumps(actions)+'</POKELAB_ACTIONS>'
+        return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}]})
+    svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
+    before={k:p.read_bytes() for k,p in stores.paths.items()}
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Add two Draw Helper.',include_deck=True,revision=7))
+    report=result['answer']['proposal']
+    assert report['total_cards']==60 and report['validation_status']=='VALIDATED'
+    assert sum(r['quantity'] for r in report['removes'])==2
+    assert all(r['canonical_name']!='Pikachu ex' for r in report['removes'])
+    assert any('redundant recovery' in p['text'] for p in result['answer']['paragraphs'])
+    assert before=={k:p.read_bytes() for k,p in stores.paths.items()} and len(calls)==1
+
+
+def test_evidence_boundary_names_recent_swaps(stores):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    proposal=dict(kind='diff',adds=[row('qa-draw',1)],removes=[row('qa-energy',1)])
+    svc,_=service(stores,proposal)
+    first=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7))
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Which of these recommendations are proven by tournament results and which are just your structural judgment?',include_deck=True,revision=7,conversation_id=first['conversation_id']))
+    prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
+    assert 'Draw Helper, Lightning Energy' in prose and 'structural hypotheses' in prose
+
+
+def test_concrete_referents_are_explicit(stores):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    svc,_=service(stores,dict(kind='diff',adds=[row('qa-draw',1)],removes=[row('qa-energy',1)]))
+    result=svc.run(a.ResearchRequest(scope='conversation',question='What would you replace those three with?',include_deck=True,revision=7))
+    assert 'treating your reference as Lightning Energy' in result['answer']['paragraphs'][0]['text']
+
+
+def test_ambiguous_reference_can_ask_without_actions(stores):
+    active(stores,[('qa-pikachu',4),('qa-energy',56)])
+    svc,_=service(stores,text='Do you mean the support cards or the Energy slots?')
+    result=svc.run(a.ResearchRequest(scope='conversation',question='What would you replace those three with?',include_deck=True,revision=7))
+    assert result['status']=='answered' and 'proposal' not in result['answer']
+    assert sum(p['text'].count('?') for p in result['answer']['paragraphs'])==1

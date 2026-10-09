@@ -86,3 +86,19 @@ def test_unresolved_attack_removes_attached_precision(stores):
     assert 'unresolved' in text and '70' not in text and '3 Energy' not in text
     assert 'Strategically, pressure still matters.' in text
     assert not text.startswith('The plan depends on I cannot')
+
+
+
+def test_printed_effect_newlines_do_not_create_orphans(stores):
+    from tcg_lab.card_db import SQLiteCards
+    db=SQLiteCards(stores.paths['cards'])
+    with stores.snapshot() as (dbs,errors):raw=json.loads(dbs['cards'].execute("SELECT raw FROM cards WHERE id='qa-recover'").fetchone()[0])
+    raw['effect']='Search your deck for a Pokémon.\n\nThen, shuffle your deck..'
+    db.put(raw)
+    svc,_=service(stores,text='Recovery Tool recovers every Trainer. I would keep recovery.')
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Explain.'))
+    paragraphs=[p['text'] for p in result['answer']['paragraphs']]
+    assert not any(p.startswith('Then, shuffle') for p in paragraphs)
+    assert not any('..' in p for p in paragraphs)
+    assert any('Recovery Tool:' in p for p in paragraphs)
+    assert any('Then, shuffle' in e['value'].get('effect','') for e in result['envelope']['evidence'])

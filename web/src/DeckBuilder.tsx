@@ -92,7 +92,7 @@ function TrayArtwork({entry}:{entry:Entry}) {
   return()=>abort.abort()
  },[entry.printing_id,entry.variant])
  return <><Link className="tray-art-link" to={`${detailPath(entry.printing_id,true)}?variant=${encodeURIComponent(entry.variant)}`} state={{library:location.pathname+location.search,libraryState:location.state}} aria-label={`Inspect ${entry.name} from tray`}>
-  {card?<CardImage card={card} finish={entry.variant} artworkEvents={{onPointerEnter:e=>hover.enter(e.currentTarget),onPointerLeave:hover.leave}}/>:<div className="tray-art-fallback">{entry.name}<small>Artwork unavailable</small></div>}
+  {card?<CardImage card={card} previewEnabled={false} finish={entry.variant} artworkEvents={{onPointerEnter:e=>hover.enter(e.currentTarget),onPointerLeave:hover.leave}}/>:<div className="tray-art-fallback">{entry.name}<small>Artwork unavailable</small></div>}
  </Link><strong className="tray-count" aria-label={`${entry.name} tray quantity`}>×{entry.quantity}</strong>
  <CompetitivePopup id={entry.printing_id} name={entry.name} deckIdentity={entry.identity} hover={hover}/></>
 }
