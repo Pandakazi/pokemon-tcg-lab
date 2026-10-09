@@ -65,12 +65,17 @@ def build(path, question, preferred_printings=()):
             parents=by_name.get(normalized_name(parent),[])
             if not parents:missing.append('legal-evolution-predecessor:'+parent)
             for ancestor in parents[:2]:add(ancestor,'evolution-family',seen)
-        value=dict(functional_id=key,printing_id=row['printing_id'],role=role,
+        value=dict(candidate_id=key,printing_id=row['printing_id'],role=role,
+            ace_spec='ACE SPEC' in raw.get('rarity','').upper(),
+            basic_energy=key.startswith('deck-basic-energy:'),copy_limit_name=normalized_name(raw['name']),
+            requested_core=key in core_ids,
+            predecessor_candidate_ids=[r['functional_id'] for r in by_name.get(normalized_name(parent),[]) if r['functional_id'] in selected] if parent else [],
             **{k:raw[k] for k in FIELDS if k in raw})
         if len(selected)>=MAX_CANDIDATES or len(json.dumps([*selected.values(),value],ensure_ascii=False).encode())>MAX_BYTES:
             budget.append(key);return
         selected[key]=value
     core=[r for r in pool if re.search(r'(?<!\w)'+re.escape(normalized_name(r['card']['name']))+r'(?!\w)',q)]
+    core_ids={r['functional_id'] for r in core}
     for row in sorted(core,key=lambda r:(-len(r['card']['name']),r['functional_id'])):add(row,'requested-core')
     for row in pool:
         if row['printing_id'] in preferred_printings:add(row,'existing-concept')
@@ -85,10 +90,10 @@ def build(path, question, preferred_printings=()):
     core_types={t for r in core for t in r['card'].get('types',[])}
     rest=sorted(pool,key=lambda r:(not bool(core_types.intersection(r['card'].get('types',[]))),r['functional_id']))
     for row in rest:add(row,'additional-legal-option')
-    return dict(version='pokelab-standard-sandbox-v1',format=FORMAT_VERSION,
+    return dict(version='pokelab-standard-sandbox-v2',format=FORMAT_VERSION,
         legal_universe_count=len(pool),candidates=list(selected.values()),
         limitations=['Local indexed coverage only; legality is not a guarantee of a viable engine.']+sorted(set(missing))+(['bounded-candidate-subset;no-iterative-expansion'] if budget else []),
-        instruction='Choose only these functional candidates for generated_deck. Use exact names and quantities; printing_id may disambiguate genuinely different same-name cards. Preserve the requested core. Exactly 60 cards; printed effects are not tournament evidence. If options are insufficient, explain the local cache/candidate limitation; never invent outside cards.')
+        instruction='Choose only supplied candidate_id values for generated_deck entries, with exact positive integer quantities. Do not reselect ambiguous cards by bare name. Names are optional but must match the selected candidate; printing is backend-derived. Total quantity must equal 60. Sum of quantities with ace_spec=true must be <=1. Group by copy_limit_name for the ordinary maximum of 4, except basic_energy=true. Preserve requested_core candidates and consider predecessor_candidate_ids for evolution lines. Printed effects are not tournament evidence. If options are insufficient, explain the local cache/candidate limitation; never invent outside cards.')
 
 
 def small_repair(report):
@@ -106,5 +111,41 @@ def small_repair(report):
 def repair_distance(requirements, report):
     before={r['printing_id']:r['quantity'] for r in requirements.get('cards',[])}
     after={r['printing_id']:r['quantity'] for r in report['cards']}
-    return max(sum(max(0,before.get(k,0)-after.get(k,0)) for k in before),
-               sum(max(0,after.get(k,0)-before.get(k,0)) for k in after))
+    added={k:max(0,n-before.get(k,0)) for k,n in after.items()}
+    # Choosing an identity for an already proposed unresolved name fills that slot;
+    # it is not another missing slot. Replacements of different names still count.
+    for slot in requirements.get('unresolved',[]):
+        remaining=slot['quantity']
+        for row in report['cards']:
+            if normalized_name(slot.get('name',''))!=normalized_name(row['canonical_name']):continue
+            if slot.get('candidate_id') and slot['candidate_id']!=row.get('candidate_id'):continue
+            credit=min(remaining,added[row['printing_id']])
+            added[row['printing_id']]-=credit;remaining-=credit
+    return max(sum(max(0,n-after.get(k,0)) for k,n in before.items()),sum(added.values()))
+
+
+def candidate_key(row):
+    """Accept an existing in-memory v1 sandbox while new packets use candidate_id."""
+    return row.get('candidate_id',row.get('functional_id'))
+
+
+def accounting(report):
+    resolved=report['total_cards']
+    unresolved=sum(r['quantity'] for r in report['unresolved'])
+    proposed=resolved+unresolved
+    return dict(resolved_count=resolved,unresolved_proposed_count=unresolved,
+        proposed_total=proposed,true_missing_count=max(0,60-proposed),
+        excess_proposed_count=max(0,proposed-60))
+
+
+def construction_violations(rows):
+    counts=Counter();ace=0
+    for row in rows:
+        raw=row.get('printed',{})
+        if 'ACE SPEC' in raw.get('rarity','').upper():ace+=row['quantity']
+        if not row['card_id'].startswith('deck-basic-energy:'):
+            counts[normalized_name(row['canonical_name'])]+=row['quantity']
+    result=[dict(kind='name_copy_limit',name=name,count=n,maximum=4,excess=n-4)
+            for name,n in sorted(counts.items()) if n>4]
+    if ace>1:result.append(dict(kind='ace_spec',count=ace,maximum=1,excess=ace-1))
+    return result

@@ -297,7 +297,7 @@ def run(service, request, selection, *, _repair=None):
     if requirements:
         envelope['repair']={k:v for k,v in requirements.items() if k!='candidate_sandbox'}
         if requirements.get('candidate_sandbox'):envelope['candidate_sandbox']=requirements['candidate_sandbox']
-        envelope['repair_instruction']='Repair this same generated deck now. Return a complete generated_deck artifact; do not merely explain. Preserve valid engine cards, repair failed roles using Standard-legal candidates. Change at most 8 card copies; no broader redesign. Choose only candidate_sandbox cards.'
+        envelope['repair_instruction']='Repair this same generated deck now. Return a complete generated_deck artifact; do not merely explain. Preserve valid engine cards, repair failed roles using Standard-legal candidates. Resolve or replace the unresolved proposed copies, add only accounting.true_missing_count genuinely missing copies, and fix construction_violations. total is resolved copies, not proposed_total; never double-count unresolved slots as missing. Select exact candidate_id values. Change at most 8 card copies; no broader redesign. Choose only candidate_sandbox cards.'
         envelope['lifecycle']='FINALIZE'
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)

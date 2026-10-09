@@ -19,6 +19,7 @@ from .rules.models import digest
 
 class Candidate(Frozen):
     name: str = Field(default='', max_length=100)
+    candidate_id: str | None = Field(default=None, min_length=1, max_length=100)
     printing_id: str | None = Field(default=None, max_length=100)
     quantity: int = Field(default=1, ge=1, le=999, strict=True)
     role: str = Field(default='', max_length=250)
@@ -66,6 +67,7 @@ class Resolver:
 
     def resolve(self, candidate, active=None, *, generated=False):
         if generated:return self.resolve_functional(candidate)
+        if candidate.candidate_id:return None,'candidate_id_requires_generated_sandbox',[]
         if candidate.printing_id:
             record=self.records.get(candidate.printing_id)
             matches=[record] if record else []
@@ -98,6 +100,17 @@ class Resolver:
         return record,state,[]
 
     def resolve_functional(self,candidate):
+        if candidate.candidate_id is not None:
+            key=candidate.candidate_id
+            if self.allowed is None or key not in self.allowed:
+                return None,'outside_candidate_sandbox',[]
+            item=self.provider.functional.get(key)
+            if not item:return None,'unresolved_candidate_id',[]
+            if item['standard']!=1:return None,'illegal',[]
+            record=self.provider.functional_record(key)
+            if candidate.name and normalized_name(candidate.name)!=normalized_name(record['card']['name']):
+                return None,'candidate_name_mismatch',[]
+            return record,'resolved',[]
         hint=self.records.get(candidate.printing_id)
         name=candidate.name or (hint['card']['name'] if hint else '')
         keys=self.provider.candidates(name) if name else []
@@ -214,7 +227,8 @@ def evaluate(proposal, premises, sources, request, envelope):
         collection=SnapshotCollection(cards,sources.paths['collection'],dbs.get('collection'))
         resolver=Resolver(collection,sources.paths['cards'])
         if proposal and proposal.kind=='list' and envelope.get('candidate_sandbox'):
-            resolver.allowed={r['functional_id'] for r in envelope['candidate_sandbox']['candidates']}
+            from .agent_deck_sandbox import candidate_key
+            resolver.allowed={candidate_key(r) for r in envelope['candidate_sandbox']['candidates']}
         active=None
         if request.include_deck:
             row=None if 'workspace' in errors else dbs['workspace'].execute('SELECT revision,document FROM workspace WHERE id=1').fetchone()
@@ -237,16 +251,16 @@ def evaluate(proposal, premises, sources, request, envelope):
         def resolve(candidate, cutting=False):
             record,state,choices=resolver.resolve(candidate,active if cutting else None,generated=bool(proposal and proposal.kind=='list' and not cutting))
             sandbox=envelope.get('candidate_sandbox') if proposal and proposal.kind=='list' and not cutting else None
-            if sandbox and state=='resolved' and deck_identity(record) not in {r['functional_id'] for r in sandbox['candidates']}:
+            if sandbox and state=='resolved' and deck_identity(record) not in resolver.allowed:
                 record=None;state='outside_candidate_sandbox';choices=[]
             if record:evidence(record)
             if state!='resolved' and not (cutting and record is not None and state in ('illegal','unknown_legality')):
                 label=candidate.name or candidate.role or 'Unresolved slot'
                 rejected.add(candidate.name)
-                report['unresolved'].append(dict(name=label,quantity=candidate.quantity,role=candidate.role,state=state))
+                report['unresolved'].append(dict(name=label,candidate_id=candidate.candidate_id,quantity=candidate.quantity,role=candidate.role,state=state))
                 if len(report['alternatives'])<8:
                     options=choices or resolver.alternatives(candidate.role,record)
-                    if sandbox:options=[r for r in options if r['card_id'] in {c['functional_id'] for c in sandbox['candidates']}]
+                    if sandbox:options=[r for r in options if r['card_id'] in resolver.allowed]
                     report['alternatives'].append(dict(for_card=label,role=candidate.role,candidates=options))
                 report['repair_notes'].append(f"{label}: {'several different printed versions match; choose the intended one' if state=='ambiguous' else 'not established as a current legal card for this role'}. Keep the role; review the local alternatives instead of treating this as finished.")
             return record,state
@@ -310,7 +324,11 @@ def evaluate(proposal, premises, sources, request, envelope):
             allocation['quantity']+=candidate.quantity;entry['quantity']+=candidate.quantity
         for entry in document['entries']:
             record=resolver.records.get(entry['allocations'][0]['printing_id'])
-            if record:report['cards'].append(dict(**resolver.view(record),quantity=entry['quantity']))
+            if record:
+                if proposal.kind=='list':record=dict(record,deck_functional_id=entry['identity'])
+                row=dict(**resolver.view(record),quantity=entry['quantity'])
+                if proposal.kind=='list':row['candidate_id']=entry['identity']
+                report['cards'].append(row)
         for change in (*report['adds'],*report['removes']):
             change['resulting_quantity']=sum(e['quantity'] for e in document['entries'] if e['identity']==change['card_id'])
         document['has_saved']=report['lifecycle'] in ('RECOMMEND','FINALIZE')
@@ -318,6 +336,10 @@ def evaluate(proposal, premises, sources, request, envelope):
         report['hard_validation']+=validation['reasons']+validation['unknown']
         report['limitations']=validation['limitations'];report['total_cards']=validation['total']
         report['category_subtotals']={category:sum(r['quantity'] for r in report['cards'] if r['category']==category) for category in ('Pokemon','Trainer','Energy')}
+        if proposal.kind=='list':
+            from .agent_deck_sandbox import accounting,construction_violations
+            report['accounting']=accounting(report)
+            report['construction_violations']=construction_violations(report['cards'])
         report['strategic_diagnostics']=diagnostics(report['cards'])
         report['resolution_status']='UNRESOLVED' if report['unresolved'] else 'RESOLVED'
         report['legality_status']='INVALID' if validation['reasons'] else 'UNKNOWN' if validation['unknown'] or report['unresolved'] else 'INCOMPLETE' if validation['total']!=60 else 'LEGAL_SUPPORTED_CHECKS'

@@ -11,6 +11,11 @@ For changes to the active deck use:
 <POKELAB_ACTIONS>{"type":"proposed_deck_changes","changes":[{"action":"add","card_name":"Card name","quantity":1}]}</POKELAB_ACTIONS>
 These examples show shape, not a complete deck. FINALIZE requires exact cards totaling
 60; no "or similar". A generated deck stays separate even when an active deck exists.
+When candidate_sandbox is supplied, each generated_deck card must select its exact
+candidate_id and quantity, for example {"candidate_id":"<exact supplied candidate_id>","quantity":3}.
+card_name is optional but must agree with that candidate. Do not use a bare ambiguous name.
+Printing is derived by PokéLab, not model authority. Select at most one ACE SPEC copy;
+group ordinary copies by copy_limit_name (maximum 4); Basic Energy is exempt.
 A draft may use role instead of card_name for an unresolved slot. Optional printing_id
 must be an actual supplied printing, never invented. Positive integer quantities only.
 Maximum 60 entries, 8192 bytes per block. Optional rationale is your tradeoff explanation;
@@ -56,8 +61,8 @@ def parse(text, active, metadata=None):
         try:
             if not isinstance(item,dict) or item.get('action') not in ('add','remove'):raise ValueError()
             if not active and item['action']=='remove':raise ValueError()
-            candidate=Candidate(name=item.get('card_name',''),printing_id=item.get('printing_id'),role=item.get('role',''),quantity=item.get('quantity'))
-            if not candidate.name.strip() and not candidate.role.strip():raise ValueError()
+            candidate=Candidate(name=item.get('card_name',item.get('name','')),candidate_id=item.get('candidate_id'),printing_id=item.get('printing_id'),role=item.get('role',''),quantity=item.get('quantity'))
+            if not candidate.name.strip() and not candidate.role.strip() and not candidate.candidate_id:raise ValueError()
             (adds if item['action']=='add' else removes).append(candidate)
         except (ValueError,TypeError):issues.append(f'action_{index+1}_unresolved')
     rationale=data.get('rationale','')

@@ -23,7 +23,7 @@ def test_legal_pool_deduplicates_and_ignores_stale_flags(stores):
     assert len(matches)==1 and matches[0]['printing_id']=='legal-a'
     assert 'qa-old' not in {r['printing_id'] for r in rows}
     packet=build(stores.paths['cards'],'Build a Standard deck with draw and search')
-    assert all(c['functional_id'] in {r['functional_id'] for r in rows} for c in packet['candidates'])
+    assert all(c['candidate_id'] in {r['functional_id'] for r in rows} for c in packet['candidates'])
     assert not any(c['printing_id'] in ('old','rotated','qa-old') for c in packet['candidates'])
 
 
