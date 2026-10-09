@@ -7,8 +7,8 @@ import {ResearchCardText,type ResearchCard} from './ResearchCardText'
 type Evidence={id:string;kind:'fact'|'evidence';title:string;printing?:string;value:Record<string,unknown>;[key:string]:unknown}
 type Envelope={content_hash:string;selected:{printing:string;variant?:string}|null;revision:number|null;window:string;as_of:string;proof_requested:boolean;evidence:Evidence[];omissions:string[]}
 type ProposedCard={card_id:string;printing_id:string;canonical_name:string;quantity:number;current_quantity?:number;validated?:boolean}
-type Proposal={status:string;lifecycle:string;kind:string;name:string;source_revision:number|null;validation_status:string;legality_status:string;total_cards:number;cards:ProposedCard[];adds:ProposedCard[];removes:ProposedCard[];unresolved:{name:string;quantity:number;role:string}[];hard_validation:string[];strategic_diagnostics:string[];repair_notes:string[];alternatives:unknown[];premises:unknown[];limitations?:string[]}
-type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[];proposal?:Proposal};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
+type Proposal={status:string;lifecycle:string;kind:string;name:string;source_revision:number|null;validation_status:string;legality_status:string;total_cards:number;category_subtotals?:Record<string,number>;cards:ProposedCard[];adds:ProposedCard[];removes:ProposedCard[];unresolved:{name:string;quantity:number;role:string}[];hard_validation:string[];strategic_diagnostics:string[];repair_notes:string[];alternatives:unknown[];premises:unknown[];limitations?:string[]}
+type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[];proposal?:Proposal;notices?:string[];historical_snapshot?:boolean;artifact_id?:string};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
 type Turn={question:string;result:Result;contextKey:string}
 
 function AnswerView({result}:{result:Result}) {
@@ -25,6 +25,8 @@ function AnswerView({result}:{result:Result}) {
  return <>
  {!result.answer&&<><p role="alert">{messages[result.status]||'No completed answer is available. No automatic retry was made.'}</p><ValidationDetails value={result.contract_diagnostics}/></>}
  {result.answer&&<article aria-label="Agent answer">
+  {result.answer.historical_snapshot&&<p className="source-note">Previously proposed artifact — original validation snapshot, separate from the active deck.</p>}
+  {result.answer.notices?.map(code=><p className="source-note" key={code}>{({missing_artifact:'No structured list or changes were supplied. This remains a discussion, not a completed deck.',empirical_claim_unverified:'A tournament-performance claim was withheld because its evidence was not established.',printed_fact_review:'Check the local printed facts below before relying on that mechanical premise.'} as Record<string,string>)[code]}</p>)}
   {result.answer.proposal&&<ProposalView proposal={result.answer.proposal} cards={aliases} inspect={inspect}/>}
   {result.answer.paragraphs.map((p,i)=><p key={i}><ResearchCardText text={p.text} cards={aliases} inspect={inspect}/>{p.evidence.length>0&&<button className="source-note" aria-label={`Inspect support for paragraph ${i+1}`} onClick={()=>inspect(p.evidence[0])}> · evidence</button>}</p>)}
   {result.answer.facts.length>0&&<details><summary>Printed facts &amp; recorded evidence</summary>{result.answer.facts.map(e=><section key={e.id}><h3>{e.title}</h3><EvidenceValue value={e.value}/></section>)}</details>}
@@ -49,7 +51,8 @@ function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:Resear
  })
  // Only unambiguous exact-printing alternatives receive a preview.
  const alternativeCards=alternatives.filter(c=>!alternatives.some(other=>other.name===c.name&&other.printing!==c.printing))
- const text=(s:string)=><ResearchCardText text={s} cards={cards} inspect={inspect}/>
+ const proposalCards=[...cards,...[...p.cards,...p.adds,...p.removes].map(c=>({id:`proposal-${c.printing_id}`,name:c.canonical_name,printing:c.printing_id}))]
+ const text=(s:string)=><ResearchCardText text={s} cards={proposalCards} inspect={id=>{if(!id.startsWith('proposal-'))inspect(id)}}/>
  const alternativeText=(s:string)=><ResearchCardText text={s} cards={alternativeCards} inspect={()=>{}}/>
  return <section aria-label="Proposed deck review" className="research-context">
   <h3>{p.kind==='diff'?'Proposed changes':p.kind==='list'?'Proposed deck':'Card premise review'}{p.name?` · ${p.name}`:''}</h3>
@@ -57,6 +60,7 @@ function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:Resear
   {p.source_revision!==null&&<p>Source revision: {p.source_revision}</p>}
   {p.kind!=='premises'&&<><p>{p.total_cards} resolved cards · {p.validation_status==='VALIDATED'?'Passes supported construction checks':p.validation_status==='STALE'?'Source changed — needs review':p.lifecycle==='DRAFT'?'Partial shell — not a finished list':'Needs repair before use'}</p>
    {p.kind==='diff'&&(['removes','adds'] as const).map(key=><div key={key}><h3>{key==='removes'?'Proposed cuts':'Proposed additions'}</h3><ul>{p[key].map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} · currently {c.current_quantity}{c.validated===false?' · cut not valid':''}</li>)}</ul></div>)}
+   {p.category_subtotals&&<p aria-label="Calculated category subtotals">{Object.entries(p.category_subtotals).map(([category,count])=>`${category==='Pokemon'?'Pokémon':category}: ${count}`).join(' · ')} · Total: {p.total_cards}</p>}
    <details open={p.kind==='list'}><summary>{p.kind==='list'?'Resolved list':'Resulting proposed list'}</summary><ul>{p.cards.map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} <small>{c.printing_id}</small></li>)}</ul></details>
    {!!p.unresolved.length&&<ul>{p.unresolved.map((c,i)=><li key={i}>{c.quantity} slots — {c.role||c.name} [unresolved]</li>)}</ul>}
   </>}

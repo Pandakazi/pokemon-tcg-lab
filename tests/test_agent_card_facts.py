@@ -1,6 +1,6 @@
 import json
 import pytest
-from pokelab.agent_card_facts import reconcile
+from pokelab.agent_card_facts import review
 from pokelab import agent_conversation as c,agent_research as a
 from test_agent_deck_proposals import stores,active,service
 from test_card_pool_research import sources,setup,research,offline
@@ -20,8 +20,12 @@ def test_named_facts_correct_without_losing_strategy(stores,draft,expected,absen
     result=svc.run(a.ResearchRequest(scope='conversation',question='Explain this plan.',include_deck=True,revision=7))
     assert result['status']=='answered'
     text=' '.join(p['text'] for p in result['answer']['paragraphs'])
-    assert expected in text and absent not in text
-    assert any(word in text for word in ('preserve','test','matchup'))
+    assert absent not in text and 'printed_fact_review' in result['answer']['notices']
+    if expected=='multiple materially different':assert result['answer']['fact_reviews'][0]['status']=='unresolved'
+    elif expected=='reviewed ruling':assert result['answer']['facts'] and not text
+    else:
+        assert expected.replace('Printed damage: 20','20') in json.dumps(result['answer']['facts'],ensure_ascii=False)
+        assert any(word in text for word in ('preserve','test','matchup'))
     assert len(calls)==1
 
 
@@ -31,7 +35,7 @@ def test_active_printing_wins_ambiguity_and_readonly(stores):
     svc,_=service(stores,text='Alakazam has an Ability called First that draws cards. I would test this plan.')
     result=svc.run(a.ResearchRequest(scope='conversation',question='How does this deck work?',include_deck=True,revision=7))
     text=' '.join(p['text'] for p in result['answer']['paragraphs'])
-    assert 'Second' in text and 'Heal 20 damage' in text and 'called First' not in text
+    assert 'Second' in json.dumps(result['answer']['facts']) and 'Heal 20 damage' in json.dumps(result['answer']['facts']) and 'called First' not in text
     assert before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
@@ -39,14 +43,15 @@ def test_active_printing_wins_ambiguity_and_readonly(stores):
 def test_casual_strategy_does_not_open_resolution(text):
     class Forbidden:
         def snapshot(self):raise AssertionError('No factual trigger')
-    assert reconcile(text,Forbidden(),None,{})==(text,[])
+    assert review(text,Forbidden(),None,{})==([],[])
 
 
 def test_missing_fact_keeps_reasoning(stores):
     request=a.ResearchRequest(scope='conversation',question='Explain.')
     envelope=c.context(request,stores,dict(turns=[],printings=[]))
-    text,facts=reconcile('Unknownmon uses Fake Storm so a slower plan could work. Keep experimenting.',stores,request,envelope)
-    assert 'unresolved' in text and 'Keep experimenting' in text and 'Fake Storm' not in text
+    reviews,facts=review('Unknownmon uses Fake Storm so a slower plan could work. Keep experimenting.',stores,request,envelope)
+    assert reviews[0]['status']=='unresolved' and facts==[]
+
 
 
 def test_hybrid_attack_correction_survives_quantity_filter(stores):
@@ -59,7 +64,8 @@ def test_hybrid_attack_correction_survives_quantity_filter(stores):
     svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
     result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7))
     text=' '.join(p['text'] for p in result['answer']['paragraphs'])
-    assert result['status']=='answered' and 'Spark' in text and 'Printed damage: 20' in text
+    assert result['status']=='answered' and result['answer']['facts'][0]['value']['attacks'][0]['name']=='Spark'
+    assert result['answer']['facts'][0]['value']['attacks'][0]['damage']==20
     assert 'Wrong Storm' not in text and '999' not in text and 'keep the core' in text
     assert result['answer']['proposal']['validation_status']=='VALIDATED'
 
@@ -71,21 +77,19 @@ def test_hybrid_attack_correction_survives_quantity_filter(stores):
 def test_embedded_fact_replacement_is_a_whole_sentence(stores,draft,expected):
     request=a.ResearchRequest(scope='conversation',question='Explain.')
     envelope=c.context(request,stores,dict(turns=[],printings=[]))
-    text,_=reconcile(draft,stores,request,envelope)
-    assert expected in text and 'Wrong Storm' not in text and 'every Trainer' not in text
-    assert 'signature For' not in text and 'Adding a third' not in text
-    assert 'resolved printing states' not in text and 'For Recovery Tool' not in text
-    assert 'I would' in text
+    reviews,facts=review(draft,stores,request,envelope)
+    assert reviews and expected in json.dumps(facts,ensure_ascii=False)
+    assert 'I would' in draft  # original prose is never rewritten by factual review
 
 
 def test_unresolved_attack_removes_attached_precision(stores):
     request=a.ResearchRequest(scope='conversation',question='Explain.')
     envelope=c.context(request,stores,dict(turns=[],printings=[]))
     draft='The plan depends on Unknownmon uses Fake Storm. It deals 70 damage per Energy. You must discard 3 Energy. Strategically, pressure still matters.'
-    text,_=reconcile(draft,stores,request,envelope)
-    assert 'unresolved' in text and '70' not in text and '3 Energy' not in text
-    assert 'Strategically, pressure still matters.' in text
-    assert not text.startswith('The plan depends on I cannot')
+    reviews,facts=review(draft,stores,request,envelope)
+    assert reviews[0]['status']=='unresolved' and facts==[]
+    assert 'Strategically, pressure still matters.' in draft
+
 
 
 
@@ -100,5 +104,6 @@ def test_printed_effect_newlines_do_not_create_orphans(stores):
     paragraphs=[p['text'] for p in result['answer']['paragraphs']]
     assert not any(p.startswith('Then, shuffle') for p in paragraphs)
     assert not any('..' in p for p in paragraphs)
-    assert any('Recovery Tool:' in p for p in paragraphs)
+    assert paragraphs==['I would keep recovery.']
+    assert result['answer']['fact_reviews'][0]['card']=='Recovery Tool'
     assert any('Then, shuffle' in e['value'].get('effect','') for e in result['envelope']['evidence'])

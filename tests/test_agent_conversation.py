@@ -124,7 +124,7 @@ def test_unsupported_empirical_claim_qualified_not_whole_answer_rejected(sources
     assert result['status']=='answered' and result['empirical_qualification']
     assert claim not in a.canonical(result)
     assert result['answer']['paragraphs'][0]['text'].startswith('A plausible plan')
-    assert result['answer']['paragraphs'][-1]['text']==c.QUALIFICATION
+    assert 'empirical_claim_unverified' in result['answer']['notices']
 
 
 @pytest.mark.parametrize('change',[
@@ -142,7 +142,7 @@ def test_internal_failure_and_truncation_never_commit_history(sources,monkeypatc
     assert svc.run(request())['status']=='output_token_limit_reached'
     assert not svc.conversations.items
     svc,_=service(sources)
-    monkeypatch.setattr(c,'assess',lambda *a:(_ for _ in ()).throw(RuntimeError('unsafe exception')))
+    monkeypatch.setattr(c,'present',lambda *a:(_ for _ in ()).throw(RuntimeError('unsafe exception')))
     result=svc.run(request())
     assert result['status']=='internal_assessment_failure' and 'unsafe exception' not in a.canonical(result)
     assert not svc.conversations.items
@@ -168,10 +168,12 @@ def test_sessions_bounded_isolated_and_expire(monkeypatch):
     assert store.get(next(iter(store.items))) is None and not store.items
 
 
-def test_prompt_literal_example_validates():
-    literal=next(line for line in c.SYSTEM.splitlines() if line.startswith('{'))
-    result,qualified=c.assess(literal,dict(evidence=[]))
-    assert result['paragraphs'] and not qualified
+def test_prompt_literal_examples_validate():
+    from pokelab.agent_hybrid import INSTRUCTIONS,parse
+    for line in INSTRUCTIONS.splitlines():
+        if line.startswith('<POKELAB_ACTIONS>'):
+            _,proposal,issues=parse(line,True)
+            assert proposal is not None and issues==[]
     assert 'Strategic inference needs no database verdict' in c.SYSTEM
     assert 'compare' in c.SYSTEM and 'printed' in c.SYSTEM
 
@@ -226,7 +228,8 @@ def test_clear_invented_card_fact_is_not_saved_by_lenient_annotations(sources,te
     result=svc.run(request())
     assert result['status']=='answered' and result['answer'] is not None
     assert text not in a.canonical(result['answer'])
-    assert any(word in result['answer']['paragraphs'][0]['text'] for word in ('premise needs correction','premise is unresolved'))
+    assert 'printed_fact_review' in result['answer']['notices']
+    assert result['answer']['fact_reviews'][0]['status']=='unresolved'
     assert len(calls)==1
 
 
@@ -252,16 +255,15 @@ def test_optional_schema_and_hard_core_content():
     assert schema['$defs']['Paragraph']['required']==['text']
     for bad in ['{', '{}', '{"version":"pokelab-conversation-answer-v1","paragraphs":[]}',
                 '{"version":"pokelab-conversation-answer-v1","paragraphs":[{"text":null}]}']:
-        with pytest.raises(a.ContractError):c.assess(bad,dict(evidence=[]))
+        with pytest.raises(c.ValidationError):c.Answer.model_validate_json(bad)
 
 
 def test_gemini_receives_optional_annotation_schema_and_no_repair_call(sources):
     calls=[]
     def handle(req):
         body=json.loads(req.content);calls.append(body)
-        schema=body['response_format']['json_schema']['schema']
-        assert schema==c.provider_contract('EXPLORE')[1]
-        assert schema['required']==['version','paragraphs']
+        assert 'response_format' not in body
+        assert c.provider_contract('EXPLORE')[1] is None
         return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(dict(
             version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Compare repeatability and setup before choosing a direction.')]))},'finish_reason':'stop'}]})
     svc=a.ResearchService(sources.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))

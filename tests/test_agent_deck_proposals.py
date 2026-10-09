@@ -174,7 +174,7 @@ def test_invalid_proposal_shape_does_not_remove_conversation(stores):
     svc,calls=service(stores,dict(kind='list',cards=[dict(name='Pikachu ex',quantity='two')]))
     result=svc.run(a.ResearchRequest(scope='conversation',question='Give me the finished 60.'))
     assert result['status']=='answered' and len(calls)==1
-    assert 'unresolved' in result['answer']['paragraphs'][-1]['text']
+    assert 'missing_artifact' in result['answer']['notices']
 
 
 def test_add_another_and_excessive_cuts_use_actual_counts(stores):
@@ -252,10 +252,8 @@ def test_gemini_ordinary_wire_contract_twice(stores,monkeypatch,question,include
     monkeypatch.setattr(d,'evaluate',no_resolution)
     def handle(req):
         body=json.loads(req.content);calls.append(body)
-        schema=body['response_format']['json_schema']['schema']
-        assert set(schema['properties'])=={'version','paragraphs','fact_ids'}
-        assert set(schema['$defs'])=={'Paragraph'}
-        assert 'Concrete-output extension' not in body['messages'][0]['content']
+        assert 'response_format' not in body
+        assert 'not a JSON answer envelope' in body['messages'][0]['content']
         value=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='The core has a coherent plan; consider consistency before changes.')])
         return httpx.Response(200,json={'choices':[{'message':{'content':json.dumps(value)},'finish_reason':'stop'}]})
     svc=a.ResearchService(stores.paths,selection=Selection(provider='gemini',model='gemini-3.5-flash-lite'),transport=httpx.MockTransport(handle))
@@ -270,7 +268,7 @@ def test_gemini_ordinary_wire_contract_twice(stores,monkeypatch,question,include
 def test_concrete_wire_contract_stays_available():
     for question in ('Give me exact cards and quantities to add/remove.','Give me the final 60.'):
         system,schema=c.provider_contract(d.lifecycle(question))
-        assert schema is None and 'natural conversational prose' in system
+        assert schema is None and 'Respond in natural prose' in system
 
 
 @pytest.mark.parametrize('question',[
@@ -305,9 +303,9 @@ def test_pm_counts_are_authoritative_in_final_answer(stores,question):
     assert result['status']=='answered'
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
     assert '3rd' not in prose and '8th' not in prose and 'or an extra' not in prose
-    assert 'currently 3, resulting quantity 4' in prose
-    assert 'currently 6, resulting quantity 7' in prose
-    assert 'remain unresolved' in prose
+    report=result['answer']['proposal']
+    assert [(r['current_quantity'],r['resulting_quantity']) for r in report['adds']]==[(3,4),(6,7)]
+    assert report['unresolved']
     assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
@@ -317,7 +315,7 @@ def test_missing_concrete_diff_cannot_display_unchecked_prose(stores):
     result=svc.run(a.ResearchRequest(scope='conversation',question='What exactly comes out and what exactly goes in?',include_deck=True,revision=7))
     assert result['status']=='answered'
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
-    assert '8th' not in prose and 'unresolved' in prose and len(calls)==1
+    assert '8th' not in prose and 'missing_artifact' in result['answer']['notices'] and len(calls)==1
 
 
 @pytest.mark.parametrize('rationale,shown',[
@@ -335,14 +333,14 @@ def test_strategy_without_empirical_permission_gate(stores,rationale,shown):
     assert first['status']==result['status']=='answered'
     envelope=json.loads(calls[-1]['messages'][1]['content'])
     assert 'empirical-tournament-evidence-not-supplied' in envelope['omissions']
-    assert 'creator intent, or declared matchup target' in calls[-1]['messages'][0]['content']
+    assert 'without demanding tournament proof' in calls[-1]['messages'][0]['content']
     report=result['answer']['proposal']
     assert report['validation_status']=='VALIDATED' and report['source_revision']==7
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
     assert (rationale in prose)==shown
-    if shown:assert 'Strategic hypothesis (not a proven tournament improvement)' in prose
+    if shown:assert 'Strategic hypothesis (not a proven tournament improvement)' not in prose
     if '8%' in rationale:assert result['empirical_qualification'] is True
-    assert 'currently 56, resulting quantity 54' in prose
+    assert report['removes'][0]['current_quantity']==56 and report['removes'][0]['resulting_quantity']==54
     assert len(calls)==2 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
@@ -353,7 +351,7 @@ def test_role_only_proposal_retains_strategy_without_proof(stores):
     result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7))
     assert result['status']=='answered'
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
-    assert rationale in prose and 'remain unresolved' in prose and len(calls)==1
+    assert rationale in prose and result['answer']['proposal']['unresolved'] and len(calls)==1
 
 
 @pytest.mark.parametrize('block,expected',[
@@ -379,22 +377,17 @@ def test_hybrid_natural_prose_survives_optional_actions(stores,block,expected):
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
     assert 'consistency hypothesis' in prose and 'POKELAB_ACTIONS' not in a.canonical(result)
     if expected in ('missing','malformed'):
-        assert 'proposal' not in result['answer'] and 'unresolved' in prose
+        assert 'proposal' not in result['answer'] and 'missing_artifact' in result['answer']['notices']
     elif expected=='valid':assert result['answer']['proposal']['validation_status']=='VALIDATED'
     else:assert result['answer']['proposal']['validation_status']=='NEEDS_REPAIR'
     assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
-def test_hybrid_reconciliation_keeps_causal_reasoning():
-    from pokelab.agent_hybrid import parse,strategic_prose
-    prose='Add the 3rd Area Zero because the stadium supports the core. Add 8th Grass. This improves setup flexibility. This raises win rate by 8%.'
-    kept,qualified=strategic_prose(prose,c.EMPIRICAL)
-    text=' '.join(kept)
-    assert '3rd' not in text and '8th' not in text and '8%' not in text
-    assert 'stadium supports the core' in text and 'setup flexibility' in text and qualified
-    ambiguous='I might cut Jamming Tower, although I could also keep it and shave Cyrano instead.'
-    visible,proposal,issues=parse(ambiguous,True)
-    assert proposal is None and strategic_prose(visible,c.EMPIRICAL,False)[0]==[ambiguous]
+def test_hybrid_withholds_state_unit_without_rewriting_remaining_strategy(stores):
+    svc,_=service(stores,text='Add the 3rd Area Zero because the stadium supports the core. This improves setup flexibility. This raises win rate by 8%.')
+    result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact changes.'))
+    assert result['answer']['paragraphs']==[dict(text='This improves setup flexibility.',evidence=[])]
+    assert result['empirical_qualification']
 
 
 @pytest.mark.parametrize('question',[
@@ -433,7 +426,7 @@ def test_absent_explicit_cut_cannot_survive_as_strategy(stores,payload):
     assert result['status']=='answered'
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
     assert 'is a liability' not in prose and 'worthwhile' not in prose
-    assert 'not in revision 7' in prose and 'consistency is a reasonable goal' in prose
+    assert result['answer']['proposal']['removes'][0]['current_quantity']==0 and 'consistency is a reasonable goal' in prose
     assert result['answer']['proposal']['removes'][0]['validated'] is False
     assert len(calls)==1 and before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
@@ -443,15 +436,14 @@ def test_integrity_intents_and_empirical_audit_route():
         assert d.lifecycle(q)=='RECOMMEND'
     q='Which of these recommendations are proven by tournament results and which are just your structural judgment?'
     assert d.lifecycle(q)=='EXPLORE'
-    assert c.provider_contract(d.lifecycle(q))[1] is not None
+    assert c.provider_contract(d.lifecycle(q))[1] is None
 
 
-def test_stale_another_and_ordinals_do_not_survive():
-    from pokelab.agent_hybrid import strategic_prose
+def test_stale_another_and_ordinals_do_not_survive(stores):
     for state in ['A second Area Zero Underdepths helps.','A third Area Zero Underdepths helps.','A fourth or fifth Grass Energy helps.','Another Area Zero is already present.']:
-        kept,_=strategic_prose(state+' Consistency is a hypothesis.',c.EMPIRICAL)
-        assert state not in kept and 'Consistency is a hypothesis.' in kept
-
+        svc,_=service(stores,text=state+' Consistency is a hypothesis.')
+        result=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact changes.'))
+        assert result['answer']['paragraphs']==[dict(text='Consistency is a hypothesis.',evidence=[])]
 
 
 def test_full_deck_addition_requests_balancing_cuts_and_preserves_core(stores):
@@ -460,7 +452,7 @@ def test_full_deck_addition_requests_balancing_cuts_and_preserves_core(stores):
     def handle(req):
         body=json.loads(req.content);calls.append(body)
         assert 'propose balancing' in body['messages'][0]['content']
-        assert 'Preserve core concept cards' in body['messages'][0]['content']
+        assert 'Preserve core' in body['messages'][0]['content']
         actions={'changes':[{'action':'add','card_name':'Draw Helper','quantity':2},{'action':'remove','card_name':'Recovery Tool','quantity':2}],'rationale':'I would test trimming redundant recovery to preserve the main attacker and draw engine.'}
         text='I would preserve the core and test a support change. <POKELAB_ACTIONS>'+json.dumps(actions)+'</POKELAB_ACTIONS>'
         return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}]})
@@ -478,11 +470,13 @@ def test_full_deck_addition_requests_balancing_cuts_and_preserves_core(stores):
 def test_evidence_boundary_names_recent_swaps(stores):
     active(stores,[('qa-pikachu',4),('qa-energy',56)])
     proposal=dict(kind='diff',adds=[row('qa-draw',1)],removes=[row('qa-energy',1)])
-    svc,_=service(stores,proposal)
+    svc,calls=service(stores,proposal,text='Draw Helper and Lightning Energy are changes I would test, not proven upgrades.')
     first=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact cards and quantities.',include_deck=True,revision=7))
     result=svc.run(a.ResearchRequest(scope='conversation',question='Which of these recommendations are proven by tournament results and which are just your structural judgment?',include_deck=True,revision=7,conversation_id=first['conversation_id']))
     prose=' '.join(p['text'] for p in result['answer']['paragraphs'])
-    assert 'Draw Helper, Lightning Energy' in prose and 'structural hypotheses' in prose
+    assert 'Draw Helper and Lightning Energy' in prose and 'not proven upgrades' in prose
+    context=json.loads(calls[-1]['messages'][1]['content'])
+    assert context['artifacts']['proposed_deck_changes']['report']['adds'][0]['canonical_name']=='Draw Helper'
 
 
 def test_concrete_referents_are_explicit(stores):
@@ -494,13 +488,13 @@ def test_concrete_referents_are_explicit(stores):
         assert 'Draw Helper, Recovery Tool, and Darkness Energy' in json.dumps(body)
         assert 'explicitly name the cards' in body['messages'][0]['content']
         actions={'changes':[{'action':'remove','card_name':name,'quantity':1} for name in ['Draw Helper','Recovery Tool','Darkness Energy']]+[{'action':'add','card_name':'Lightning Energy','quantity':3}]}
-        text='I would test simplifying the support package. <POKELAB_ACTIONS>'+json.dumps(actions)+'</POKELAB_ACTIONS>'
+        text='By those three I mean Draw Helper, Recovery Tool, and Darkness Energy. I would test simplifying the support package. <POKELAB_ACTIONS>'+json.dumps(actions)+'</POKELAB_ACTIONS>'
         return httpx.Response(200,json={'choices':[{'message':{'content':text},'finish_reason':'stop'}]})
     svc.transport=httpx.MockTransport(followup)
     before={k:p.read_bytes() for k,p in stores.paths.items()}
     result=svc.run(a.ResearchRequest(scope='conversation',question='What would you replace those three with?',include_deck=True,revision=7,conversation_id=first['conversation_id']))
     assert result['status']=='answered',result
-    assert 'treating your reference as Draw Helper, Recovery Tool, Darkness Energy' in result['answer']['paragraphs'][0]['text']
+    assert 'Draw Helper, Recovery Tool, and Darkness Energy' in result['answer']['paragraphs'][0]['text']
     assert result['answer']['proposal']['total_cards']==60
     assert before=={k:p.read_bytes() for k,p in stores.paths.items()}
 

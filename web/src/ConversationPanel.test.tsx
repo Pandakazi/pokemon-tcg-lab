@@ -104,3 +104,24 @@ test('role alternatives reuse the existing card preview without changing proposa
  expect(within(tooltip).getByRole('img')).toHaveAttribute('src','/local-art.webp')
  expect(calls).toHaveLength(1)
 })
+
+test('generated artifact renders trusted subtotals and an incomplete total without model labels',async()=>{
+ const proposal={status:'PROPOSED',lifecycle:'FINALIZE',kind:'list',name:'Generated concept',source_revision:null,validation_status:'NEEDS_REPAIR',legality_status:'INCOMPLETE',total_cards:59,category_subtotals:{Pokemon:18,Trainer:31,Energy:10},cards:[{card_id:'x',printing_id:'test-1',canonical_name:'Example Card',quantity:4}],adds:[],removes:[],unresolved:[],hard_validation:['Deck must contain exactly 60 cards.'],strategic_diagnostics:[],repair_notes:[],alternatives:[],premises:[]}
+ const {calls,agent}=setup(async()=>({...result,answer:{paragraphs:[],facts:[],proposal,historical_snapshot:true,artifact_id:'artifact-fixture'}}))
+ await ask('Recount that deck.');await agent.findByRole('region',{name:'Proposed deck review'})
+ expect(agent.getByLabelText('Calculated category subtotals')).toHaveTextContent('Trainer: 31')
+ expect(agent.getByLabelText('Calculated category subtotals')).toHaveTextContent('Total: 59')
+ expect(agent.getByText(/Previously proposed artifact/)).toBeVisible()
+ expect(agent.getByText(/Needs repair before use/)).toBeVisible()
+ expect(agent.queryByText(/Trainer \(32\)/)).toBeNull()
+ expect(calls).toHaveLength(1)
+})
+
+test('factual and missing-artifact notices remain separate from natural prose',async()=>{
+ const {agent}=setup(async()=>({...result,answer:{paragraphs:[{text:'I would preserve the core.',evidence:[]}],facts:[evidence],notices:['printed_fact_review','missing_artifact']}}))
+ await ask();await agent.findByRole('article')
+ expect(agent.getByText('I would preserve the core.')).toBeVisible()
+ expect(agent.getByText(/Check the local printed facts below/)).toBeVisible()
+ expect(agent.getByText(/No structured list or changes were supplied/)).toBeVisible()
+ expect(agent.queryByText(/I cannot verify the exact printed details/)).toBeNull()
+})

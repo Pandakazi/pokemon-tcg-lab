@@ -44,44 +44,10 @@ def lifecycle(question):
     if re.search(r'^\s*(?:please\s+)?(?:add|cut|remove|swap)\b',q): return 'RECOMMEND'
     # Explicit partial intent wins over the word 60 in "not ready for a 60".
     if re.search(r'not ready|just.*(?:shell|core)|sketch|partial (?:list|deck)',q): return 'DRAFT'
-    if re.search(r'finali[sz]|finished|give me (?:the |a )?(?:final )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
+    if re.search(r'(?:create|build|make).*?(?:complete|legal|60.card).*?(?:deck|list)|finali[sz]|finished|give me (?:the |a )?(?:final )?60|resolve.*slots|tournament legal|ptcgl',q): return 'FINALIZE'
     if re.search(r'recommend.*(?:deck|list)|actually play|specific cards|exact cards|quantit|cut and add|remov.*add|cards.*change|changes concrete|(?:exact|specific) changes|replace.*(?:cards?|slots?|them|these|those)|cards?.*replace|what comes out.*what goes in|exactly.*(?:comes out|goes in)',q): return 'RECOMMEND'
     if re.search(r'\bshell\b|core look|draft',q): return 'DRAFT'
     return 'EXPLORE'
-
-
-INSTRUCTIONS = """
-Concrete-output extension: THE MODEL BUILDS IT. POKÉLAB VALIDATES IT.
-The envelope's lifecycle is inferred, not a user mode. EXPLORE freely; DRAFT may
-contain unresolved roles. RECOMMEND exact cards/changes; FINALIZE requests a complete
-60 with no placeholders. The server, not you, decides validation/legality status.
-No empirical evidence, matchup target or creator intent is required to propose
-specific changes. rationale is your strategic hypothesis, not a proof obligation.
-Explain the intended role/setup/consistency tradeoff without current/resulting counts
-or empirical performance claims. PokéLab renders authoritative quantities separately.
-Keep ordinary prose conversational. Never claim a list is validated/tournament
-legal before local checks. Put exact list quantities in proposal, not in prose.
-proposal is optional: {kind:"list" or "diff",name,cards,adds,removes,rationale}.
-Each cards/adds/removes entry: {name,printing_id:null or exact local printing ID,
-quantity:positive integer,role:strategic job}. Max 100 list rows, 60 add/remove rows.
-A role-only entry with name:"" is an unresolved draft slot. For a list supply cards;
-for an active-deck diff supply adds/removes only. Never pretend a proposal was saved.
-You may nominate cards not pre-retrieved. Local resolution checks them afterwards.
-For ambiguous names use a printing ID if known; never invent an ID to force a match.
-Use the complete source active deck and actual quantities for cuts or "add another".
-Preserve the user's concept and intended roles when correcting illegal suggestions.
-premises is optional (max 12): {name,printing_id,expected_text}. Register named cards
-whose exact effect materially drives advice, including matchup premises and specific
-recommendations. expected_text is the exact printed effect you are relying on, if
-known, NOT a remembered paraphrase. Wrong/unknown text is corrected locally.
-Ordinary strategic reasoning needs neither a premise nor a legal 60. In paragraphs,
-optional depends_on lists premise/card names when an argument depends on their facts.
-Unresolved/illegal premises receive corrections, not silence. Separately discuss
-quality vs legality; an Energy/evolution concern is advisory, not deck invalidity.
-Do not repeat the full list in rationale or paragraphs. The UI renders canonical
-resolved names/counts and validation. Return an incomplete proposal honestly rather
-than filling roles with invented cards. No write actions, repair calls or browsing.
-"""
 
 
 def printed(raw):
@@ -257,12 +223,18 @@ def evaluate(proposal, premises, sources, request, envelope):
             report['hard_validation'].append('A proposed change needs the exact active deck revision. No cuts or additions were applied.')
         if (proposal.kind=='list' and (proposal.adds or proposal.removes)) or (proposal.kind=='diff' and proposal.cards):
             report['hard_validation'].append('The proposal mixes list and change formats. Keep the concept, but separate the proposed list from add/cut instructions.')
+        added_keys=set()
+        if proposal.kind=='diff':
+            for addition in proposal.adds:
+                record,_,_=resolver.resolve(addition)
+                if record:added_keys.add(deck_identity(record))
         for candidate in proposal.removes if proposal.kind=='diff' and active else ():
             record,state=resolve(candidate,True)
             if not record:continue
             key=deck_identity(record);entry=next((e for e in document['entries'] if e['identity']==key),None)
             original=next((e for e in active['entries'] if e['identity']==key),None)
-            valid=entry is not None and entry['quantity']>=candidate.quantity
+            valid=entry is not None and entry['quantity']>=candidate.quantity and key not in added_keys
+            if key in added_keys:report['hard_validation'].append(f'{record["card"]["name"]}: a cut cannot cancel an addition in the same proposal.')
             report['removes'].append(dict(**resolver.view(record),quantity=candidate.quantity,current_quantity=original['quantity'] if original else 0,validated=valid))
             if not valid:
                 rejected.update((candidate.name,record['card']['name']))
@@ -300,6 +272,7 @@ def evaluate(proposal, premises, sources, request, envelope):
         validation=Decks(collection,sources.paths['workspace']).validation(document)
         report['hard_validation']+=validation['reasons']+validation['unknown']
         report['limitations']=validation['limitations'];report['total_cards']=validation['total']
+        report['category_subtotals']={category:sum(r['quantity'] for r in report['cards'] if r['category']==category) for category in ('Pokemon','Trainer','Energy')}
         report['strategic_diagnostics']=diagnostics(report['cards'])
         report['resolution_status']='UNRESOLVED' if report['unresolved'] else 'RESOLVED'
         report['legality_status']='INVALID' if validation['reasons'] else 'UNKNOWN' if validation['unknown'] or report['unresolved'] else 'INCOMPLETE' if validation['total']!=60 else 'LEGAL_SUPPORTED_CHECKS'
@@ -319,27 +292,6 @@ def evaluate(proposal, premises, sources, request, envelope):
                 options=resolver.alternatives(candidate.role if candidate else '',resolver.records[row['printing_id']],exclude_ace=True)
                 report['alternatives'].append(dict(for_card=row['canonical_name'],role=candidate.role if candidate else '',candidates=[r for r in options if 'ACE SPEC' not in r['printed'].get('rarity','').upper()]))
         return report,new_evidence,rejected
-
-
-def diff_paragraphs(report):
-    """Render arithmetic only from the checked snapshot, never provider prose."""
-    if not report or report['kind']!='diff':
-        return [dict(text='No exact active-deck change was resolved. The replacement remains unresolved; no changes have been applied.',evidence=[])]
-    lines=[f"Proposed changes against revision {report['source_revision']}; nothing has been applied."]
-    if report['validation_status']=='STALE':
-        return [dict(text='The source snapshot changed. These changes are unresolved against the current deck; nothing has been applied.',evidence=[])]
-    for group,verb in (('removes','Remove'),('adds','Add')):
-        for row in report[group]:
-            if row.get('validated') is False:
-                lines.append(f"{row['canonical_name']} is not in revision {report['source_revision']}, so there is nothing to cut there." if row['current_quantity']==0 else f"Cannot remove {row['quantity']} {row['canonical_name']}: this source revision has {row['current_quantity']}, or earlier proposed cuts already use them.")
-            else:
-                lines.append(f"{verb} {row['quantity']} {row['canonical_name']} -- currently {row['current_quantity']}, resulting quantity {row['resulting_quantity']} in the proposed list.")
-    if report['unresolved']:
-        lines.append(f"{len(report['unresolved'])} proposed component(s) remain unresolved; no exact replacement has been established for those slots.")
-    lines.append(f"Resulting resolved list: {report['total_cards']} cards. " + ('The supported construction checks pass.' if report['validation_status']=='VALIDATED' else 'This proposal still needs review or repair before use.'))
-    lines.extend(report['hard_validation'])
-    lines.extend(report['strategic_diagnostics'])
-    return [dict(text=line,evidence=[]) for line in lines]
 
 
 def quantity_claim(text):
