@@ -20,6 +20,16 @@ def build_request(question):
 def words(text):return tuple(w for w in re.findall(r'\w+',text.casefold()) if w!='ex')
 
 
+# Presentation requirements are not strategic permission to change the deck.
+PRESENTATION_WORDS=set('build rebuild create make me a an the deck list standard legal complete card cards 60 please can could would you competitive current recent for with and put it in form every slot exact include category subtotals sure total is exactly return show all quantities counts count print format formatted as table of another'.split())
+
+
+def custom_request(question,label=''):
+    style=bool(re.search(r'\b(?:aggressive|control|experimental|custom|weird|budget|mill|stall|toolbox)\b',question,re.I))
+    clauses=re.findall(r'\b(?:with|around|using|include|featuring|plus|without|except|avoid|exclude|only)\b([^.!?]*)',question,re.I)
+    return style or any(set(words(clause))-set(words(label))-PRESENTATION_WORDS for clause in clauses)
+
+
 def select(rows,question):
     """Two newest relevant events; depth first, then one older event at a time."""
     labels={r['variant']:r['label'] for r in rows if r['variant']!='unknown'}
@@ -43,8 +53,7 @@ def select(rows,question):
             if len(sample)>=8:
                 break
         if len(sample)>=8 or count==len(events):
-            ignored={'build','create','make','me','a','an','the','deck','list','standard','legal','complete','card','60','please','can','could','would','you','competitive','current','recent','for','with'}
-            constrained=bool(q-set(words(labels[variant]))-ignored)
+            constrained=custom_request(question,labels[variant])
             return dict(sample=sample,event_ids=[e for _,e in events[:count]],variant=variant,label=labels[variant],
                 placement_band=band,dominance=dict(totals),explicit_variant=explicit,constrained=constrained)
     return None
@@ -143,6 +152,8 @@ def baseline(path,competitive_path,pool,question,format_start=None,today=None):
     except (OSError,sqlite3.Error,ValueError,KeyError,TypeError,ZeroDivisionError):return None
 
 
+# Historical compatibility only; initial builds now use direct_generation and
+# this contract is not sent to providers.
 CONTRACT='''
 candidate_sandbox.consensus is PokéLab's deterministic recent competitive consensus
 for one Limitless-labeled variant. Its 60 slots and shape are the strong default,
@@ -164,6 +175,7 @@ def proposal_for(consensus):
 
 
 def permitted_deviation(proposal,consensus,candidates):
+    """Legacy comparison helper, not authorization for initial-build changes."""
     if proposal is None or proposal.kind!='list':return False
     before={r['candidate_id']:r['quantity'] for r in consensus['cards']};after=Counter()
     raw={r['candidate_id']:r for r in candidates}

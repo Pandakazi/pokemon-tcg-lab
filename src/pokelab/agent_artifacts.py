@@ -11,6 +11,7 @@ def artifact_context(history):
 
 def remember(history, report, envelope):
     artifacts=deepcopy(history.get('artifacts',{}))
+    if envelope.get('artifact_mutation_allowed') is False:return artifacts
     if report and report['kind'] in ('list','diff'):
         kind='generated_deck' if report['kind']=='list' else 'proposed_deck_changes'
         # Keep resolved identities/counts/status independent of compacted prose.
@@ -75,6 +76,13 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
         for unit in re.split(r'(?<=[.!?])\s+|\n+',text):
             unit=unit.strip()
             if not unit or not re.search(r'\w',unit):continue
+            current=envelope.get('current_generated_deck',{})
+            denies_card=any(r['canonical_name'].casefold() in unit.casefold() for r in current.get('cards',[])) and re.search(r'unavailable|unresolved|missing from|not (?:in|available)|cannot (?:find|resolve)',unit,re.I)
+            denies_artifact=current.get('validation_status')=='VALIDATED' and re.search(r'placeholder|(?:deck|list|artifact).*(?:unresolved|unavailable)|no (?:current |generated )?deck',unit,re.I)
+            if denies_card or denies_artifact:
+                correction=dict(text='The current conversational deck is retained; its resolved cards and quantities remain authoritative.',evidence=[])
+                if correction not in answer['paragraphs']:answer['paragraphs'].append(correction)
+                continue
             if any(name and name.casefold() in unit.casefold() for name in rejected):
                 invalid_dependency=True;continue
             if invalid_dependency and re.match(r'(?:It|This|That|Doing so|They)\b',unit,re.I):continue
@@ -127,6 +135,8 @@ def clean_references(text,envelope):
 
 def pending_repair(question, history):
     """A small confirmation dispatcher, gated by an actual unresolved artifact."""
+    from .agent_generated_changes import read_only
+    if read_only(question):return None
     artifact=history.get('artifacts',{}).get('generated_deck')
     if not artifact or not artifact.get('pending'):return None
     words=set(re.findall(r"[a-z]+",question.casefold()))

@@ -24,7 +24,7 @@ def generated(count=52):
 @pytest.mark.parametrize('energy,total,status',[(51,59,'NEEDS_REPAIR'),(52,60,'VALIDATED')])
 def test_finalize_structured_totals_and_local_recount(stores,monkeypatch,energy,total,status):
     svc,calls=service(stores,generated(energy));before={k:p.read_bytes() for k,p in stores.paths.items()}
-    question='Create me a complete legal 60-card Dragapult ex deck and put it in list form. Make every slot an exact card, include category subtotals, and make sure the total is exactly 60.'
+    question='Create me a custom complete legal 60-card Dragapult ex deck and put it in list form. Make every slot an exact card, include category subtotals, and make sure the total is exactly 60.'
     assert c.lifecycle(question)=='FINALIZE'
     result=svc.run(a.ResearchRequest(scope='conversation',question=question))
     assert result['status']=='answered',result

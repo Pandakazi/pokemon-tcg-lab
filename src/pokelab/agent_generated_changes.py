@@ -5,16 +5,21 @@ from .rules.models import digest
 from .agent_deck_proposals import Candidate, Proposal, lifecycle
 
 
+def read_only(question):
+    return bool(re.match(r'\s*(?:why\b|explain\b|critique\b|analy[sz]e\b|compare\b|what do you think\b|what are (?:the |its )?(?:weak|strength)|how (?:does|do|would)\b)',question,re.I))
+
+
 def intent(question, history):
     if not history.get('artifacts', {}).get('generated_deck'):return None
     q=question.casefold()
     if history.get('artifacts',{}).get('deck_referent') in ('active','other') and not re.search(r'generated|your (?:own )?deck',q):return None
     if re.search(r'\b(?:active|saved|deck builder) deck\b|\b(?:new|different|another) deck\b|change (?:the )?subject|different topic|forget (?:that|this) deck|(?:this|selected) card\b',q):return None
+    if read_only(question):return 'DISCUSS'
     if re.search(r'\b(?:make|apply) (?:those|these|the|your) (?:changes|recommendations)|\b(?:do|try) that\b|\bshow.*updated.*list',q):return 'APPLY'
     if lifecycle(question)=='FINALIZE':return None
-    if re.search(r'exact changes|cut and add|more aggressive',q) or lifecycle(question)=='RECOMMEND':return 'RECOMMEND'
+    if re.search(r'exact changes|cut and add|more aggressive|what would you change|try a control|\b(?:add|cut|replace|modify)\b',q) or lifecycle(question)=='RECOMMEND':return 'RECOMMEND'
     if re.search(r'\b(?:deck|list|critique|weaknesses|weakest|ratios|pilot|play|weak points|game plan|these cards|it|this|that|evidence|sources)\b',q):return 'DISCUSS'
-    return None
+    return 'DISCUSS'
 
 
 def compose(artifact, proposal):
@@ -59,6 +64,11 @@ def select(history):
 CONTRACT='''
 current_generated_deck is the current conversational deck, separate from the saved
 active deck. Discussion/critique/explanation requires no action block. For
+DISCUSS, its resolved identities, quantities and validation status are authoritative:
+do not call it a placeholder or claim its known cards are unavailable. Do not emit
+a generated_deck or changes block. candidate_sandbox.consensus records its original
+baseline when present; do not invent deviations if the current quantities match.
+For
 generated_intent RECOMMEND, give a specific rationale and one proposed_deck_changes
 block with exact candidate_id and quantity for every remove/add. Choose only the
 supplied candidate_sandbox; cuts must exist in current_generated_deck. Balance to

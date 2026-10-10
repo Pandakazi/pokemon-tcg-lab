@@ -144,18 +144,25 @@ def context(request, sources, history):
     from .agent_context_sources import Unavailable, stamp
     before = stamp(sources.paths['cards'])
     omissions = []; evidence = []; active = None; selected = None
-    from .agent_generated_changes import intent
+    from .agent_generated_changes import intent,read_only
     from .agent_consensus import build_request
     new_build=build_request(request.question) and lifecycle(request.question)!='DRAFT'
-    generated_intent=None if new_build else intent(request.question,history)
+    generated_intent=None if new_build or pending_repair(request.question,history) else intent(request.question,history)
     generated=history.get('artifacts',{}).get('generated_deck') if generated_intent else None
-    building=new_build or bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE' or generated_intent=='RECOMMEND'
+    reading=read_only(request.question) or generated_intent=='DISCUSS'
+    building=bool(generated) or new_build or bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE'
     sandbox=None
     try:
         if building:
             from .agent_deck_sandbox import build
             pending=pending_repair(request.question,history)
             sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,history['printings'],competitive_path=sources.paths['competitive'],format_start=sources.format_start)
+            if generated_intent=='DISCUSS':
+                # Read context needs current printed facts, not all alternative
+                # ranking/construction annotations. Never modify the saved packet.
+                current_ids={r.get('candidate_id') for r in generated['report']['cards']}
+                fields=('candidate_id','printing_id','name','category','stage','evolveFrom','attacks','abilities','effect','types','rules')
+                sandbox=dict(sandbox,candidates=[{k:r[k] for k in fields if k in r} for r in sandbox['candidates'] if r['candidate_id'] in current_ids])
             if not sandbox['candidates']:raise ResearchUnavailable('context_unavailable')
             index=None
         else:index = RetrievalIndex.from_database(sources.paths['cards'])
@@ -165,7 +172,7 @@ def context(request, sources, history):
         omissions.append('standard-retrieval-unavailable')
     printings = [request.printing] if request.printing else []
     if generated:printings += [r['printing_id'] for r in generated['report']['cards']]
-    if sandbox:printings += [r['printing_id'] for r in sandbox['candidates'] if r['role']=='requested-core']
+    if sandbox:printings += [r['printing_id'] for r in sandbox['candidates'] if r.get('role')=='requested-core']
     question = request.question.casefold()
     if index:
         # Exact card/component names are local lookup keys, not model knowledge.
@@ -243,8 +250,14 @@ def context(request, sources, history):
         envelope['generated_intent']=generated_intent
         envelope['current_generated_deck']=dict(id=generated['id'],cards=[{k:r[k] for k in ('candidate_id','canonical_name','printing_id','quantity')} for r in generated['report']['cards']])
         if generated_intent=='DISCUSS':envelope['lifecycle']='EXPLORE'
+        envelope['current_generated_deck'].update(validation_status=generated['report']['validation_status'],total_cards=generated['report']['total_cards'],category_subtotals=generated['report'].get('category_subtotals',{}),generation_source=generated['report'].get('generation_source'))
     if sandbox:envelope['candidate_sandbox']=sandbox
+    if generated and sandbox and sandbox.get('consensus'):
+        c=sandbox['consensus']
+        evidence.append(dict(id='recent-consensus',kind='evidence',title='Original recent consensus snapshot',source='limitless-main',value={k:c[k] for k in ('label','event_ids','sample_size','placement_band','shape','energy') if k in c}))
     if new_build:envelope['lifecycle']='FINALIZE'
+    envelope['artifact_mutation_allowed']=not reading
+    if reading:envelope['lifecycle']='EXPLORE'
     # Preserve selected card and complete deck; shed optional cards then older turns.
     while len(canonical(envelope).encode()) > CONTEXT_BYTES:
         removable = next((e for e in reversed(evidence) if e.get('printing') and e['printing'] != request.printing), None)
@@ -315,6 +328,10 @@ def run(service, request, selection, *, _repair=None):
         envelope['lifecycle']='FINALIZE'
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)
+    from .agent_generation import direct_generation,unchanged_consensus
+    local=direct_generation(service,request,history,envelope) if not requirements else None
+    if local is None and envelope.get('generated_intent')=='DISCUSS':local=unchanged_consensus(service,request,history,envelope)
+    if local is not None:return local
     if envelope.get('generated_intent')=='APPLY' and not requirements:
         return apply_generated(service,request,selection,history,envelope)
     target=None if requirements else recount_target(request.question)
@@ -327,11 +344,6 @@ def run(service, request, selection, *, _repair=None):
             return dict(status='answered',answer=answer,envelope=envelope,conversation_id=key,execution={'mode':'local_artifact','provider_called':False})
     from .agent_qualification_config import INPUT_BYTES
     system, wire_schema = (completion.SYSTEM,None) if additive else provider_contract(envelope['lifecycle'], request.include_deck)
-    consensus=envelope.get('candidate_sandbox',{}).get('consensus')
-    use_consensus=bool(consensus and consensus['status']=='available' and not requirements and not envelope.get('generated_intent'))
-    if use_consensus:
-        from .agent_consensus import CONTRACT
-        system+=CONTRACT
     if envelope.get('generated_intent') and not additive:
         from .agent_generated_changes import CONTRACT
         system+=CONTRACT
@@ -377,6 +389,10 @@ def run(service, request, selection, *, _repair=None):
         if requirements and parsed.proposal and parsed.proposal.kind!='list':
             parsed=parsed.model_copy(update={'proposal':None});hybrid_issues.append('repair_requires_generated_deck')
         if not hybrid_prose and not parsed.proposal:raise ContractError('empty_statement')
+        if envelope.get('artifact_mutation_allowed') is False:
+            if parsed.proposal or hybrid_issues:hybrid_issues=['read_only_artifact_ignored']
+            parsed=parsed.model_copy(update={'proposal':None,'premises':()})
+            if not hybrid_prose:hybrid_prose='The current conversational deck is unchanged.'
         if request.include_deck and not envelope.get('generated_intent'):
             from .agent_hybrid import explicit_cut
             cut=explicit_cut(request.question)
@@ -386,15 +402,6 @@ def run(service, request, selection, *, _repair=None):
                 intent=intent.model_copy(update={'removes':(cut,)})
                 parsed=parsed.model_copy(update={'proposal':intent})
         premises=list(parsed.premises)
-        baseline_used=False
-        if use_consensus and not consensus['constrained']:
-            from .agent_consensus import proposal_for, permitted_deviation
-            if not permitted_deviation(parsed.proposal,consensus,envelope['candidate_sandbox']['candidates']):
-                baseline_used=True
-                if parsed.proposal is not None or hybrid_issues:
-                    hybrid_prose='Using the recent source-labeled competitive consensus baseline. Its quantities are derived from the selected sample; no model changes were applied.'
-                parsed=parsed.model_copy(update={'proposal':proposal_for(consensus)})
-                premises=[];hybrid_issues=[]
         report=None;rejected=set()
         proposed_changes=None
         if envelope.get('generated_intent') in ('DISCUSS','RECOMMEND') and not requirements:
@@ -414,11 +421,7 @@ def run(service, request, selection, *, _repair=None):
             parsed=parsed.model_copy(update={'proposal':None});premises=[]
         if parsed.proposal or premises:
             report,extra,rejected=evaluate(parsed.proposal,premises,Sources(**service.paths,format_start=service.format_start),request,envelope)
-            if use_consensus and not consensus['constrained'] and report and report['validation_status']!='VALIDATED' and not baseline_used:
-                parsed=parsed.model_copy(update={'proposal':proposal_for(consensus)})
-                report,extra,rejected=evaluate(parsed.proposal,(),Sources(**service.paths,format_start=service.format_start),request,envelope)
-                hybrid_prose='The proposed deviation did not validate. Using the recent competitive consensus baseline instead.'
-                hybrid_issues=[]
+            if report and envelope.get('generation'):report.update(envelope['generation'])
             if providers.secret_present(canonical(report)+canonical(extra)):raise ContractError('secret_quarantined')
             envelope=envelope.copy()
             envelope['evidence']=[*envelope['evidence'],*[e for e in extra if e['id'] not in {x['id'] for x in envelope['evidence']}]]
@@ -487,6 +490,9 @@ def run(service, request, selection, *, _repair=None):
     if report and report['kind'] in ('list','diff'):
         artifact=artifacts.get('generated_deck' if report['kind']=='list' else 'proposed_deck_changes')
         if artifact:answer.update(artifact_id=artifact['id'],source_turn=artifact['source_turn'])
+    if envelope.get('artifact_mutation_allowed') is False:
+        from copy import deepcopy
+        artifacts=deepcopy(history.get('artifacts',{}));proposal=history.get('proposal')
     key = service.conversations.put(request.conversation_id, turns, [e['printing'] for e in envelope['evidence'] if e.get('printing')],proposal,artifacts)
     return dict(response, status='answered', answer=answer, conversation_id=key, empirical_qualification=qualified)
 

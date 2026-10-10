@@ -127,7 +127,7 @@ def test_full_build_without_padding(quality):
         return '<POKELAB_ACTIONS>'+json.dumps(dict(type='generated_deck',cards=selected))+'</POKELAB_ACTIONS>'
     svc,calls=service(stores,[answer])
     before={k:p.read_bytes() for k,p in stores.paths.items()}
-    result=svc.run(ResearchRequest(scope='conversation',question='Build a Standard Dragapult ex deck'))
+    result=svc.run(ResearchRequest(scope='conversation',question='Build a custom Standard Dragapult ex deck'))
     assert result['status']=='answered',result
     report=result['answer']['proposal']
     assert report['validation_status']=='VALIDATED' and report['total_cards']==60

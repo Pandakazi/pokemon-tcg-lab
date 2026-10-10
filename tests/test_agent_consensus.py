@@ -106,10 +106,10 @@ def test_production_baseline_and_readonly_state(cohort):
     report=result['answer']['proposal']
     assert report['validation_status']=='VALIDATED' and report['total_cards']==60
     assert report['category_subtotals']['Energy']==8
-    assert len(calls)==1 and calls[0]['candidate_sandbox']['consensus']['sample_size']==10
+    assert len(calls)==0 and result['envelope']['candidate_sandbox']['consensus']['sample_size']==10
     assert before=={k:p.read_bytes() for k,p in cohort.paths.items()}
     recount=svc.run(ResearchRequest(scope='conversation',question='Recount that deck',conversation_id=result['conversation_id']))
-    assert recount['answer']['proposal']['total_cards']==60 and len(calls)==1
+    assert recount['answer']['proposal']['total_cards']==60 and len(calls)==0
 
 
 def test_bounded_deviation(cohort):
@@ -133,7 +133,7 @@ def test_large_padding_is_replaced_by_baseline(cohort):
         energy=next(r for r in e['candidate_sandbox']['candidates'] if r['basic_energy'])
         return '<POKELAB_ACTIONS>'+json.dumps(dict(type='generated_deck',cards=[dict(candidate_id=energy['candidate_id'],quantity=60)],rationale='Filler'))+'</POKELAB_ACTIONS>'
     svc,calls=service(cohort,[answer]);result=svc.run(ResearchRequest(scope='conversation',question='Build me a Dragapult deck'))
-    assert result['answer']['proposal']['category_subtotals']['Energy']==8 and len(calls)==1
+    assert result['answer']['proposal']['category_subtotals']['Energy']==8 and len(calls)==0
 
 
 def test_explicit_constraint_allows_deliberate_larger_deviation(cohort):
