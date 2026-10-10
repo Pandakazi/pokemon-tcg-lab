@@ -24,7 +24,9 @@ def remember(history, report, envelope):
         item['id']=digest(item)
         if len(json.dumps(item).encode())<=65536:
             artifacts[kind]=item
-            if kind=='generated_deck':artifacts.pop('deck_referent',None)
+            if kind=='generated_deck':
+                artifacts.pop('deck_referent',None)
+                artifacts.pop('build_clarification',None)
         else:
             artifacts.pop(kind,None)
             report['validation_status']='NEEDS_REPAIR'
@@ -76,6 +78,12 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
         for unit in re.split(r'(?<=[.!?])\s+|\n+',text):
             unit=unit.strip()
             if not unit or not re.search(r'\w',unit):continue
+            generation=envelope.get('generation') or envelope.get('current_generated_deck',{})
+            if generation.get('build_mode')=='custom' and re.search(r'recent (?:competitive )?consensus|current tournament shell|average archetype list',unit,re.I):
+                # Custom provenance is server-owned; provider wording cannot
+                # turn a sandbox construction into a tournament baseline.
+                if 'custom_provenance_claim_withheld' not in answer['notices']:answer['notices'].append('custom_provenance_claim_withheld')
+                continue
             current=envelope.get('current_generated_deck',{})
             denies_card=any(r['canonical_name'].casefold() in unit.casefold() for r in current.get('cards',[])) and re.search(r'unavailable|unresolved|missing from|not (?:in|available)|cannot (?:find|resolve)',unit,re.I)
             denies_artifact=current.get('validation_status')=='VALIDATED' and re.search(r'placeholder|(?:deck|list|artifact).*(?:unresolved|unavailable)|no (?:current |generated )?deck',unit,re.I)
@@ -152,7 +160,7 @@ def repair_requirements(report):
     if not report:return dict(format='standard',target_total=60,failures=['A generated_deck artifact is required.'])
     from .agent_deck_sandbox import accounting
     from .agent_deck_completion import eligible
-    return dict(mode='additive_completion' if eligible(report) else 'replacement',required_delta=accounting(report)['true_missing_count'] if eligible(report) else None,format='standard',target_total=60,name=report['name'],accounting=accounting(report),
+    return dict(generation={k:report[k] for k in ('build_mode','generation_source','consensus_status','fallback_reason','requested_core_ids') if k in report},mode='additive_completion' if eligible(report) else 'replacement',required_delta=accounting(report)['true_missing_count'] if eligible(report) else None,format='standard',target_total=60,name=report['name'],accounting=accounting(report),
         missing_copies=accounting(report)['true_missing_count'],construction_violations=report.get('construction_violations',[]),candidate_sandbox=report.get('candidate_sandbox'),
         cards=[{k:r.get(k) for k in ('candidate_id','canonical_name','printing_id','quantity','category')} for r in report['cards']],
         total=report['total_cards'],unresolved=report['unresolved'],

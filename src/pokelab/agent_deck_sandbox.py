@@ -55,7 +55,23 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
     for row in pool:by_name.setdefault(normalized_name(row['card']['name']),[]).append(row)
     q=normalized_name(question)
     from .agent_candidate_quality import prior,rank,energy_types,ROLES as QUALITY_ROLES
-    core=[r for r in pool if re.search(r'(?<!\w)'+re.escape(normalized_name(r['card']['name']))+r'(?!\w)',q)]
+    def mentioned(row):
+        name=normalized_name(row['card']['name'])
+        if re.search(r'(?<!\w)'+re.escape(name)+r'(?!\w)',q):return True
+        # Novice Pokémon themes can omit Mega/ex. Keep all legal gameplay
+        # interpretations so the routing boundary can ask rather than guess.
+        if row['card']['category']!='Pokemon':return False
+        theme=re.sub(r'^mega\s+|\s+ex$', '',name)
+        return bool(re.search(r'(?<!\w)'+re.escape(theme)+r'(?!\w)',q))
+    core=[r for r in pool if mentioned(r)]
+    specific={re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])):normalized_name(r['card']['name']) for r in core
+        if (normalized_name(r['card']['name']).startswith('mega ') or normalized_name(r['card']['name']).endswith(' ex'))
+        and re.search(r'(?<!\w)'+re.escape(normalized_name(r['card']['name']))+r'(?!\w)',q)}
+    core=[r for r in core if specific.get(re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])),normalized_name(r['card']['name']))==normalized_name(r['card']['name'])]
+    chosen={re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])):r['functional_id'] for r in core
+        if r['printing_id'].casefold()!=re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name']))
+        and re.search(r'(?<!\w)'+re.escape(r['printing_id'].casefold())+r'(?!\w)',question.casefold())}
+    core=[r for r in core if chosen.get(re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])),r['functional_id'])==r['functional_id']]
     core_ids={r['functional_id'] for r in core}
     usage,field,provenance=prior(path,competitive_path,pool,core,question,format_start,today)
     family={r['functional_id']:r for r in core}
@@ -97,8 +113,8 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
         for row in sorted(core,key=lambda r:(-len(r['card']['name']),r['functional_id'])):add(row,'requested-core')
     if consensus and consensus['status']=='available':
         for item in consensus['cards']:add(by_id[item['candidate_id']],'consensus',ancestors=False)
-        if any(r['candidate_id'] not in selected for r in consensus['cards']):
-            consensus=dict(consensus,status='candidate_budget_unavailable',cards=[])
+        # Model candidate admission cannot invalidate a complete local baseline.
+        # Direct generation validates its identities separately; exploration stays bounded.
     for row in sorted(core,key=lambda r:(-len(r['card']['name']),r['functional_id'])):add(row,'requested-core')
     for row in pool:
         if row['printing_id'] in preferred_printings:add(row,'existing-concept')

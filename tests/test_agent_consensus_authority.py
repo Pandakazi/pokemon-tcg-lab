@@ -78,16 +78,17 @@ def test_unknown_generic_never_silently_invents(stores):
     assert not calls and verbose['envelope']['generation']['consensus_status']=='unknown_archetype'
 
 
-def test_insufficient_and_invalid_consensus_never_falls_through(cohort,monkeypatch):
+def test_insufficient_and_invalid_consensus_fallback_is_explicit(cohort,monkeypatch):
     import sqlite3
     import pokelab.agent_deck_proposals as proposals
-    svc,calls=service(cohort,['must not run'])
+    svc,calls=service(cohort,['I would test a custom setup; no established baseline is available.'])
     monkeypatch.setattr(proposals,'evaluate',lambda *args,**kwargs:(dict(validation_status='INVALID'),[],set()))
     r=ask(svc,QUESTION)
-    assert not calls and r['envelope']['generation']['consensus_status']=='invalid' and 'proposal' not in r['answer']
+    assert len(calls)==1 and r['envelope']['generation']['fallback_reason']=='invalid' and 'proposal' not in r['answer']
+    assert r['envelope']['generation']['generation_source']=='custom_model_build'
     with sqlite3.connect(cohort.paths['competitive']) as db:db.execute('DELETE FROM competitive_decks WHERE rank>2')
     r=ask(svc,QUESTION)
-    assert not calls and r['envelope']['generation']['consensus_status']=='insufficient_sample'
+    assert len(calls)==2 and r['envelope']['generation']['fallback_reason']=='insufficient_sample'
 
 
 def test_explicit_modify_keeps_proposal_path(cohort):

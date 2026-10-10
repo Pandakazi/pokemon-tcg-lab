@@ -31,7 +31,10 @@ def test_finalize_structured_totals_and_local_recount(stores,monkeypatch,energy,
     answer=result['answer'];report=answer['proposal']
     assert report['total_cards']==total and report['category_subtotals']=={'Pokemon':4,'Trainer':4,'Energy':energy}
     assert report['validation_status']==status
-    assert answer['paragraphs']==[] and answer['artifact_id']
+    # Provider arithmetic/false completion prose is still withheld. The build
+    # source now has a required server-authored custom label.
+    assert len(answer['paragraphs'])==1 and 'custom Standard build' in answer['paragraphs'][0]['text'] and answer['artifact_id']
+    assert report['generation_source']=='custom_model_build'
     import pokelab.agent_card_facts as facts
     monkeypatch.setattr(facts,'review',lambda *args,**kwargs:pytest.fail('Recount must not inspect printed claims'))
     for q in ['What exact cards and quantities are in the deck list you just proposed? Recount them and tell me the total.','show me that list again','what exact cards were in it?','how many cards was that?']:

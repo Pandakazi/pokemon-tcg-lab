@@ -19,22 +19,27 @@ def finish(service,request,history,envelope,answer,artifacts):
 def direct_generation(service,request,history,envelope):
     if not build_request(request.question) or envelope['lifecycle']!='FINALIZE' or not envelope.get('artifact_mutation_allowed',True):return None
     c=envelope.get('candidate_sandbox',{}).get('consensus')
+    core=[r for r in envelope.get('candidate_sandbox',{}).get('candidates',[]) if r.get('requested_core') and r.get('category')=='Pokemon']
+    themes={}
+    for r in core:
+        theme=re.sub(r'^mega\s+|\s+ex$', '',r['name'].casefold())
+        themes.setdefault(theme,[]).append(r)
     custom=custom_request(request.question,c['label'] if c else '')
-    # Unspecified builds remain an explicitly labeled custom build. Named generic
-    # builds never silently fall through to model invention when data is absent.
+    # Explicit constraints and unspecified builds retain the existing custom path.
     unspecified=not (set(words(request.question))-PRESENTATION_WORDS)
     if custom or unspecified:
-        envelope['generation']=dict(generation_source='model_custom',consensus_status=c['status'] if c else 'unavailable',fallback_reason='explicit_constraint' if custom else 'no_archetype_requested')
-        envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
-        return None
+        # A theme-only novice request is not an arbitrary strategic constraint.
+        style=bool(re.search(r'\b(?:aggressive|control|experimental|custom|weird|budget|mill|stall|toolbox)\b',request.question,re.I))
+        if c or unspecified or style or len(themes)>1:return custom_generation(envelope,c,'explicit_constraint' if custom else 'no_archetype_requested')
     status=c['status'] if c else 'unknown_archetype'
     report=None
     if status=='available':
         from .agent_deck_proposals import evaluate
         from .agent_context_sources import Sources
-        report,extra,_=evaluate(proposal_for(c),(),Sources(**service.paths,format_start=service.format_start),request,envelope)
+        report,extra,_=evaluate(proposal_for(c),(),Sources(**service.paths,format_start=service.format_start),request,envelope,consensus_ids=[r['candidate_id'] for r in c['cards']])
         if report['validation_status']=='VALIDATED':
-            generation=dict(generation_source='recent_consensus',consensus_status='complete',fallback_reason=None)
+            explicit=c.get('explicit_variant') or (len(words(c['label']))>1 and not c['label'].casefold().startswith('mega ') and set(words(c['label']))<=set(words(request.question)))
+            generation=dict(build_mode='consensus',generation_source='recent_consensus_explicit_variant' if explicit else 'recent_consensus',consensus_status='complete',fallback_reason=None)
             report.update(generation);envelope['generation']=generation
             # Compact provenance stays inspectable, but does not open evidence by default.
             envelope['evidence'].append(dict(id='recent-consensus',kind='evidence',title='Recent archetype consensus',value={k:c[k] for k in ('label','event_ids','sample_size','placement_band','placement_weights','shape','energy')},source=c['source']))
@@ -46,7 +51,20 @@ def direct_generation(service,request,history,envelope):
                 answer['completion']=dict(status='complete',repair_attempts=0)
                 return finish(service,request,history,envelope,answer,artifacts)
         status='invalid'
-    generation=dict(generation_source=None,consensus_status=status,fallback_reason=status)
+    if core:
+        # Same theme, materially different legal gameplay identities: ask once.
+        ambiguous=next((rows for rows in themes.values() if len(rows)>1),None)
+        if ambiguous:
+            generation=dict(generation_source=None,consensus_status=status,failure_reason='ambiguous_legal_core',
+                clarification_candidates=[{k:r[k] for k in ('name','printing_id')} for r in ambiguous])
+            envelope['generation']=generation
+            choices=', '.join(r['name']+' ('+r['printing_id']+')' for r in ambiguous)
+            answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Which legal version should I build around: '+choices+'?',evidence=[])],facts=[],notices=[],generation=generation)
+            artifacts=deepcopy(history.get('artifacts',{}))
+            artifacts['build_clarification']=dict(question=request.question,candidates=generation['clarification_candidates'])
+            return finish(service,request,history,envelope,answer,artifacts)
+        return custom_generation(envelope,c,status,core)
+    generation=dict(generation_source=None,consensus_status=status,fallback_reason=status,failure_reason='requested_core_unresolved_or_not_standard_legal')
     envelope['generation']=generation
     artifacts=deepcopy(history.get('artifacts',{}));artifacts['generation_attempt']=generation
     message={'unknown_archetype':'No usable cached Limitless variant matches this request.',
@@ -56,6 +74,29 @@ def direct_generation(service,request,history,envelope):
         'invalid':'The consensus did not pass current validation.'}.get(status,'Recent consensus data is unavailable.')
     answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text=message+' I have not substituted a model-generated deck. Any existing conversational deck is unchanged.',evidence=[])],facts=[],notices=[],generation=generation)
     return finish(service,request,history,envelope,answer,artifacts)
+
+
+def custom_generation(envelope,consensus,reason,core=()):
+    envelope['generation']=dict(build_mode='custom',generation_source='custom_model_build',
+        consensus_status='no_matching_variant' if consensus is None else 'unavailable',
+        fallback_reason=reason,requested_core_ids=[r['candidate_id'] for r in core])
+    envelope['generation_instruction']='This is a CUSTOM Standard build, not an established tournament consensus. Preserve the requested legal core. Use the supplied candidate_id sandbox and construction constraints; label strategic choices as judgment. Do not claim a recent tournament shell or consensus without supplied evidence.'
+    envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
+    return None
+
+
+def clarified_build(request,history):
+    """A precise reply to our last bounded choice resumes that build intent."""
+    turns=history.get('turns',[])
+    if not turns or build_request(request.question):return request
+    last=turns[-1];pending=history.get('artifacts',{}).get('build_clarification')
+    if not pending or last['question']!=pending['question']:return request
+    choice=request.question.casefold().strip().rstrip('.!')
+    matches=[r for r in pending['candidates'] if choice in
+        (r['name'].casefold(),r['printing_id'].casefold(),(r['name']+' ('+r['printing_id']+')').casefold())]
+    if len(matches)!=1:return request
+    row=matches[0]
+    return request.model_copy(update={'question':last['question']+' Selected core: '+row['name']+' ('+row['printing_id']+').'})
 
 
 def unchanged_consensus(service,request,history,envelope):

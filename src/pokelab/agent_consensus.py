@@ -14,7 +14,7 @@ from .agent_context_sources import stamp
 
 def build_request(question):
     if re.search(r'\b(?:those|these|the proposed) changes\b',question,re.I):return False
-    return bool(re.search(r'^(?:(?:please|can you|could you|would you)\s+)*(?:(?:build|create)\b|make\b.*\b(?:deck|list)\b)',question,re.I))
+    return bool(re.search(r'^\s*(?:(?:please|can you|could you|would you)\s+)*(?:(?:build|create)\b|make\b.*\b(?:deck|list)\b)|^\s*I (?:like|love)\b.+[,;]\s*(?:build|make|create)\b',question,re.I))
 
 
 def words(text):return tuple(w for w in re.findall(r'\w+',text.casefold()) if w!='ex')

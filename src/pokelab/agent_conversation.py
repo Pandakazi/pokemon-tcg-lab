@@ -163,7 +163,7 @@ def context(request, sources, history):
                 current_ids={r.get('candidate_id') for r in generated['report']['cards']}
                 fields=('candidate_id','printing_id','name','category','stage','evolveFrom','attacks','abilities','effect','types','rules')
                 sandbox=dict(sandbox,candidates=[{k:r[k] for k in fields if k in r} for r in sandbox['candidates'] if r['candidate_id'] in current_ids])
-            if not sandbox['candidates']:raise ResearchUnavailable('context_unavailable')
+            if not sandbox['candidates'] and not ((new_build and (sandbox.get('consensus') or {}).get('status')=='available') or (generated and generated['report']['cards'])):raise ResearchUnavailable('context_unavailable')
             index=None
         else:index = RetrievalIndex.from_database(sources.paths['cards'])
     except (OSError, ValueError, sqlite3.Error):
@@ -251,7 +251,7 @@ def context(request, sources, history):
         envelope['generated_intent']=generated_intent
         envelope['current_generated_deck']=dict(id=generated['id'],artifact_hash=source_hash(generated),cards=[{k:r[k] for k in ('candidate_id','canonical_name','printing_id','quantity')} for r in generated['report']['cards']])
         if generated_intent=='DISCUSS':envelope['lifecycle']='EXPLORE'
-        envelope['current_generated_deck'].update(validation_status=generated['report']['validation_status'],total_cards=generated['report']['total_cards'],category_subtotals=generated['report'].get('category_subtotals',{}),generation_source=generated['report'].get('generation_source'))
+        envelope['current_generated_deck'].update(validation_status=generated['report']['validation_status'],total_cards=generated['report']['total_cards'],category_subtotals=generated['report'].get('category_subtotals',{}),**{k:generated['report'].get(k) for k in ('build_mode','generation_source','consensus_status','fallback_reason','requested_core_ids')})
     if sandbox:envelope['candidate_sandbox']=sandbox
     if generated and sandbox and sandbox.get('consensus'):
         c=sandbox['consensus']
@@ -263,7 +263,12 @@ def context(request, sources, history):
     pending_changes=history.get('artifacts',{}).get('proposed_change_set')
     if pending_changes:envelope['pending_changes']=pending_changes
     from .agent_context_budget import fit
-    envelope=fit(envelope,CONTEXT_BYTES)
+    from .agent_consensus import custom_request
+    c=(sandbox or {}).get('consensus')
+    local_consensus=new_build and c and c['status']=='available' and not custom_request(request.question,c['label'])
+    # No provider context is needed to validate/return a complete local consensus.
+    # Every provider-bound path still passes the ordinary context budget below.
+    if not local_consensus:envelope=fit(envelope,CONTEXT_BYTES)
     envelope['content_hash'] = digest(envelope)
     return envelope
 
@@ -302,6 +307,8 @@ def run(service, request, selection, *, _repair=None):
     from .agent_research import ResearchUnavailable, ContractError, canonical, MAX_OUTPUT
     history = service.conversations.get(request.conversation_id)
     if history is None: return dict(status='conversation_expired', answer=None)
+    from .agent_generation import clarified_build
+    request=clarified_build(request,history)
     from .agent_system_questions import respond
     local=respond(service,request,history)
     if local is not None:return local
@@ -321,6 +328,9 @@ def run(service, request, selection, *, _repair=None):
     from . import agent_deck_completion as completion
     additive=bool(requirements and requirements.get('mode')=='additive_completion')
     if requirements:
+        prior_generation=(pending or {}).get('report',{}) if pending else (requirements.get('generation') or {})
+        if prior_generation.get('generation_source'):
+            envelope['generation']={k:prior_generation[k] for k in ('build_mode','generation_source','consensus_status','fallback_reason','requested_core_ids') if k in prior_generation}
         envelope['repair']={k:v for k,v in requirements.items() if k!='candidate_sandbox'}
         if requirements.get('candidate_sandbox'):envelope['candidate_sandbox']=requirements['candidate_sandbox']
         envelope['repair_instruction']='Repair this same generated deck now. Return a complete generated_deck artifact; do not merely explain. Preserve valid engine cards, repair failed roles using Standard-legal candidates. Resolve or replace the unresolved proposed copies, add only accounting.true_missing_count genuinely missing copies, and fix construction_violations. total is resolved copies, not proposed_total; never double-count unresolved slots as missing. Select exact candidate_id values. Change at most 8 card copies; no broader redesign. Choose only candidate_sandbox cards.'
@@ -332,6 +342,12 @@ def run(service, request, selection, *, _repair=None):
     local=direct_generation(service,request,history,envelope) if not requirements else None
     if local is None and envelope.get('generated_intent')=='DISCUSS':local=unchanged_consensus(service,request,history,envelope)
     if local is not None:return local
+    from .agent_context_budget import fit
+    try:
+        if 'context_budget' not in envelope:envelope=fit(envelope,CONTEXT_BYTES)
+        envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
+    except ResearchUnavailable as exc:
+        return budget_failure(service,request,history,getattr(exc,'diagnostics',{'condition':'required_context_overflow','provider_called':False}))
     if envelope.get('generated_intent')=='APPLY' and not requirements:
         return apply_generated(service,request,selection,history,envelope)
     target=None if requirements else recount_target(request.question)
@@ -439,7 +455,8 @@ def run(service, request, selection, *, _repair=None):
             Sources(**service.paths,format_start=service.format_start),request)
         if envelope.get('generated_intent')=='RECOMMEND':
             if proposed_changes:
-                names={r['candidate_id']:r['name'] for r in envelope['candidate_sandbox']['candidates']}
+                names={r['candidate_id']:r['canonical_name'] for r in envelope['current_generated_deck']['cards']}
+                names.update({r['candidate_id']:r['name'] for r in envelope['candidate_sandbox']['candidates']})
                 for group,label in (('removes','Cut'),('adds','Add')):
                     for item in proposed_changes['proposal'][group]:
                         answer['paragraphs'].append(dict(text=f"{label}: {item['quantity']} × {names[item['candidate_id']]}",evidence=[]))
@@ -494,6 +511,8 @@ def run(service, request, selection, *, _repair=None):
     if report and report['kind'] in ('list','diff'):
         artifact=artifacts.get('generated_deck' if report['kind']=='list' else 'proposed_deck_changes')
         if artifact:answer.update(artifact_id=artifact['id'],source_turn=artifact['source_turn'])
+        if report.get('build_mode')=='custom':
+            answer['paragraphs'].insert(0,dict(text='This is a custom Standard build from the local legal card pool, not a recent competitive consensus. '+('It passed the supported construction checks; strategic quality remains judgment.' if report['validation_status']=='VALIDATED' else 'It is not complete; the validation issues below still need resolution.'),evidence=[]))
     if envelope.get('artifact_mutation_allowed') is False:
         from copy import deepcopy
         artifacts=deepcopy(history.get('artifacts',{}));proposal=history.get('proposal')

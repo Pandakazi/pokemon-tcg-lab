@@ -30,8 +30,10 @@ def compose(artifact, proposal):
     counts={key:r['quantity'] for key,r in rows.items()}
     for group in ('removes','adds'):
         for c in getattr(proposal,group):
-            if not c.candidate_id or c.candidate_id not in allowed:raise ValueError('candidate_id_required')
-            if c.name and c.name.casefold()!=allowed[c.candidate_id]['name'].casefold():raise ValueError('candidate_name_mismatch')
+            source=rows.get(c.candidate_id) if group=='removes' else None
+            item=allowed.get(c.candidate_id) or source
+            if not c.candidate_id or item is None:raise ValueError('candidate_id_required')
+            if c.name and c.name.casefold()!=item.get('name',item.get('canonical_name','')).casefold():raise ValueError('candidate_name_mismatch')
             if group=='removes':
                 if counts.get(c.candidate_id,0)<c.quantity:raise ValueError('cut_exceeds_source')
                 counts[c.candidate_id]-=c.quantity

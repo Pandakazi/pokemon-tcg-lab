@@ -207,7 +207,7 @@ def diagnostics(rows):
     return list(dict.fromkeys(notes))[:12]
 
 
-def evaluate(proposal, premises, sources, request, envelope):
+def evaluate(proposal, premises, sources, request, envelope, *, consensus_ids=()):
     from .agent_context_sources import SnapshotCards, SnapshotCollection, stamp
     report=dict(version='pokelab-proposal-v1',status='PROPOSED',lifecycle=envelope['lifecycle'],
         format=envelope.get('build_constraints',{}).get('format','standard'),kind=proposal.kind if proposal else 'premises',name=proposal.name if proposal else '',
@@ -217,6 +217,8 @@ def evaluate(proposal, premises, sources, request, envelope):
         total_cards=0,hard_validation=[],strategic_diagnostics=[],repair_notes=[],alternatives=[],
         rationale=proposal.rationale if proposal else '',writes_performed=False)
     if proposal and proposal.kind=='list' and envelope.get('candidate_sandbox'):report['candidate_sandbox']=envelope['candidate_sandbox']
+    if proposal and proposal.kind=='list':
+        report.update({k:v for k,v in envelope.get('current_generated_deck',{}).items() if k in ('build_mode','generation_source','consensus_status','fallback_reason','requested_core_ids') and v is not None})
     rejected=set();new_evidence=[]
     with sources.snapshot() as (dbs,errors):
         if 'cards' in errors:
@@ -229,6 +231,10 @@ def evaluate(proposal, premises, sources, request, envelope):
         if proposal and proposal.kind=='list' and envelope.get('candidate_sandbox'):
             from .agent_deck_sandbox import candidate_key
             resolver.allowed={candidate_key(r) for r in envelope['candidate_sandbox']['candidates']}
+            # Server-only deterministic baseline and retained artifact identities
+            # are authority, not additional model exploration candidates.
+            resolver.allowed.update(consensus_ids)
+            resolver.allowed.update(r['candidate_id'] for r in envelope.get('current_generated_deck',{}).get('cards',[]))
         active=None
         if request.include_deck:
             row=None if 'workspace' in errors else dbs['workspace'].execute('SELECT revision,document FROM workspace WHERE id=1').fetchone()
@@ -341,6 +347,9 @@ def evaluate(proposal, premises, sources, request, envelope):
             report['accounting']=accounting(report)
             report['construction_violations']=construction_violations(report['cards'])
         report['strategic_diagnostics']=diagnostics(report['cards'])
+        required=envelope.get('generation',{}).get('requested_core_ids',[])
+        if required and not set(required)<={r.get('candidate_id') for r in report['cards']}:
+            report['hard_validation'].append('The requested legal core must remain in the custom build.')
         report['resolution_status']='UNRESOLVED' if report['unresolved'] else 'RESOLVED'
         report['legality_status']='INVALID' if validation['reasons'] else 'UNKNOWN' if validation['unknown'] or report['unresolved'] else 'INCOMPLETE' if validation['total']!=60 else 'LEGAL_SUPPORTED_CHECKS'
         report['validation_status']='NEEDS_REPAIR' if report['hard_validation'] or report['unresolved'] else 'PARTIAL' if validation['total']!=60 else 'VALIDATED'
