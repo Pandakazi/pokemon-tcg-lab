@@ -145,9 +145,11 @@ def context(request, sources, history):
     before = stamp(sources.paths['cards'])
     omissions = []; evidence = []; active = None; selected = None
     from .agent_generated_changes import intent
-    generated_intent=intent(request.question,history)
+    from .agent_consensus import build_request
+    new_build=build_request(request.question) and lifecycle(request.question)!='DRAFT'
+    generated_intent=None if new_build else intent(request.question,history)
     generated=history.get('artifacts',{}).get('generated_deck') if generated_intent else None
-    building=bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE' or generated_intent=='RECOMMEND'
+    building=new_build or bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE' or generated_intent=='RECOMMEND'
     sandbox=None
     try:
         if building:
@@ -242,6 +244,7 @@ def context(request, sources, history):
         envelope['current_generated_deck']=dict(id=generated['id'],cards=[{k:r[k] for k in ('candidate_id','canonical_name','printing_id','quantity')} for r in generated['report']['cards']])
         if generated_intent=='DISCUSS':envelope['lifecycle']='EXPLORE'
     if sandbox:envelope['candidate_sandbox']=sandbox
+    if new_build:envelope['lifecycle']='FINALIZE'
     # Preserve selected card and complete deck; shed optional cards then older turns.
     while len(canonical(envelope).encode()) > CONTEXT_BYTES:
         removable = next((e for e in reversed(evidence) if e.get('printing') and e['printing'] != request.printing), None)
@@ -324,6 +327,11 @@ def run(service, request, selection, *, _repair=None):
             return dict(status='answered',answer=answer,envelope=envelope,conversation_id=key,execution={'mode':'local_artifact','provider_called':False})
     from .agent_qualification_config import INPUT_BYTES
     system, wire_schema = (completion.SYSTEM,None) if additive else provider_contract(envelope['lifecycle'], request.include_deck)
+    consensus=envelope.get('candidate_sandbox',{}).get('consensus')
+    use_consensus=bool(consensus and consensus['status']=='available' and not requirements and not envelope.get('generated_intent'))
+    if use_consensus:
+        from .agent_consensus import CONTRACT
+        system+=CONTRACT
     if envelope.get('generated_intent') and not additive:
         from .agent_generated_changes import CONTRACT
         system+=CONTRACT
@@ -378,6 +386,15 @@ def run(service, request, selection, *, _repair=None):
                 intent=intent.model_copy(update={'removes':(cut,)})
                 parsed=parsed.model_copy(update={'proposal':intent})
         premises=list(parsed.premises)
+        baseline_used=False
+        if use_consensus and not consensus['constrained']:
+            from .agent_consensus import proposal_for, permitted_deviation
+            if not permitted_deviation(parsed.proposal,consensus,envelope['candidate_sandbox']['candidates']):
+                baseline_used=True
+                if parsed.proposal is not None or hybrid_issues:
+                    hybrid_prose='Using the recent source-labeled competitive consensus baseline. Its quantities are derived from the selected sample; no model changes were applied.'
+                parsed=parsed.model_copy(update={'proposal':proposal_for(consensus)})
+                premises=[];hybrid_issues=[]
         report=None;rejected=set()
         proposed_changes=None
         if envelope.get('generated_intent') in ('DISCUSS','RECOMMEND') and not requirements:
@@ -397,6 +414,11 @@ def run(service, request, selection, *, _repair=None):
             parsed=parsed.model_copy(update={'proposal':None});premises=[]
         if parsed.proposal or premises:
             report,extra,rejected=evaluate(parsed.proposal,premises,Sources(**service.paths,format_start=service.format_start),request,envelope)
+            if use_consensus and not consensus['constrained'] and report and report['validation_status']!='VALIDATED' and not baseline_used:
+                parsed=parsed.model_copy(update={'proposal':proposal_for(consensus)})
+                report,extra,rejected=evaluate(parsed.proposal,(),Sources(**service.paths,format_start=service.format_start),request,envelope)
+                hybrid_prose='The proposed deviation did not validate. Using the recent competitive consensus baseline instead.'
+                hybrid_issues=[]
             if providers.secret_present(canonical(report)+canonical(extra)):raise ContractError('secret_quarantined')
             envelope=envelope.copy()
             envelope['evidence']=[*envelope['evidence'],*[e for e in extra if e['id'] not in {x['id'] for x in envelope['evidence']}]]

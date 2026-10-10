@@ -66,15 +66,18 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
             if parent['functional_id'] not in family:
                 family[parent['functional_id']]=parent;pending.append(parent)
     quality=rank(pool,index,list(family.values()),usage,field)
+    from .agent_consensus import baseline
+    consensus=baseline(path,competitive_path,pool,question,format_start,today)
+    consensus_ids={r['candidate_id'] for r in consensus['cards']} if consensus and consensus['status']=='available' else set()
     order=lambda r:(-quality[r['functional_id']]['score'],normalized_name(r['card']['name']),r['functional_id'])
-    def add(row, role, seen=None):
+    def add(row, role, seen=None, ancestors=True):
         key=row['functional_id']
         if key in selected:return
         seen=set() if seen is None else seen
         if key in seen:return
         seen.add(key)
         raw=row['card'];parent=raw.get('evolveFrom')
-        if parent:
+        if parent and ancestors:
             parents=by_name.get(normalized_name(parent),[])
             if not parents:missing.append('legal-evolution-predecessor:'+parent)
             for ancestor in sorted(parents,key=order)[:2]:add(ancestor,'evolution-family',seen)
@@ -82,12 +85,18 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
             ace_spec='ACE SPEC' in raw.get('rarity','').upper(),
             basic_energy=key.startswith('deck-basic-energy:'),copy_limit_name=normalized_name(raw['name']),
             requested_core=key in core_ids,
-            predecessor_candidate_ids=[r['functional_id'] for r in by_name.get(normalized_name(parent),[]) if r['functional_id'] in selected] if parent else [],
+            predecessor_candidate_ids=[r['functional_id'] for r in by_name.get(normalized_name(parent),[]) if r['functional_id'] in selected or r['functional_id'] in consensus_ids] if parent else [],
             **{k:raw[k] for k in FIELDS if k in raw})
         if core:value['ranking']={k:quality[key][k] for k in ('score','recent_prior')}
         if len(selected)>=MAX_CANDIDATES or len(json.dumps([*selected.values(),value],ensure_ascii=False).encode())>MAX_BYTES:
             budget.append(key);return
         selected[key]=value
+    if consensus and consensus['constrained']:
+        for row in sorted(core,key=lambda r:(-len(r['card']['name']),r['functional_id'])):add(row,'requested-core')
+    if consensus and consensus['status']=='available':
+        for item in consensus['cards']:add(by_id[item['candidate_id']],'consensus',ancestors=False)
+        if any(r['candidate_id'] not in selected for r in consensus['cards']):
+            consensus=dict(consensus,status='candidate_budget_unavailable',cards=[])
     for row in sorted(core,key=lambda r:(-len(r['card']['name']),r['functional_id'])):add(row,'requested-core')
     for row in pool:
         if row['printing_id'] in preferred_printings:add(row,'existing-concept')
@@ -128,8 +137,10 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
     extra_energy=energy_types([by_id[key] for key,value in selected.items() if value['role']=='secondary-attacker' and quality[key]['score']>0])
     for row in pool:
         if row['functional_id'].startswith('deck-basic-energy:') and row['functional_id'].split(':',1)[1] in extra_energy:add(row,'basic-energy')
+    for value in selected.values():
+        value['predecessor_candidate_ids']=[key for key in value['predecessor_candidate_ids'] if key in selected]
     return dict(version='pokelab-standard-sandbox-v2',format=FORMAT_VERSION,
-        legal_universe_count=len(pool),candidates=list(selected.values()),competitive_prior=provenance,
+        legal_universe_count=len(pool),candidates=list(selected.values()),competitive_prior=provenance,consensus=consensus,
         limitations=['Local indexed coverage only; legality is not a guarantee of a viable engine.']+sorted(set(missing))+(['bounded-candidate-subset;no-iterative-expansion'] if budget else []),
         instruction='Use recent-archetype priors and core support as the default foundation, allowing reasoned deviations. Ranking is a heuristic, not a tournament ranking or recommended copy count; recent_prior is recency-weighted cached inclusion, not population prevalence. Choose only supplied candidate_id values for generated_deck entries, with exact positive integer quantities. Do not reselect ambiguous cards by bare name. Names are optional but must match the selected candidate; printing is backend-derived. Total quantity must equal 60. Sum of quantities with ace_spec=true must be <=1. Group by copy_limit_name for the ordinary maximum of 4, except basic_energy=true. Preserve requested_core candidates and consider predecessor_candidate_ids for evolution lines. Printed effects are not tournament evidence. If options are insufficient, explain the local cache/candidate limitation; never invent outside cards.')
 
