@@ -26,6 +26,9 @@ def direct_generation(service,request,history,envelope):
         envelope['generation']=generation
         answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Do you want '+' or '.join(r['label'] for r in choices)+'?',evidence=[])],facts=[],notices=[],generation=generation)
         artifacts=deepcopy(history.get('artifacts',{}))
+        artifacts.pop('selected_core',None)
+        from .agent_build_core import theme as core_theme
+        artifacts['pending_build']=dict(question=request.question,choices=choices,format='standard',source_turn=history.get('turn_number',0)+1,status='awaiting_core',theme=core_theme(choices[0]['canonical_name']))
         artifacts['build_clarification']=dict(question=request.question,choices=choices)
         return finish(service,request,history,envelope,answer,artifacts)
     if resolution.get('reason')=='selected_core_not_standard_legal':return failed_build(service,request,history,envelope,'unresolved_core')

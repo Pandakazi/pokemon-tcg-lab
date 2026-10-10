@@ -147,7 +147,7 @@ def context(request, sources, history, selected_core=None):
     from .agent_generated_changes import intent,read_only
     from .agent_consensus import build_request
     new_build=build_request(request.question) and lifecycle(request.question)!='DRAFT'
-    if new_build and request.printing:
+    if new_build and request.printing and not selected_core and re.search(r'\b(?:this exact|this card|selected card)\b',request.question,re.I):
         try:
             with sqlite3.connect(sources.paths['cards'].resolve().as_uri()+'?mode=ro',uri=True) as db:
                 row=db.execute('SELECT functional_id FROM gameplay_printings WHERE printing_id=?',(request.printing,)).fetchone()
@@ -322,9 +322,21 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
     from .agent_research import ResearchUnavailable, ContractError, canonical, MAX_OUTPUT
     history = service.conversations.get(request.conversation_id)
     if history is None: return dict(status='conversation_expired', answer=None)
-    from .agent_build_core import prepare
+    from .agent_build_core import prepare,begin
+    if _repair is None:history=begin(request,history)
     request,core_hint=prepare(request,history)
     core_hint=_selected_core or core_hint
+    # Completion is idempotent for an already validated retained artifact.
+    # Never reinterpret it through another provider call or an older core.
+    artifacts=history.get('artifacts',{})
+    retained=artifacts.get('generated_deck',{}).get('report',{})
+    if (_repair is None and retained.get('validation_status')=='VALIDATED'
+            and not artifacts.get('pending_build') and not artifacts.get('build_clarification')
+            and artifacts.get('deck_referent') not in ('active','other')
+            and re.fullmatch(r'(?:please )?(?:finish|finalize|complete) (?:it|that deck|this deck)[.!?]?',request.question.strip(),re.I)):
+        answer=recount(history,'generated_deck')
+        answer['completion']=dict(status='complete',repair_attempts=0)
+        return dict(status='answered',answer=answer,conversation_id=request.conversation_id,execution=dict(mode='local_artifact',provider_called=False))
     from .agent_system_questions import respond
     local=respond(service,request,history)
     if local is not None:return local
@@ -539,7 +551,9 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
         execution['repair_calls']=0
     elif completing and incomplete and _repair is None:
         repaired=run(service,request,selection,_repair=repair_requirements(report),_selected_core=envelope.get('selected_core'))
-        if repaired.get('status')=='answered' and repaired.get('answer',{}).get('proposal',{}).get('kind')=='list':
+        repaired_report=(repaired.get('answer') or {}).get('proposal') or {}
+        custom=envelope.get('generation',{}).get('build_mode')=='custom'
+        if repaired.get('status')=='answered' and repaired_report.get('kind')=='list' and (not custom or repaired_report.get('validation_status')=='VALIDATED'):
             repaired.setdefault('execution',{})['initial_attempt']=execution
             repaired['execution']['repair_calls']=1
             return repaired
@@ -548,8 +562,27 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
         execution['repair_execution']=repaired.get('execution')
     elif completing:
         answer['completion']={'status':'incomplete' if incomplete else 'complete','repair_attempts':1 if _repair is not None else 0}
+    if completing and incomplete and _repair is None and envelope.get('generation',{}).get('build_mode')=='custom' and completion.fillable(report):
+        try:
+            proposal,fill_debug=completion.final_fill(report)
+            if proposal:
+                filled,extra,rejected=evaluate(proposal,(),Sources(**service.paths,format_start=service.format_start),request,envelope)
+                if completion.validation_failure(filled) is None and completion.evolution_complete(filled):
+                    if providers.secret_present(canonical(filled)+canonical(extra)):raise ContractError('secret_quarantined')
+                    filled.update({k:v for k,v in report.items() if k in ('build_mode','generation_source','consensus_status','fallback_reason','requested_core_ids')})
+                    filled['completion_debug']=dict(mode='deterministic_ranked_fill',provider_failure=answer['completion']['reason'],**fill_debug)
+                    parsed=parsed.model_copy(update={'proposal':proposal})
+                    report=filled
+                    envelope['evidence'].extend(e for e in extra if e['id'] not in {v['id'] for v in envelope['evidence']})
+                    answer,qualified=present('',parsed,report,set(),[],envelope,Sources(**service.paths,format_start=service.format_start),request)
+                    answer['completion']=dict(status='complete',repair_attempts=execution.get('repair_calls',0))
+                    incomplete=False
+                else:answer['completion']['reason']='local_completion_validation_failed'
+            else:answer['completion']['reason']='insufficient_safe_completion_candidates'
+        except Exception:
+            return custom_failure('internal_completion_assessment_failure')
     if completing and incomplete and envelope.get('generation',{}).get('build_mode')=='custom':
-        answer['build_failure']=dict(reason='repair_failed_validation' if answer.get('completion',{}).get('repair_attempts') else 'construction_validation_failed')
+        answer['build_failure']=dict(reason=answer.get('completion',{}).get('reason','construction_validation_failed'))
     if _repair is not None and report is None:
         return dict(response,status='answered',answer=answer)
     turns = history['turns'] + [dict(question=request.question, answer=answer, snapshot=envelope['content_hash'])]
@@ -568,7 +601,7 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
         if report.get('build_mode')=='custom':
             answer['paragraphs'].insert(0,dict(text='This is a custom Standard build from the local legal card pool, not a recent competitive consensus. '+('It passed the supported construction checks; strategic quality remains judgment.' if report['validation_status']=='VALIDATED' else 'It is not complete; the validation issues below still need resolution.'),evidence=[]))
             if envelope.get('selected_core') and envelope.get('new_build'):
-                answer['paragraphs'][0]['text']='Build-around: '+envelope['selected_core']['canonical_name']+'. '+answer['paragraphs'][0]['text']
+                answer['paragraphs'][0]['text']='Build-around: '+envelope['selected_core'].get('display_name',envelope['selected_core']['canonical_name'])+'. '+answer['paragraphs'][0]['text']
     if envelope.get('artifact_mutation_allowed') is False:
         from copy import deepcopy
         artifacts=deepcopy(history.get('artifacts',{}));proposal=history.get('proposal')

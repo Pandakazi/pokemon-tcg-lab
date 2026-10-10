@@ -62,12 +62,13 @@ def test_call_bell_24_to_23_repair_cannot_replace_or_persist_worse_list(stores):
     original=base+[('Call Bell','sv08-165',1,'supporter search')]
     svc,calls=service(stores,[deck(original),deck(base),deck(base)])
     first=svc.run(a.ResearchRequest(scope='conversation',question='Create a complete legal 60-card Standard deck.'))
-    assert first['answer']['proposal']['total_cards']==24 and len(calls)==1
-    assert first['answer']['completion']['reason']=='generation_failure_exceeds_small_repair'
+    assert first['answer']['proposal']['total_cards']==60 and len(calls)==1
+    assert first['answer']['completion']['status']=='complete'
+    assert first['answer']['proposal']['completion_debug']['mode']=='deterministic_ranked_fill'
     assert any(c['printing_id']=='sv08-165' for c in first['answer']['proposal']['cards'])
     follow=svc.run(a.ResearchRequest(scope='conversation',question='Finish it.',conversation_id=first['conversation_id']))
-    assert follow['answer']['proposal']['total_cards']==24 and len(calls)==1
+    assert follow['answer']['proposal']['total_cards']==60 and len(calls)==1
     stored=svc.conversations.get(first['conversation_id'])['artifacts']['generated_deck']['report']
-    assert stored['total_cards']==24 and any(c['printing_id']=='sv08-165' for c in stored['cards'])
+    assert stored['total_cards']==60 and any(c['printing_id']=='sv08-165' for c in stored['cards'])
     recount=svc.run(a.ResearchRequest(scope='conversation',question='Recount that deck.',conversation_id=first['conversation_id']))
-    assert recount['answer']['proposal']['total_cards']==24 and len(calls)==1
+    assert recount['answer']['proposal']['total_cards']==60 and len(calls)==1

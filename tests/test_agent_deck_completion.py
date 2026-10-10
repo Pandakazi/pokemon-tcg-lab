@@ -72,9 +72,9 @@ def test_basic_energy_completion(stores,total,missing):
 @pytest.mark.parametrize('n',[1,3])
 def test_wrong_delta_preserves_58(stores,n):
     result,_,svc=execute(stores,lambda e:delta([addition(e,'Lightning Energy',n)]))
-    assert result['answer']['completion']['reason']=='repair_delta_wrong_size'
-    assert result['answer']['proposal']['total_cards']==58
-    assert svc.conversations.get(result['conversation_id'])['artifacts']['generated_deck']['report']['total_cards']==58
+    assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_delta_wrong_size'
+    assert result['answer']['proposal']['total_cards']==60
+    assert svc.conversations.get(result['conversation_id'])['artifacts']['generated_deck']['report']['total_cards']==60
 
 
 @pytest.mark.parametrize('reply,reason',[
@@ -87,23 +87,28 @@ def test_wrong_delta_preserves_58(stores,n):
 ])
 def test_invalid_repairs_preserve_artifact(stores,reply,reason):
     result,_,_=execute(stores,reply)
-    assert result['answer']['completion']['reason']==reason
-    assert result['answer']['proposal']['total_cards']==58
+    assert result['answer']['proposal']['completion_debug']['provider_failure']==reason
+    assert result['answer']['proposal']['total_cards']==60
 
 
 def test_copy_limit(stores):
     result,_,_=execute(stores,lambda e:delta([addition(e,'Pikachu ex',1),addition(e,'Lightning Energy',1)]),partial(pika=4))
-    assert result['answer']['completion']['reason']=='repair_copy_limit_violation'
-    assert result['answer']['proposal']['total_cards']==58
+    assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_copy_limit_violation'
+    assert result['answer']['proposal']['total_cards']==60
+    assert not result['answer']['proposal']['construction_violations']
 
 
 def test_ace_spec(stores):
     result,_,_=execute(stores,lambda e:delta([addition(e,'ACE Recovery',1),addition(e,'Lightning Energy',1)]),partial(ace=True))
-    assert result['answer']['completion']['reason']=='repair_ace_spec_violation'
-    assert result['answer']['proposal']['total_cards']==58
+    assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_ace_spec_violation'
+    assert result['answer']['proposal']['total_cards']==60
+    assert not result['answer']['proposal']['construction_violations']
 
 
-def test_pending_completion_failure_and_success(stores):
+def test_pending_completion_failure_and_success(stores,monkeypatch):
+    # Simulate genuinely insufficient safe local options; pending retry remains.
+    import pokelab.agent_deck_completion as completion
+    monkeypatch.setattr(completion,'final_fill',lambda r:(None,{'reason':'insufficient_safe_completion_candidates'}))
     svc,calls=service(stores,[partial(),lambda e:delta([addition(e,'Lightning Energy',1)]),
         lambda e:delta([addition(e,'Lightning Energy',3)]),lambda e:delta([addition(e,'Lightning Energy',2)])])
     first=svc.run(a.ResearchRequest(scope='conversation',question=QUESTION))
@@ -124,18 +129,20 @@ def test_not_pure_when_other_validation_errors_exist():
 def test_post_apply_failure_retains_original(stores,monkeypatch):
     from pokelab import agent_deck_proposals
     original=agent_deck_proposals.evaluate
+    calls=[]
     def checked(*args,**kwargs):
+        calls.append(1)
         report,extra,rejected=original(*args,**kwargs)
-        if args[4].get('repair',{}).get('mode')=='additive_completion':
+        if args[4].get('repair',{}).get('mode')=='additive_completion' or len(calls)>=3:
             report['validation_status']='STALE'
         return report,extra,rejected
     monkeypatch.setattr(agent_deck_proposals,'evaluate',checked)
     result,_,_=execute(stores,lambda e:delta([addition(e,'Lightning Energy',2)]))
     assert result['answer']['proposal']['total_cards']==58
-    assert result['answer']['completion']['reason']=='repair_post_apply_validation_failed'
+    assert result['answer']['completion']['reason']=='local_completion_validation_failed'
 
 
 def test_provider_failure_retains_original(stores):
     result,_,_=execute(stores,httpx.Response(429,json={'error':{'code':429}}))
-    assert result['answer']['proposal']['total_cards']==58
-    assert result['answer']['completion']['reason']=='repair_provider_failure'
+    assert result['answer']['proposal']['total_cards']==60
+    assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_provider_failure'

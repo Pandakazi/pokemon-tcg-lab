@@ -90,7 +90,7 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
             **{k:raw[k] for k in FIELDS if k in raw})
         # Consensus quantities already establish these slots; per-card ranking
         # annotations are redundant and must not crowd a complete baseline out.
-        if core and role!='consensus':value['ranking']={k:quality[key][k] for k in ('score','recent_prior')}
+        if core and role!='consensus':value['ranking']={k:quality[key][k] for k in ('score','recent_prior','roles')}
         if len(selected)>=MAX_CANDIDATES or len(json.dumps([*selected.values(),value],ensure_ascii=False).encode())>MAX_BYTES:
             budget.append(key);return
         selected[key]=value

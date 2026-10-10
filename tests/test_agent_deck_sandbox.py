@@ -77,8 +77,11 @@ def test_small_repair_cannot_redesign_valid_slots(stores):
     changed=[FULL[0],FULL[1],('Lightning Energy',None,40,'energy'),('Darkness Energy',None,12,'energy')]
     svc,calls=service(stores,[deck(short),deck(changed)])
     result=svc.run(a.ResearchRequest(scope='conversation',question='Build a Standard deck'))
-    assert len(calls)==2 and result['answer']['proposal']['total_cards']==59
-    assert result['answer']['completion']['reason']=='repair_parse_failed'
+    assert len(calls)==2 and result['answer']['proposal']['total_cards']==60
+    assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_parse_failed'
+    quantities={r['canonical_name']:r['quantity'] for r in result['answer']['proposal']['cards']}
+    assert quantities['Lightning Energy']==51 and 'Darkness Energy' not in quantities
+    assert quantities['Pikachu ex']==4 and quantities['Recovery Tool']==4
 
 
 def test_small_repair_cannot_regress(stores):
@@ -86,8 +89,9 @@ def test_small_repair_cannot_regress(stores):
     worse=[FULL[0],FULL[1],('Lightning Energy',None,50,'energy')]
     svc,calls=service(stores,[deck(short),deck(worse)])
     result=svc.run(a.ResearchRequest(scope='conversation',question='Build a Standard deck'))
-    assert len(calls)==2 and result['answer']['proposal']['total_cards']==59
-    assert result['answer']['completion']['reason']=='repair_parse_failed'
+    assert len(calls)==2 and result['answer']['proposal']['total_cards']==60
+    assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_parse_failed'
+    assert next(r['quantity'] for r in result['answer']['proposal']['cards'] if r['canonical_name']=='Lightning Energy')==51
 
 
 def test_name_copy_limit_spans_distinct_functional_cards(stores):

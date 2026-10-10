@@ -21,16 +21,17 @@ def generated(count=52):
     return 'Trainer (32)\nTotal: 60\nThis is a complete legal deck.\n<POKELAB_ACTIONS>'+json.dumps({'type':'generated_deck','name':'Test concept','cards':[{'card_name':'Pikachu ex','printing_id':'qa-pikachu','quantity':4},{'card_name':'Recovery Tool','printing_id':'qa-recover','quantity':4},{'card_name':'Lightning Energy','printing_id':'qa-energy','quantity':count}]})+'</POKELAB_ACTIONS>'
 
 
-@pytest.mark.parametrize('energy,total,status',[(51,59,'NEEDS_REPAIR'),(52,60,'VALIDATED')])
-def test_finalize_structured_totals_and_local_recount(stores,monkeypatch,energy,total,status):
+@pytest.mark.parametrize('energy',[51,52])
+def test_finalize_structured_totals_and_local_recount(stores,monkeypatch,energy):
     svc,calls=service(stores,generated(energy));before={k:p.read_bytes() for k,p in stores.paths.items()}
     question='Create me a custom complete legal 60-card Dragapult ex deck and put it in list form. Make every slot an exact card, include category subtotals, and make sure the total is exactly 60.'
     assert c.lifecycle(question)=='FINALIZE'
     result=svc.run(a.ResearchRequest(scope='conversation',question=question))
     assert result['status']=='answered',result
     answer=result['answer'];report=answer['proposal']
-    assert report['total_cards']==total and report['category_subtotals']=={'Pokemon':4,'Trainer':4,'Energy':energy}
-    assert report['validation_status']==status
+    assert report['total_cards']==60 and report['category_subtotals']['Energy']==energy
+    assert sum(report['category_subtotals'].values())==60
+    assert report['validation_status']=='VALIDATED'
     # Provider arithmetic/false completion prose is still withheld. The build
     # source now has a required server-authored custom label.
     assert len(answer['paragraphs'])==1 and 'custom Standard build' in answer['paragraphs'][0]['text'] and answer['artifact_id']
@@ -40,10 +41,10 @@ def test_finalize_structured_totals_and_local_recount(stores,monkeypatch,energy,
     for q in ['What exact cards and quantities are in the deck list you just proposed? Recount them and tell me the total.','show me that list again','what exact cards were in it?','how many cards was that?']:
         again=svc.run(a.ResearchRequest(scope='conversation',question=q,conversation_id=result['conversation_id']))
         assert again['execution']['provider_called'] is False
-        assert again['answer']['proposal']['total_cards']==total
+        assert again['answer']['proposal']['total_cards']==60
         assert [(r['printing_id'],r['quantity']) for r in again['answer']['proposal']['cards']]==[(r['printing_id'],r['quantity']) for r in report['cards']]
         assert again['answer']['artifact_id']==answer['artifact_id']
-    assert len(calls)==(1 if total==60 else 2) and before=={k:p.read_bytes() for k,p in stores.paths.items()}
+    assert len(calls)==(1 if energy==52 else 2) and before=={k:p.read_bytes() for k,p in stores.paths.items()}
 
 
 def test_generated_deck_separate_from_active_deck(stores):
