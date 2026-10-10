@@ -70,13 +70,13 @@ def test_novice_theme(stores,q):
 
 
 def test_novice_ambiguity_asks_once(novel):
-    install(novel,[dict(id='lopunny-other',name='Lopunny',category='Pokemon',stage='Basic',types=['Fire'],
-        attacks=[dict(name='Other',cost=['Fire'],damage=30)],regulationMark='H',legal={'standard':True},variants={'normal':True})])
+    install(novel,[dict(id='lopunny-other',name='Mega Lopunny ex',category='Pokemon',stage='Basic',types=['Fire'],
+        attacks=[dict(name='Other',cost=['Fire'],damage=100)],regulationMark='H',legal={'standard':True},variants={'normal':True})])
     svc,calls=service(novel,[custom]);r=ask(svc,'Can you make a deck with Lopunny?')
     assert not calls and 'proposal' not in r['answer']
     assert r['envelope']['generation']['failure_reason']=='ambiguous_legal_core'
     assert r['answer']['paragraphs'][0]['text'].count('?')==1
-    precise=ask(svc,'Mega Lopunny ex',r['conversation_id'])
+    precise=ask(svc,'Mega Lopunny ex — Kick',r['conversation_id'])
     assert precise['envelope']['generation']['generation_source']=='custom_model_build'
     assert precise['answer']['proposal']['validation_status']=='VALIDATED'
     assert len(calls)==1

@@ -48,30 +48,17 @@ def retrieval(pool):
     return RetrievalIndex(cards,effects,digest(cards))
 
 
-def build(path, question, preferred_printings=(), *, competitive_path=None,format_start=None,today=None):
+def build(path, question, preferred_printings=(), *, competitive_path=None,format_start=None,today=None,selected_core=None):
     pool=legal_pool(path);by_id={r['functional_id']:r for r in pool}
     index=retrieval(pool);selected={};missing=[];budget=[]
     by_name={}
     for row in pool:by_name.setdefault(normalized_name(row['card']['name']),[]).append(row)
     q=normalized_name(question)
     from .agent_candidate_quality import prior,rank,energy_types,ROLES as QUALITY_ROLES
-    def mentioned(row):
-        name=normalized_name(row['card']['name'])
-        if re.search(r'(?<!\w)'+re.escape(name)+r'(?!\w)',q):return True
-        # Novice Pokémon themes can omit Mega/ex. Keep all legal gameplay
-        # interpretations so the routing boundary can ask rather than guess.
-        if row['card']['category']!='Pokemon':return False
-        theme=re.sub(r'^mega\s+|\s+ex$', '',name)
-        return bool(re.search(r'(?<!\w)'+re.escape(theme)+r'(?!\w)',q))
-    core=[r for r in pool if mentioned(r)]
-    specific={re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])):normalized_name(r['card']['name']) for r in core
-        if (normalized_name(r['card']['name']).startswith('mega ') or normalized_name(r['card']['name']).endswith(' ex'))
-        and re.search(r'(?<!\w)'+re.escape(normalized_name(r['card']['name']))+r'(?!\w)',q)}
-    core=[r for r in core if specific.get(re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])),normalized_name(r['card']['name']))==normalized_name(r['card']['name'])]
-    chosen={re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])):r['functional_id'] for r in core
-        if r['printing_id'].casefold()!=re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name']))
-        and re.search(r'(?<!\w)'+re.escape(r['printing_id'].casefold())+r'(?!\w)',question.casefold())}
-    core=[r for r in core if chosen.get(re.sub(r'^mega\s+|\s+ex$', '',normalized_name(r['card']['name'])),r['functional_id'])==r['functional_id']]
+    from .agent_consensus import baseline
+    consensus=baseline(path,competitive_path,pool,question,format_start,today)
+    from .agent_build_core import resolve
+    core,core_resolution=resolve(pool,question,consensus,selected_core)
     core_ids={r['functional_id'] for r in core}
     usage,field,provenance=prior(path,competitive_path,pool,core,question,format_start,today)
     family={r['functional_id']:r for r in core}
@@ -82,8 +69,6 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
             if parent['functional_id'] not in family:
                 family[parent['functional_id']]=parent;pending.append(parent)
     quality=rank(pool,index,list(family.values()),usage,field)
-    from .agent_consensus import baseline
-    consensus=baseline(path,competitive_path,pool,question,format_start,today)
     consensus_ids={r['candidate_id'] for r in consensus['cards']} if consensus and consensus['status']=='available' else set()
     order=lambda r:(-quality[r['functional_id']]['score'],normalized_name(r['card']['name']),r['functional_id'])
     def add(row, role, seen=None, ancestors=True):
@@ -158,7 +143,7 @@ def build(path, question, preferred_printings=(), *, competitive_path=None,forma
     for value in selected.values():
         value['predecessor_candidate_ids']=[key for key in value['predecessor_candidate_ids'] if key in selected]
     return dict(version='pokelab-standard-sandbox-v2',format=FORMAT_VERSION,
-        legal_universe_count=len(pool),candidates=list(selected.values()),competitive_prior=provenance,consensus=consensus,
+        legal_universe_count=len(pool),candidates=list(selected.values()),competitive_prior=provenance,consensus=consensus,core_resolution=core_resolution,
         limitations=['Local indexed coverage only; legality is not a guarantee of a viable engine.']+sorted(set(missing))+(['bounded-candidate-subset;no-iterative-expansion'] if budget else []),
         instruction='Use recent-archetype priors and core support as the default foundation, allowing reasoned deviations. Ranking is a heuristic, not a tournament ranking or recommended copy count; recent_prior is recency-weighted cached inclusion, not population prevalence. Choose only supplied candidate_id values for generated_deck entries, with exact positive integer quantities. Do not reselect ambiguous cards by bare name. Names are optional but must match the selected candidate; printing is backend-derived. Total quantity must equal 60. Sum of quantities with ace_spec=true must be <=1. Group by copy_limit_name for the ordinary maximum of 4, except basic_energy=true. Preserve requested_core candidates and consider predecessor_candidate_ids for evolution lines. Printed effects are not tournament evidence. If options are insufficient, explain the local cache/candidate limitation; never invent outside cards.')
 

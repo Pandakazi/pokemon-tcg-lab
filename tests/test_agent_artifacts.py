@@ -60,9 +60,9 @@ def test_missing_or_malformed_artifact_never_renders_false_final(stores):
         svc,_=service(stores,'Trainer (32)\n31 Recovery Tool\nTotal: 60\nThis is a complete legal deck.\nI like a steady setup plan.\n'+block)
         result=svc.run(a.ResearchRequest(scope='conversation',question='Create a complete legal 60-card deck.'))
         assert result['status']=='answered',result
-        assert result['answer']['paragraphs']==[{'text':'I like a steady setup plan.','evidence':[]}]
-        assert 'missing_artifact' in result['answer']['notices']
-        assert not svc.conversations.get(result['conversation_id'])['artifacts']
+        assert result['answer']['build_failure']['reason'] in ('structured_deck_not_returned','generated_deck_contract_invalid')
+        assert 'missing_artifact' not in result['answer']['notices']
+        assert 'generated_deck' not in svc.conversations.get(result['conversation_id'])['artifacts']
 
 
 def test_explicit_cut_does_not_silently_substitute(stores):

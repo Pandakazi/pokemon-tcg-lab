@@ -19,6 +19,16 @@ def finish(service,request,history,envelope,answer,artifacts):
 def direct_generation(service,request,history,envelope):
     if not build_request(request.question) or envelope['lifecycle']!='FINALIZE' or not envelope.get('artifact_mutation_allowed',True):return None
     c=envelope.get('candidate_sandbox',{}).get('consensus')
+    resolution=envelope.get('candidate_sandbox',{}).get('core_resolution',{})
+    if resolution.get('status')=='ambiguous':
+        choices=resolution['choices']
+        generation=dict(generation_source=None,consensus_status='unavailable',failure_reason='ambiguous_legal_core')
+        envelope['generation']=generation
+        answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Do you want '+' or '.join(r['label'] for r in choices)+'?',evidence=[])],facts=[],notices=[],generation=generation)
+        artifacts=deepcopy(history.get('artifacts',{}))
+        artifacts['build_clarification']=dict(question=request.question,choices=choices)
+        return finish(service,request,history,envelope,answer,artifacts)
+    if resolution.get('reason')=='selected_core_not_standard_legal':return failed_build(service,request,history,envelope,'unresolved_core')
     core=[r for r in envelope.get('candidate_sandbox',{}).get('candidates',[]) if r.get('requested_core') and r.get('category')=='Pokemon']
     themes={}
     for r in core:
@@ -32,6 +42,11 @@ def direct_generation(service,request,history,envelope):
         style=bool(re.search(r'\b(?:aggressive|control|experimental|custom|weird|budget|mill|stall|toolbox)\b',request.question,re.I))
         if c or unspecified or style or len(themes)>1:return custom_generation(envelope,c,'explicit_constraint' if custom else 'no_archetype_requested')
     status=c['status'] if c else 'unknown_archetype'
+    # A species-level cached shell cannot silently replace a user-selected
+    # gameplay core. Its sampling/allocation is untouched; use custom fallback.
+    selected=envelope.get('selected_core')
+    if status=='available' and selected and selected['candidate_id'] not in {r['candidate_id'] for r in c['cards']}:
+        return custom_generation(envelope,c,'selected_core_not_in_consensus',core)
     report=None
     if status=='available':
         from .agent_deck_proposals import evaluate
@@ -52,18 +67,8 @@ def direct_generation(service,request,history,envelope):
                 return finish(service,request,history,envelope,answer,artifacts)
         status='invalid'
     if core:
-        # Same theme, materially different legal gameplay identities: ask once.
-        ambiguous=next((rows for rows in themes.values() if len(rows)>1),None)
-        if ambiguous:
-            generation=dict(generation_source=None,consensus_status=status,failure_reason='ambiguous_legal_core',
-                clarification_candidates=[{k:r[k] for k in ('name','printing_id')} for r in ambiguous])
-            envelope['generation']=generation
-            choices=', '.join(r['name']+' ('+r['printing_id']+')' for r in ambiguous)
-            answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='Which legal version should I build around: '+choices+'?',evidence=[])],facts=[],notices=[],generation=generation)
-            artifacts=deepcopy(history.get('artifacts',{}))
-            artifacts['build_clarification']=dict(question=request.question,candidates=generation['clarification_candidates'])
-            return finish(service,request,history,envelope,answer,artifacts)
         return custom_generation(envelope,c,status,core)
+    if resolution.get('status')=='selected':return failed_build(service,request,history,envelope,'candidate_budget_insufficient')
     generation=dict(generation_source=None,consensus_status=status,fallback_reason=status,failure_reason='requested_core_unresolved_or_not_standard_legal')
     envelope['generation']=generation
     artifacts=deepcopy(history.get('artifacts',{}));artifacts['generation_attempt']=generation
@@ -79,24 +84,21 @@ def direct_generation(service,request,history,envelope):
 def custom_generation(envelope,consensus,reason,core=()):
     envelope['generation']=dict(build_mode='custom',generation_source='custom_model_build',
         consensus_status='no_matching_variant' if consensus is None else 'unavailable',
-        fallback_reason=reason,requested_core_ids=[r['candidate_id'] for r in core])
+        fallback_reason=reason,requested_core_ids=[envelope['selected_core']['candidate_id']] if envelope.get('new_build') and envelope.get('selected_core') else [r['candidate_id'] for r in core])
     envelope['generation_instruction']='This is a CUSTOM Standard build, not an established tournament consensus. Preserve the requested legal core. Use the supplied candidate_id sandbox and construction constraints; label strategic choices as judgment. Do not claim a recent tournament shell or consensus without supplied evidence.'
     envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     return None
 
 
-def clarified_build(request,history):
-    """A precise reply to our last bounded choice resumes that build intent."""
-    turns=history.get('turns',[])
-    if not turns or build_request(request.question):return request
-    last=turns[-1];pending=history.get('artifacts',{}).get('build_clarification')
-    if not pending or last['question']!=pending['question']:return request
-    choice=request.question.casefold().strip().rstrip('.!')
-    matches=[r for r in pending['candidates'] if choice in
-        (r['name'].casefold(),r['printing_id'].casefold(),(r['name']+' ('+r['printing_id']+')').casefold())]
-    if len(matches)!=1:return request
-    row=matches[0]
-    return request.model_copy(update={'question':last['question']+' Selected core: '+row['name']+' ('+row['printing_id']+').'})
+def failed_build(service,request,history,envelope,reason):
+    if reason=='unresolved_core' and envelope.get('selected_core'):
+        envelope['selected_core']=dict(envelope['selected_core'],status='UNAVAILABLE')
+    generation=envelope.get('generation') or dict(build_mode='custom',generation_source=None,consensus_status='unavailable')
+    generation=dict(generation,failure_reason=reason)
+    envelope['generation']=generation
+    answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='I could not complete this custom Standard build: '+reason.replace('_',' ')+'. No completed deck is claimed; any existing conversational deck is unchanged.',evidence=[])],facts=[],notices=[],generation=generation,build_failure=dict(reason=reason),completion=dict(status='incomplete',repair_attempts=0,reason=reason))
+    artifacts=remember(history,None,envelope);artifacts['generation_attempt']=generation
+    return finish(service,request,history,envelope,answer,artifacts)
 
 
 def unchanged_consensus(service,request,history,envelope):

@@ -14,7 +14,7 @@ from .agent_context_sources import stamp
 
 def build_request(question):
     if re.search(r'\b(?:those|these|the proposed) changes\b',question,re.I):return False
-    return bool(re.search(r'^\s*(?:(?:please|can you|could you|would you)\s+)*(?:(?:build|create)\b|make\b.*\b(?:deck|list)\b)|^\s*I (?:like|love)\b.+[,;]\s*(?:build|make|create)\b',question,re.I))
+    return bool(re.search(r'^\s*(?:(?:please|can you|could you|would you)\s+)*(?:(?:build|create)\b|make\b.*\b(?:deck|list)\b)|^\s*I (?:like|love)\b.+[,;]\s*(?:build|make|create)\b|^\s*I want\b.*\bdeck\b',question,re.I))
 
 
 def words(text):return tuple(w for w in re.findall(r'\w+',text.casefold()) if w!='ex')
@@ -25,7 +25,7 @@ PRESENTATION_WORDS=set('build rebuild create make me a an the deck list standard
 
 
 def custom_request(question,label=''):
-    style=bool(re.search(r'\b(?:aggressive|control|experimental|custom|weird|budget|mill|stall|toolbox)\b',question,re.I))
+    style=bool(re.search(r'\b(?:aggressive|control|experimental|custom|weird|budget|mill|stall|toolbox|regular|baby|non.ex)\b',question,re.I))
     clauses=re.findall(r'\b(?:with|around|using|include|featuring|plus|without|except|avoid|exclude|only)\b([^.!?]*)',question,re.I)
     return style or any(set(words(clause))-set(words(label))-PRESENTATION_WORDS for clause in clauses)
 

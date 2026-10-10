@@ -138,7 +138,7 @@ def queries(question):
     return [question[:1000]]
 
 
-def context(request, sources, history):
+def context(request, sources, history, selected_core=None):
     """Fresh read transactions for facts; history only supplies referent printings."""
     from .agent_research import ResearchUnavailable, canonical
     from .agent_context_sources import Unavailable, stamp
@@ -147,6 +147,12 @@ def context(request, sources, history):
     from .agent_generated_changes import intent,read_only
     from .agent_consensus import build_request
     new_build=build_request(request.question) and lifecycle(request.question)!='DRAFT'
+    if new_build and request.printing:
+        try:
+            with sqlite3.connect(sources.paths['cards'].resolve().as_uri()+'?mode=ro',uri=True) as db:
+                row=db.execute('SELECT functional_id FROM gameplay_printings WHERE printing_id=?',(request.printing,)).fetchone()
+        except (OSError,sqlite3.Error):raise ResearchUnavailable('context_unavailable') from None
+        selected_core=dict(candidate_id=row[0] if row else 'unresolved',selection_source='user_selected')
     generated_intent=None if new_build or pending_repair(request.question,history) else intent(request.question,history)
     generated=history.get('artifacts',{}).get('generated_deck') if generated_intent else None
     reading=read_only(request.question) or generated_intent=='DISCUSS'
@@ -156,14 +162,14 @@ def context(request, sources, history):
         if building:
             from .agent_deck_sandbox import build
             pending=pending_repair(request.question,history)
-            sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,history['printings'],competitive_path=sources.paths['competitive'],format_start=sources.format_start)
+            sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,history['printings'],competitive_path=sources.paths['competitive'],format_start=sources.format_start,selected_core=selected_core)
             if generated_intent=='DISCUSS':
                 # Read context needs current printed facts, not all alternative
                 # ranking/construction annotations. Never modify the saved packet.
                 current_ids={r.get('candidate_id') for r in generated['report']['cards']}
                 fields=('candidate_id','printing_id','name','category','stage','evolveFrom','attacks','abilities','effect','types','rules')
                 sandbox=dict(sandbox,candidates=[{k:r[k] for k in fields if k in r} for r in sandbox['candidates'] if r['candidate_id'] in current_ids])
-            if not sandbox['candidates'] and not ((new_build and (sandbox.get('consensus') or {}).get('status')=='available') or (generated and generated['report']['cards'])):raise ResearchUnavailable('context_unavailable')
+            if not sandbox['candidates'] and not ((new_build and ((sandbox.get('consensus') or {}).get('status')=='available' or sandbox.get('core_resolution',{}).get('status') in ('selected','ambiguous'))) or (generated and generated['report']['cards'])):raise ResearchUnavailable('context_unavailable')
             index=None
         else:index = RetrievalIndex.from_database(sources.paths['cards'])
     except (OSError, ValueError, sqlite3.Error):
@@ -253,6 +259,13 @@ def context(request, sources, history):
         if generated_intent=='DISCUSS':envelope['lifecycle']='EXPLORE'
         envelope['current_generated_deck'].update(validation_status=generated['report']['validation_status'],total_cards=generated['report']['total_cards'],category_subtotals=generated['report'].get('category_subtotals',{}),**{k:generated['report'].get(k) for k in ('build_mode','generation_source','consensus_status','fallback_reason','requested_core_ids')})
     if sandbox:envelope['candidate_sandbox']=sandbox
+    envelope['new_build']=new_build
+    if new_build and (sandbox or {}).get('core_resolution',{}).get('selected_core'):
+        envelope['selected_core']=dict(sandbox['core_resolution']['selected_core'],source_turn=(selected_core or {}).get('source_turn',history.get('turn_number',0)+1))
+    elif new_build and selected_core and selected_core.get('canonical_name'):
+        envelope['selected_core']=selected_core
+    elif not new_build and history.get('artifacts',{}).get('selected_core'):
+        envelope['selected_core']=history['artifacts']['selected_core']
     if generated and sandbox and sandbox.get('consensus'):
         c=sandbox['consensus']
         evidence.append(dict(id='recent-consensus',kind='evidence',title='Original recent consensus snapshot',source='limitless-main',value={k:c[k] for k in ('label','event_ids','sample_size','placement_band','shape','energy') if k in c}))
@@ -268,7 +281,9 @@ def context(request, sources, history):
     local_consensus=new_build and c and c['status']=='available' and not custom_request(request.question,c['label'])
     # No provider context is needed to validate/return a complete local consensus.
     # Every provider-bound path still passes the ordinary context budget below.
-    if not local_consensus:envelope=fit(envelope,CONTEXT_BYTES)
+    # New builds resolve/commit their core locally first. The run boundary
+    # still budgets every provider-bound request before any execution.
+    if not local_consensus and not new_build:envelope=fit(envelope,CONTEXT_BYTES)
     envelope['content_hash'] = digest(envelope)
     return envelope
 
@@ -302,17 +317,18 @@ def unsupported_identity(text, envelope):
     return False
 
 
-def run(service, request, selection, *, _repair=None):
+def run(service, request, selection, *, _repair=None, _selected_core=None):
     from .agent_context_sources import Sources
     from .agent_research import ResearchUnavailable, ContractError, canonical, MAX_OUTPUT
     history = service.conversations.get(request.conversation_id)
     if history is None: return dict(status='conversation_expired', answer=None)
-    from .agent_generation import clarified_build
-    request=clarified_build(request,history)
+    from .agent_build_core import prepare
+    request,core_hint=prepare(request,history)
+    core_hint=_selected_core or core_hint
     from .agent_system_questions import respond
     local=respond(service,request,history)
     if local is not None:return local
-    try: envelope = context(request, Sources(**service.paths, format_start=service.format_start), history)
+    try: envelope = context(request, Sources(**service.paths, format_start=service.format_start), history,core_hint)
     except ResearchUnavailable as exc:
         if exc.reason=='budget_exceeded':return budget_failure(service,request,history,getattr(exc,'diagnostics',{'condition':'required_context_overflow','provider_called':False}))
         return dict(status=exc.reason, answer=None)
@@ -342,11 +358,26 @@ def run(service, request, selection, *, _repair=None):
     local=direct_generation(service,request,history,envelope) if not requirements else None
     if local is None and envelope.get('generated_intent')=='DISCUSS':local=unchanged_consensus(service,request,history,envelope)
     if local is not None:return local
+    if not requirements and envelope.get('generation',{}).get('build_mode')=='custom':
+        from .agent_generation import failed_build
+        candidates=envelope['candidate_sandbox']['candidates']
+        available={r['candidate_id'] for r in candidates}
+        if not set(envelope['generation']['requested_core_ids'])<=available:
+            return failed_build(service,request,history,envelope,'candidate_budget_insufficient')
+        capacity=4*len({r['copy_limit_name'] for r in candidates if not r['basic_energy'] and not r['ace_spec']})+int(any(r['ace_spec'] for r in candidates))
+        if not any(r['basic_energy'] for r in candidates) and capacity<60:
+            reason='candidate_budget_insufficient' if 'bounded-candidate-subset;no-iterative-expansion' in envelope['candidate_sandbox']['limitations'] else 'insufficient_legal_candidate_coverage'
+            return failed_build(service,request,history,envelope,reason)
     from .agent_context_budget import fit
     try:
         if 'context_budget' not in envelope:envelope=fit(envelope,CONTEXT_BYTES)
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     except ResearchUnavailable as exc:
+        if envelope.get('generation',{}).get('build_mode')=='custom' and not requirements:
+            from .agent_generation import failed_build
+            failed=failed_build(service,request,history,envelope,'required_context_overflow')
+            failed['context_diagnostics']=getattr(exc,'diagnostics',{'condition':'required_context_overflow','provider_called':False})
+            return failed
         return budget_failure(service,request,history,getattr(exc,'diagnostics',{'condition':'required_context_overflow','provider_called':False}))
     if envelope.get('generated_intent')=='APPLY' and not requirements:
         return apply_generated(service,request,selection,history,envelope)
@@ -360,13 +391,21 @@ def run(service, request, selection, *, _repair=None):
             return dict(status='answered',answer=answer,envelope=envelope,conversation_id=key,execution={'mode':'local_artifact','provider_called':False})
     from .agent_qualification_config import INPUT_BYTES
     system, wire_schema = (completion.SYSTEM,None) if additive else provider_contract(envelope['lifecycle'], request.include_deck)
+    if not additive and envelope.get('generation',{}).get('build_mode')=='custom' and envelope['lifecycle']=='FINALIZE':
+        system+='\nThis is an explicit CUSTOM BUILD transaction, not card-detail/discussion. Return exactly one generated_deck action block with candidate_id selections totaling 60, preserving generation.requested_core_ids and the supplied constraints. Zero artifacts is NOT a successful answer for this request. If construction is impossible, state the limitation honestly; PokéLab will record a structured build failure, never a completed deck. Do not dump printing IDs, Sources, or card facts in prose.\n'
     if envelope.get('generated_intent') and not additive:
         from .agent_generated_changes import CONTRACT
         system+=CONTRACT
     if len((system+canonical(envelope)).encode()) > INPUT_BYTES:
         from .agent_context_budget import fit,RequiredContextOverflow
         try:envelope=fit(envelope,min(CONTEXT_BYTES,INPUT_BYTES-len(system.encode())))
-        except RequiredContextOverflow as exc:return budget_failure(service,request,history,exc.diagnostics)
+        except RequiredContextOverflow as exc:
+            if envelope.get('generation',{}).get('build_mode')=='custom' and not requirements:
+                from .agent_generation import failed_build
+                failed=failed_build(service,request,history,envelope,'required_context_overflow')
+                failed['context_diagnostics']=exc.diagnostics
+                return failed
+            return budget_failure(service,request,history,exc.diagnostics)
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     result = providers.complete(selection, system, canonical(envelope), transport=service.transport,
         max_output=MAX_OUTPUT, response_schema=wire_schema if selection.provider == 'gemini' else None)
@@ -374,6 +413,12 @@ def run(service, request, selection, *, _repair=None):
     execution.update(provider=selection.provider, model=selection.model,
         finish_reason=result.finish_reason if result.finish_reason in ('stop','end_turn','length','max_tokens') else None)
     response = dict(answer=None, envelope=envelope, execution=execution)
+    custom_initial=not requirements and envelope.get('generation',{}).get('build_mode')=='custom' and envelope['lifecycle']=='FINALIZE'
+    def custom_failure(reason):
+        from .agent_generation import failed_build
+        failed=failed_build(service,request,history,envelope,reason)
+        failed['execution']=execution
+        return failed
     def completion_failure(reason):
         if pending and _repair is None:
             retained=recount(history,'generated_deck')
@@ -382,8 +427,10 @@ def run(service, request, selection, *, _repair=None):
         return dict(response,status=reason)
     if additive and (result.status!='ok' or result.finish_reason not in ('stop','end_turn')):
         return completion_failure('repair_provider_incomplete' if result.finish_reason in ('length','max_tokens') or result.status in ('empty_output','incomplete_or_blocked_output') else 'repair_provider_failure')
-    if result.finish_reason in ('length','max_tokens'): return dict(response,status='output_token_limit_reached')
-    if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'): return dict(response,status='provider_failure', provider_status=result.status if re.fullmatch(r'http_[0-9]{3}',result.status) or result.status in ('transport_or_response_error','empty_output','incomplete_or_blocked_output','output_too_large','response_too_large','secret_response_quarantined','tool_output_rejected') else 'other_provider_failure')
+    if result.finish_reason in ('length','max_tokens'):
+        return custom_failure('output_token_limit_reached') if custom_initial else dict(response,status='output_token_limit_reached')
+    if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'):
+        return custom_failure('provider_failure') if custom_initial else dict(response,status='provider_failure', provider_status=result.status if re.fullmatch(r'http_[0-9]{3}',result.status) or result.status in ('transport_or_response_error','empty_output','incomplete_or_blocked_output','output_too_large','response_too_large','secret_response_quarantined','tool_output_rejected') else 'other_provider_failure')
     try:
         from .agent_deck_proposals import evaluate
         if len(result.text.encode())>16384:raise ContractError('answer_budget_exceeded')
@@ -408,6 +455,8 @@ def run(service, request, selection, *, _repair=None):
                 parsed=Answer(version='pokelab-conversation-answer-v1',paragraphs=(Paragraph(text='Natural response'),),proposal=proposal,fact_ids=metadata.get('fact_ids',()))
         if requirements and parsed.proposal and parsed.proposal.kind!='list':
             parsed=parsed.model_copy(update={'proposal':None});hybrid_issues.append('repair_requires_generated_deck')
+        if envelope.get('generation',{}).get('build_mode')=='custom' and envelope['lifecycle']=='FINALIZE' and not requirements and (parsed.proposal is None or parsed.proposal.kind!='list'):
+            return custom_failure('generated_deck_contract_invalid' if hybrid_issues else 'structured_deck_not_returned')
         if not hybrid_prose and not parsed.proposal:raise ContractError('empty_statement')
         if envelope.get('artifact_mutation_allowed') is False:
             if parsed.proposal or hybrid_issues:hybrid_issues=['read_only_artifact_ignored']
@@ -465,6 +514,9 @@ def run(service, request, selection, *, _repair=None):
     except completion.CompletionError as exc:return completion_failure(exc.reason)
     except ContractError as exc:
         if additive:return completion_failure('repair_parse_failed')
+        if custom_initial:
+            failed=custom_failure('generated_deck_contract_invalid');failed['contract_diagnostics']=exc.diagnostics
+            return failed
         return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
     except Exception:
         if additive:return completion_failure('repair_internal_assessment_failure')
@@ -486,7 +538,7 @@ def run(service, request, selection, *, _repair=None):
         answer['completion']={'status':'incomplete','repair_attempts':0,'reason':'generation_failure_exceeds_small_repair'}
         execution['repair_calls']=0
     elif completing and incomplete and _repair is None:
-        repaired=run(service,request,selection,_repair=repair_requirements(report))
+        repaired=run(service,request,selection,_repair=repair_requirements(report),_selected_core=envelope.get('selected_core'))
         if repaired.get('status')=='answered' and repaired.get('answer',{}).get('proposal',{}).get('kind')=='list':
             repaired.setdefault('execution',{})['initial_attempt']=execution
             repaired['execution']['repair_calls']=1
@@ -496,6 +548,8 @@ def run(service, request, selection, *, _repair=None):
         execution['repair_execution']=repaired.get('execution')
     elif completing:
         answer['completion']={'status':'incomplete' if incomplete else 'complete','repair_attempts':1 if _repair is not None else 0}
+    if completing and incomplete and envelope.get('generation',{}).get('build_mode')=='custom':
+        answer['build_failure']=dict(reason='repair_failed_validation' if answer.get('completion',{}).get('repair_attempts') else 'construction_validation_failed')
     if _repair is not None and report is None:
         return dict(response,status='answered',answer=answer)
     turns = history['turns'] + [dict(question=request.question, answer=answer, snapshot=envelope['content_hash'])]
@@ -513,6 +567,8 @@ def run(service, request, selection, *, _repair=None):
         if artifact:answer.update(artifact_id=artifact['id'],source_turn=artifact['source_turn'])
         if report.get('build_mode')=='custom':
             answer['paragraphs'].insert(0,dict(text='This is a custom Standard build from the local legal card pool, not a recent competitive consensus. '+('It passed the supported construction checks; strategic quality remains judgment.' if report['validation_status']=='VALIDATED' else 'It is not complete; the validation issues below still need resolution.'),evidence=[]))
+            if envelope.get('selected_core') and envelope.get('new_build'):
+                answer['paragraphs'][0]['text']='Build-around: '+envelope['selected_core']['canonical_name']+'. '+answer['paragraphs'][0]['text']
     if envelope.get('artifact_mutation_allowed') is False:
         from copy import deepcopy
         artifacts=deepcopy(history.get('artifacts',{}));proposal=history.get('proposal')

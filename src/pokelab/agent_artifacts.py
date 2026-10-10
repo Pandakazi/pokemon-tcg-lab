@@ -12,6 +12,9 @@ def artifact_context(history):
 def remember(history, report, envelope):
     artifacts=deepcopy(history.get('artifacts',{}))
     if envelope.get('artifact_mutation_allowed') is False:return artifacts
+    if envelope.get('selected_core') and envelope.get('new_build'):
+        artifacts['selected_core']=deepcopy(envelope['selected_core'])
+        artifacts.pop('build_clarification',None)
     if report and report['kind'] in ('list','diff'):
         kind='generated_deck' if report['kind']=='list' else 'proposed_deck_changes'
         # Keep resolved identities/counts/status independent of compacted prose.
