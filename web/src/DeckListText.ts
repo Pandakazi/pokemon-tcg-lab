@@ -3,16 +3,11 @@ const order=['Pokemon','Trainer','Energy']
 export function orderedDeck<T extends DeckRow>(rows:T[]):T[] {
  return [...rows].sort((a,b)=>(order.includes(a.category||'')?order.indexOf(a.category!):3)-(order.includes(b.category||'')?order.indexOf(b.category!):3))
 }
-// No PTCGL importer/exporter exists in this web app. Preserve exact identifiers
-// in a clean plain-text list rather than pretending TCGdex IDs are PTCGL set codes.
-export function deckListText(rows:DeckRow[]) {
- const sorted=orderedDeck(rows),lines:string[]=[]
- for(const category of [...order,undefined]){
-  const group=sorted.filter(r=>category===undefined?!order.includes(r.category||''):r.category===category)
-  if(!group.length)continue
-  lines.push(`${category==='Pokemon'?'Pokémon':category||'Cards'}: ${group.reduce((sum,r)=>sum+r.quantity,0)}`)
-  lines.push(...group.map(r=>`${r.quantity} ${r.canonical_name} (${r.printing_id})`),'')
- }
- lines.push(`Total Cards: ${rows.reduce((sum,r)=>sum+r.quantity,0)}`)
- return lines.join('\n')
+export async function deckListText(rows:DeckRow[]):Promise<{text:string;warnings:string[]}> {
+ const response=await fetch('/api/v1/decks/export-ptcgl',{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({cards:orderedDeck(rows).map(r=>({printing_id:r.printing_id,quantity:r.quantity}))})})
+ const result=await response.json()
+ if(!response.ok)throw new Error(typeof result.detail==='string'?result.detail:'PTCGL export is unavailable. Nothing was copied.')
+ if(typeof result.text!=='string'||!Array.isArray(result.warnings))throw new Error('PTCGL export is unavailable. Nothing was copied.')
+ return result
 }

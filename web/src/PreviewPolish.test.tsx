@@ -7,6 +7,7 @@ import {TopBar} from './Shell'
 import {CardDetail} from './CardDetail'
 import {CollectionPage} from './CollectionPage'
 import {orderedDeck,deckListText} from './DeckListText'
+import {Filters,illustratorGroups} from './Filters'
 
 const ok=(body:unknown)=>({ok:true,status:200,json:async()=>body})
 test('manual sync is explicit, single-flight, success disables cooldown and displays freshness',async()=>{
@@ -48,12 +49,42 @@ test('escaped headings, emphasis and lists render safely without HTML execution'
  expect(screen.queryByRole('img')).toBeNull()
  expect(document.body.textContent).not.toContain('\\###')
 })
-test('category sorting/copy preserves exact identities, counts and source array',()=>{
+test('category sorting/copy resolves printing metadata without mutating source array',async()=>{
  const rows=[{category:'Energy',canonical_name:'Fire Energy',printing_id:'sv-1',quantity:9},{category:'Trainer',canonical_name:'Ultra Ball',printing_id:'sv-2',quantity:32},{category:'Pokemon',canonical_name:'Dragapult ex',printing_id:'sv-3',quantity:19}]
- const before=JSON.stringify(rows),sorted=orderedDeck(rows),text=deckListText(rows)
+ const expected='Pokémon: 1\n19 Dragapult ex TWM 130\n\nTrainer: 1\n32 Ultra Ball SVI 196\n\nEnergy: 1\n9 Basic {R} Energy SVE 2\n\nTotal Cards: 60'
+ const fetch=vi.fn(async(_url:string,_options?:RequestInit)=>ok({text:expected,warnings:[]}));vi.stubGlobal('fetch',fetch)
+ const before=JSON.stringify(rows),sorted=orderedDeck(rows),exported=await deckListText(rows)
  expect(sorted.map(c=>c.category)).toEqual(['Pokemon','Trainer','Energy'])
- expect(text).toBe('Pokémon: 19\n19 Dragapult ex (sv-3)\n\nTrainer: 32\n32 Ultra Ball (sv-2)\n\nEnergy: 9\n9 Fire Energy (sv-1)\n\nTotal Cards: 60')
+ expect(exported.text).toBe(expected)
+ expect(JSON.parse(fetch.mock.calls[0][1]!.body as string)).toEqual({cards:[{printing_id:'sv-3',quantity:19},{printing_id:'sv-2',quantity:32},{printing_id:'sv-1',quantity:9}]})
  expect(JSON.stringify(rows)).toBe(before)
+})
+
+test('illustrators group and sort naturally while preserving display spelling',()=>{
+ const groups=illustratorGroups(['Mitsuhiro Arita','miki kudo','Mashu','mashu','alice','Alice','Zed','5ban Graphics','★ Artist','éclair'])
+ expect(groups.map(([letter])=>letter)).toEqual(['A','M','Z','#'])
+ const names=groups.find(([letter])=>letter==='M')![1]
+ expect(new Set(names.slice(0,2))).toEqual(new Set(['Mashu','mashu']))
+ expect(names.slice(2)).toEqual(['miki kudo','Mitsuhiro Arita'])
+ expect(groups.at(-1)![1]).toEqual(expect.arrayContaining(['5ban Graphics','★ Artist','éclair']))
+})
+
+test('native illustrator disclosures never select a letter or clear active filters',()=>{
+ const onChange=vi.fn(),onClear=vi.fn(),params=new URLSearchParams('illustrators=Mashu')
+ render(<Filters options={[{parameter:'illustrators',label:'Illustrator',values:['Mitsuhiro Arita','miki kudo','Mashu','Alice','5ban Graphics']}]} params={params} onChange={onChange} onClear={onClear}/>)
+ const header=screen.getByText('M',{selector:'summary'}),group=header.parentElement!
+ expect(group).toHaveAttribute('open');expect(screen.getByRole('checkbox',{name:'Mashu'})).toBeChecked()
+ fireEvent.click(header);fireEvent.click(screen.getByText('A',{selector:'summary'}))
+ expect(onChange).not.toHaveBeenCalled();expect(onClear).not.toHaveBeenCalled()
+ expect(screen.getByRole('checkbox',{name:'Mashu'})).toBeChecked()
+ expect(screen.queryByRole('checkbox',{name:/^M$/})).toBeNull()
+ fireEvent.click(header);fireEvent.click(screen.getByRole('checkbox',{name:'miki kudo'}))
+ expect(onChange).toHaveBeenCalledWith('illustrators','miki kudo')
+})
+
+test('unmapped PTCGL export is explicit and does not return text',async()=>{
+ vi.stubGlobal('fetch',vi.fn(async()=>({ok:false,status:422,json:async()=>({detail:'The exact printing has no supported local PTCGL set-code/collector mapping.'})})))
+ await expect(deckListText([{printing_id:'unknown-1',canonical_name:'Example',quantity:1}])).rejects.toThrow('no supported local PTCGL')
 })
 test('Analytics retains disabled native tooltip and cannot navigate',()=>{
  const navigate=vi.fn();render(<TopBar activeNav="Library" onNavChange={navigate}/>)

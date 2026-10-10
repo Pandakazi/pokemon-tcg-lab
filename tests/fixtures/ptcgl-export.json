@@ -1,0 +1,450 @@
+{
+  "source": "Existing tests/fixtures/limitless/decklists.html: first published Special Event Lima 2024 list; local TCGdex printing metadata; PTCGL headers count lines, quantities sum to 60.",
+  "cards": [
+    {
+      "id": "sv01-087",
+      "name": "Shuppet",
+      "localId": "087",
+      "category": "Pokemon",
+      "set": {
+        "id": "sv01"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "sv01-088",
+      "name": "Banette ex",
+      "localId": "088",
+      "category": "Pokemon",
+      "set": {
+        "id": "sv01"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "swsh11-073",
+      "name": "Banette",
+      "localId": "073",
+      "category": "Pokemon",
+      "set": {
+        "id": "swsh11"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "swsh12-067",
+      "name": "Ralts",
+      "localId": "067",
+      "category": "Pokemon",
+      "set": {
+        "id": "swsh12"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "swsh12-068",
+      "name": "Kirlia",
+      "localId": "068",
+      "category": "Pokemon",
+      "set": {
+        "id": "swsh12"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "sv01-086",
+      "name": "Gardevoir ex",
+      "localId": "086",
+      "category": "Pokemon",
+      "set": {
+        "id": "sv01"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "sv03.5-151",
+      "name": "Mew ex",
+      "localId": "151",
+      "category": "Pokemon",
+      "set": {
+        "id": "sv03.5"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "swsh12-059",
+      "name": "Radiant Alakazam",
+      "localId": "059",
+      "category": "Pokemon",
+      "set": {
+        "id": "swsh12"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "sv02-089",
+      "name": "Spiritomb",
+      "localId": "089",
+      "category": "Pokemon",
+      "set": {
+        "id": "sv02"
+      },
+      "types": [
+        "Psychic"
+      ]
+    },
+    {
+      "id": "sv02-185",
+      "name": "Iono",
+      "localId": "185",
+      "category": "Trainer",
+      "set": {
+        "id": "sv02"
+      }
+    },
+    {
+      "id": "sv02-172",
+      "name": "Boss's Orders",
+      "localId": "172",
+      "category": "Trainer",
+      "set": {
+        "id": "sv02"
+      }
+    },
+    {
+      "id": "sv04-171",
+      "name": "Professor Turo's Scenario",
+      "localId": "171",
+      "category": "Trainer",
+      "set": {
+        "id": "sv04"
+      }
+    },
+    {
+      "id": "sv01-189",
+      "name": "Professor's Research",
+      "localId": "189",
+      "category": "Trainer",
+      "set": {
+        "id": "sv01"
+      }
+    },
+    {
+      "id": "sv05-145",
+      "name": "Ciphermaniac's Codebreaking",
+      "localId": "145",
+      "category": "Trainer",
+      "set": {
+        "id": "sv05"
+      }
+    },
+    {
+      "id": "sv05-144",
+      "name": "Buddy-Buddy Poffin",
+      "localId": "144",
+      "category": "Trainer",
+      "set": {
+        "id": "sv05"
+      }
+    },
+    {
+      "id": "sv01-181",
+      "name": "Nest Ball",
+      "localId": "181",
+      "category": "Trainer",
+      "set": {
+        "id": "sv01"
+      }
+    },
+    {
+      "id": "sv01-196",
+      "name": "Ultra Ball",
+      "localId": "196",
+      "category": "Trainer",
+      "set": {
+        "id": "sv01"
+      }
+    },
+    {
+      "id": "swsh10-156",
+      "name": "Trekking Shoes",
+      "localId": "156",
+      "category": "Trainer",
+      "set": {
+        "id": "swsh10"
+      }
+    },
+    {
+      "id": "sv04-160",
+      "name": "Counter Catcher",
+      "localId": "160",
+      "category": "Trainer",
+      "set": {
+        "id": "sv04"
+      }
+    },
+    {
+      "id": "sv05-157",
+      "name": "Prime Catcher",
+      "localId": "157",
+      "category": "Trainer",
+      "set": {
+        "id": "sv05"
+      }
+    },
+    {
+      "id": "sv02-188",
+      "name": "Super Rod",
+      "localId": "188",
+      "category": "Trainer",
+      "set": {
+        "id": "sv02"
+      }
+    },
+    {
+      "id": "sv04-177",
+      "name": "Technical Machine: Devolution",
+      "localId": "177",
+      "category": "Trainer",
+      "set": {
+        "id": "sv04"
+      }
+    },
+    {
+      "id": "sv02-175",
+      "name": "Calamitous Wasteland",
+      "localId": "175",
+      "category": "Trainer",
+      "set": {
+        "id": "sv02"
+      }
+    },
+    {
+      "id": "sve-005",
+      "name": "Psychic Energy",
+      "localId": "005",
+      "category": "Energy",
+      "set": {
+        "id": "sve"
+      },
+      "energyType": "Normal"
+    }
+  ],
+  "sets": [
+    {
+      "id": "sv01",
+      "name": "Scarlet & Violet",
+      "abbreviation": {
+        "official": "SVI"
+      },
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      }
+    },
+    {
+      "id": "swsh11",
+      "name": "Lost Origin",
+      "abbreviation": {
+        "official": "LOR"
+      },
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      }
+    },
+    {
+      "id": "swsh12",
+      "name": "Silver Tempest",
+      "abbreviation": {
+        "official": "SIT"
+      },
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      }
+    },
+    {
+      "id": "sv03.5",
+      "name": "151",
+      "abbreviation": {
+        "official": "MEW"
+      },
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      }
+    },
+    {
+      "id": "sv02",
+      "name": "Paldea Evolved",
+      "abbreviation": {
+        "official": "PAL"
+      },
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      }
+    },
+    {
+      "id": "sv04",
+      "name": "Paradox Rift",
+      "abbreviation": {
+        "official": "PAR"
+      },
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      }
+    },
+    {
+      "id": "sv05",
+      "name": "Temporal Forces",
+      "abbreviation": {
+        "official": "TEF"
+      },
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      }
+    },
+    {
+      "id": "swsh10",
+      "name": "Astral Radiance",
+      "tcgOnline": "ASR",
+      "abbreviation": {
+        "official": "ASR"
+      },
+      "serie": {
+        "id": "swsh",
+        "name": "Sword & Shield"
+      }
+    },
+    {
+      "id": "sve",
+      "name": "Scarlet & Violet Energy",
+      "abbreviation": {
+        "official": "SVE"
+      },
+      "serie": {
+        "id": "sv",
+        "name": "Scarlet & Violet"
+      }
+    }
+  ],
+  "rows": [
+    {
+      "printing_id": "sv01-087",
+      "quantity": 4
+    },
+    {
+      "printing_id": "sv01-088",
+      "quantity": 3
+    },
+    {
+      "printing_id": "swsh11-073",
+      "quantity": 1
+    },
+    {
+      "printing_id": "swsh12-067",
+      "quantity": 3
+    },
+    {
+      "printing_id": "swsh12-068",
+      "quantity": 3
+    },
+    {
+      "printing_id": "sv01-086",
+      "quantity": 2
+    },
+    {
+      "printing_id": "sv03.5-151",
+      "quantity": 2
+    },
+    {
+      "printing_id": "swsh12-059",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv02-089",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv02-185",
+      "quantity": 4
+    },
+    {
+      "printing_id": "sv02-172",
+      "quantity": 2
+    },
+    {
+      "printing_id": "sv04-171",
+      "quantity": 2
+    },
+    {
+      "printing_id": "sv01-189",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv05-145",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv05-144",
+      "quantity": 4
+    },
+    {
+      "printing_id": "sv01-181",
+      "quantity": 4
+    },
+    {
+      "printing_id": "sv01-196",
+      "quantity": 4
+    },
+    {
+      "printing_id": "swsh10-156",
+      "quantity": 3
+    },
+    {
+      "printing_id": "sv04-160",
+      "quantity": 2
+    },
+    {
+      "printing_id": "sv05-157",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv02-188",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv04-177",
+      "quantity": 1
+    },
+    {
+      "printing_id": "sv02-175",
+      "quantity": 2
+    },
+    {
+      "printing_id": "sve-005",
+      "quantity": 8
+    }
+  ],
+  "expected": "Pokémon: 9\n4 Shuppet SVI 87\n3 Banette ex SVI 88\n1 Banette LOR 73\n3 Ralts SIT 67\n3 Kirlia SIT 68\n2 Gardevoir ex SVI 86\n2 Mew ex MEW 151\n1 Radiant Alakazam SIT 59\n1 Spiritomb PAL 89\n\nTrainer: 14\n4 Iono PAL 185\n2 Boss's Orders PAL 172\n2 Professor Turo's Scenario PAR 171\n1 Professor's Research SVI 189\n1 Ciphermaniac's Codebreaking TEF 145\n4 Buddy-Buddy Poffin TEF 144\n4 Nest Ball SVI 181\n4 Ultra Ball SVI 196\n3 Trekking Shoes ASR 156\n2 Counter Catcher PAR 160\n1 Prime Catcher TEF 157\n1 Super Rod PAL 188\n1 Technical Machine: Devolution PAR 177\n2 Calamitous Wasteland PAL 175\n\nEnergy: 1\n8 Basic {P} Energy SVE 5\n\nTotal Cards: 60"
+}

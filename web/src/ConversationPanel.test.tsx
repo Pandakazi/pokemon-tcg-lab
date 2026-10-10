@@ -17,17 +17,19 @@ test('artifact is category-ordered and copies exact resolved list with lightweig
  fireEvent.click(within(region).getByRole('button',{name:'Copy Deck List'}))
  await within(region).findByText('Copied')
  const copied=writeText.mock.calls[0][0]
- expect(copied).toContain('19 Dragapult ex (poke-1)');expect(copied).toContain('32 Ultra Ball (trainer-1)');expect(copied).toContain('9 Fire Energy (energy-1)');expect(copied).toContain('Total Cards: 60')
+ expect(copied).toContain('19 Dragapult ex TWM 130');expect(copied).toContain('32 Ultra Ball SVI 196');expect(copied).toContain('9 Basic {R} Energy SVE 2');expect(copied).toContain('Total Cards: 60')
+ expect(copied).not.toContain('poke-1')
  expect(calls).toHaveLength(1);expect(proposal.cards).toEqual(rows)
 })
 
 const evidence={id:'card-fixture',kind:'fact',title:'Example Card',printing:'test-1',value:{name:'Example Card',abilities:[{name:'Example Ability',effect:'Exact locally supplied text.'}]},source:'TCGdex'}
 const result={status:'answered',conversation_id:'a'.repeat(32),answer:{paragraphs:[{text:'Example Card and Example Ability suggest a flexible concept to test.',evidence:['card-fixture']}],facts:[evidence]},envelope:{content_hash:'fixture',selected:null,revision:null,window:'30',as_of:'2026-10-03',proof_requested:false,evidence:[evidence],omissions:['empirical-tournament-evidence-not-supplied']}}
-function setup(reply:()=>Promise<unknown>=async()=>result){
+function setup(reply:()=>Promise<unknown>=async()=>result,exportReply?:{ok:boolean;status?:number;body:unknown}){
  const calls:Record<string,unknown>[]=[]
  const fetch=vi.fn(async(url:string,options?:RequestInit)=>{
   if(url==='/api/v1/agent/status')return {ok:true,json:async()=>({available:true,provider:'gemini',model:'fake'})}
   if(url==='/api/v1/agent/research'){calls.push(JSON.parse(options!.body as string));return {ok:true,json:reply}}
+  if(url==='/api/v1/decks/export-ptcgl')return {ok:exportReply?.ok??true,status:exportReply?.status,json:async()=>exportReply?.body??({text:'Pokémon: 1\n19 Dragapult ex TWM 130\n\nTrainer: 1\n32 Ultra Ball SVI 196\n\nEnergy: 1\n9 Basic {R} Energy SVE 2\n\nTotal Cards: 60',warnings:[]})}
   if(url.startsWith('/api/v1/cards/test-1'))return {ok:true,json:async()=>({card:{id:'test-1',image_url:'/local-art.webp'}})}
   return {ok:false,status:503,json:async()=>({})}
  })
@@ -40,6 +42,26 @@ async function ask(question='What directions could this take?'){
  await waitFor(()=>expect(screen.getByRole('button',{name:'Ask'})).toBeEnabled())
  fireEvent.click(screen.getByRole('button',{name:'Ask'}))
 }
+
+test('unmapped printing blocks the clipboard without another Agent request',async()=>{
+ const proposal={status:'PROPOSED',lifecycle:'FINALIZE',kind:'list',name:'Fixture',source_revision:null,validation_status:'VALIDATED',legality_status:'LEGAL',total_cards:60,cards:[{printing_id:'unsupported-1',canonical_name:'Unknown printing',quantity:60,category:'Pokemon'}],adds:[],removes:[],unresolved:[],hard_validation:[],strategic_diagnostics:[],repair_notes:[],alternatives:[],premises:[]}
+ const writeText=vi.fn();Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}})
+ const {agent,calls}=setup(async()=>({...result,answer:{...result.answer,proposal}}),{ok:false,status:422,body:{detail:'The exact printing has no supported local PTCGL set-code/collector mapping.'}})
+ await ask();fireEvent.click(await agent.findByRole('button',{name:'Copy Deck List'}))
+ await agent.findByText('The exact printing has no supported local PTCGL set-code/collector mapping.')
+ expect(writeText).not.toHaveBeenCalled();expect(calls).toHaveLength(1)
+})
+
+test('export-only Basic Energy substitution is disclosed beside Copied',async()=>{
+ const proposal={status:'PROPOSED',lifecycle:'FINALIZE',kind:'list',name:'Fixture',source_revision:null,validation_status:'VALIDATED',legality_status:'LEGAL',total_cards:60,cards:[{printing_id:'tk-bw-z-3',canonical_name:'Darkness Energy',quantity:60,category:'Energy'}],adds:[],removes:[],unresolved:[],hard_validation:[],strategic_diagnostics:[],repair_notes:[],alternatives:[],premises:[]}
+ const writeText=vi.fn().mockResolvedValue(undefined);Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}})
+ const warning='Darkness Energy: copied SVE 7 as an equivalent Basic Energy. PokéLab allocations are unchanged.'
+ const {agent,calls}=setup(async()=>({...result,answer:{...result.answer,proposal}}),{ok:true,body:{text:'Pokémon: 0\n\nTrainer: 0\n\nEnergy: 1\n60 Basic {D} Energy SVE 7\n\nTotal Cards: 60',warnings:[warning]}})
+ await ask();fireEvent.click(await agent.findByRole('button',{name:'Copy Deck List'}))
+ await agent.findByText('Copied');expect(agent.getByText(warning)).toBeVisible()
+ expect(writeText.mock.calls[0][0]).not.toContain('tk-bw-z-3');expect(calls).toHaveLength(1)
+ expect(proposal.cards[0].printing_id).toBe('tk-bw-z-3')
+})
 
 test('default conversational UI needs no deck or taxonomy and sends one explicit call',async()=>{
  const {calls,agent}=setup()

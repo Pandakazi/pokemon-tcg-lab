@@ -115,6 +115,16 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
     def competitive_sync_status():
         return app.state.competitive_sync.status()
 
+    from .ptcgl_export import ExportRequest,ExportUnavailable,export_ptcgl
+
+    @app.post('/api/v1/decks/export-ptcgl')
+    def export_deck(request: ExportRequest):
+        try:return export_ptcgl(cards,request)
+        except ExportUnavailable as error:
+            raise HTTPException(422,detail=str(error)) from None
+        except (sqlite3.Error,OSError,ValueError):
+            raise HTTPException(503,detail='Local export metadata is unavailable. Nothing was copied.') from None
+
     @app.post('/api/v1/competitive/sync')
     def competitive_manual_sync():
         from fastapi.responses import JSONResponse

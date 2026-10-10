@@ -47,9 +47,20 @@ function AnswerView({result}:{result:Result}) {
 
 function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:ResearchCard[];inspect:(id:string)=>void}){
  const [showChecks,setShowChecks]=useState(false),[copyStatus,setCopyStatus]=useState('')
+ const [copyPending,setCopyPending]=useState(false),[copyWarning,setCopyWarning]=useState('')
+ const copyFlight=useRef(false)
  const copyTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined)
  useEffect(()=>()=>clearTimeout(copyTimer.current),[])
- const copy=async()=>{try{await navigator.clipboard.writeText(deckListText(p.cards));setCopyStatus('Copied');clearTimeout(copyTimer.current);copyTimer.current=setTimeout(()=>setCopyStatus(''),2000)}catch{setCopyStatus('Couldn’t copy. Clipboard access is unavailable.')}}
+ const copy=async()=>{
+  if(copyFlight.current)return
+  copyFlight.current=true;setCopyPending(true);setCopyWarning('');clearTimeout(copyTimer.current);setCopyStatus('')
+  try{
+   const exported=await deckListText(p.cards)
+   try{await navigator.clipboard.writeText(exported.text)}catch{throw new Error('Couldn’t copy. Clipboard access is unavailable.')}
+   setCopyStatus('Copied');setCopyWarning(exported.warnings.join(' '));copyTimer.current=setTimeout(()=>setCopyStatus(''),2000)
+  }catch(error){setCopyStatus(error instanceof Error?error.message:'PTCGL export is unavailable. Nothing was copied.')}
+  finally{copyFlight.current=false;setCopyPending(false)}
+ }
  const alternatives=p.alternatives.flatMap(group=>{
   if(!group||typeof group!=='object'||!('candidates' in group)||!Array.isArray(group.candidates))return []
   return group.candidates.flatMap(candidate=>candidate&&typeof candidate.canonical_name==='string'&&typeof candidate.printing_id==='string'?[{id:`alternative-${candidate.printing_id}`,name:candidate.canonical_name,printing:candidate.printing_id}]:[])
@@ -67,7 +78,7 @@ function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:Resear
    {p.kind==='diff'&&(['removes','adds'] as const).map(key=><div key={key}><h3>{key==='removes'?'Proposed cuts':'Proposed additions'}</h3><ul>{orderedDeck(p[key]).map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} · currently {c.current_quantity}{c.validated===false?' · cut not valid':''}</li>)}</ul></div>)}
    {p.category_subtotals&&<p aria-label="Calculated category subtotals">{['Pokemon','Trainer','Energy'].filter(category=>category in p.category_subtotals!).map(category=>`${category==='Pokemon'?'Pokémon':category}: ${p.category_subtotals![category]}`).join(' · ')} · Total: {p.total_cards}</p>}
    <details open={p.kind==='list'}><summary>{p.kind==='list'?'Resolved list':'Resulting proposed list'}</summary><ul>{orderedDeck(p.cards).map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} <small>{c.printing_id}</small></li>)}</ul></details>
-   {!!p.cards.length&&<><button onClick={()=>void copy()}>Copy Deck List</button><span role="status">{copyStatus}</span>{!!p.unresolved.length&&<small> Copies resolved cards only; this list is incomplete.</small>}</>}
+   {!!p.cards.length&&<><button disabled={copyPending} onClick={()=>void copy()}>{copyPending?'Preparing copy…':'Copy Deck List'}</button><span role="status">{copyStatus}</span>{copyWarning&&<p className="source-note">{copyWarning}</p>}{!!p.unresolved.length&&<small> Copies resolved cards only; this list is incomplete.</small>}</>}
    {showChecks&&!!p.unresolved.length&&<ul>{p.unresolved.map((c,i)=><li key={i}>{c.quantity} slots — {c.role||c.name} [unresolved]</li>)}</ul>}
   </>}
   {(p.hard_validation.length>0||p.unresolved.length>0||p.strategic_diagnostics.length>0||p.alternatives.length>0||p.premises.length>0||p.repair_notes.length>0)&&<button className="source-note" onClick={()=>setShowChecks(v=>!v)}>{showChecks?'Hide details':'Review deck details'}</button>}

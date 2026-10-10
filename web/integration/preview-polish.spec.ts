@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test'
+import {readFileSync} from 'node:fs'
 
 test.beforeEach(async({page})=>{
  // All browser assets remain local; backend acceptance server independently
@@ -44,6 +45,12 @@ test('illustrator detail opens the full exact-printing catalog and clearing rest
  await expect(artist).toHaveAttribute('href',`/?${query}`)
  await artist.click()
  await expect(page.getByText('TCGdex · local SQLite · Illustrator catalog · all indexed printings')).toBeVisible()
+ const m=page.locator('.filter-panel details').filter({has:page.locator('summary',{hasText:/^M$/})})
+ await expect(m).toHaveAttribute('open','')
+ const before=page.url()
+ await m.locator('summary').click();await expect(m).not.toHaveAttribute('open','')
+ expect(page.url()).toBe(before)
+ await m.locator('summary').click();await expect(m.getByRole('checkbox',{name,exact:true})).toBeChecked()
  await expect(page.locator('article[data-printing-id]')).toHaveCount(source.cards.length)
  expect(await page.locator('article[data-printing-id]').evaluateAll(els=>els.map(e=>e.getAttribute('data-printing-id')))).toEqual(source.cards.map((c:any)=>c.id))
  await page.screenshot({path:'../.cache/preview-illustrator.png',fullPage:true})
@@ -62,4 +69,18 @@ test('Collection artist discovery includes unowned printings and clearing restor
  await page.getByRole('button',{name:'Clear illustrator',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Collection',exact:true})).toBeVisible()
  await expect(page.getByText('No owned variations match. Add cards from the Library or Card Detail.')).toBeVisible()
+})
+
+test('generated deck Copy translates local metadata into the full PTCGL fixture',async({page})=>{
+ const fixture=JSON.parse(readFileSync('../tests/fixtures/ptcgl-export.json','utf8'))
+ const cards=fixture.rows.map((row:any)=>{const card=fixture.cards.find((c:any)=>c.id===row.printing_id);return {...row,canonical_name:card.name,category:card.category}})
+ await page.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async(text:string)=>{(window as any).copiedDeck=text}}}))
+ await page.route('**/api/v1/agent/status',route=>route.fulfill({json:{available:true,provider:'fake',model:'fake'}}))
+ await page.route('**/api/v1/agent/research',route=>route.fulfill({json:{status:'answered',answer:{paragraphs:[],facts:[],proposal:{status:'PROPOSED',lifecycle:'FINALIZE',kind:'list',name:'Fixture',source_revision:null,validation_status:'VALIDATED',legality_status:'LEGAL',total_cards:60,category_subtotals:{Pokemon:20,Trainer:32,Energy:8},cards,adds:[],removes:[],unresolved:[],hard_validation:[],strategic_diagnostics:[],repair_notes:[],alternatives:[],premises:[]}}}}))
+ await page.goto('/')
+ await page.getByRole('textbox',{name:'Ask PokéLab'}).fill('Show the fixture deck.')
+ await page.getByRole('button',{name:'Ask',exact:true}).click()
+ await page.getByRole('button',{name:'Copy Deck List',exact:true}).click()
+ await expect(page.getByText('Copied',{exact:true})).toBeVisible()
+ expect(await page.evaluate(()=>(window as any).copiedDeck)).toBe(fixture.expected)
 })
