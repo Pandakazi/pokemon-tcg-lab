@@ -144,13 +144,16 @@ def context(request, sources, history):
     from .agent_context_sources import Unavailable, stamp
     before = stamp(sources.paths['cards'])
     omissions = []; evidence = []; active = None; selected = None
-    building=bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE'
+    from .agent_generated_changes import intent
+    generated_intent=intent(request.question,history)
+    generated=history.get('artifacts',{}).get('generated_deck') if generated_intent else None
+    building=bool(pending_repair(request.question,history)) or lifecycle(request.question)=='FINALIZE' or generated_intent=='RECOMMEND'
     sandbox=None
     try:
         if building:
             from .agent_deck_sandbox import build
             pending=pending_repair(request.question,history)
-            sandbox=(pending['report'].get('candidate_sandbox') if pending else None) or build(sources.paths['cards'],request.question,history['printings'])
+            sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,history['printings'])
             if not sandbox['candidates']:raise ResearchUnavailable('context_unavailable')
             index=None
         else:index = RetrievalIndex.from_database(sources.paths['cards'])
@@ -159,6 +162,7 @@ def context(request, sources, history):
         index = None
         omissions.append('standard-retrieval-unavailable')
     printings = [request.printing] if request.printing else []
+    if generated:printings += [r['printing_id'] for r in generated['report']['cards']]
     if sandbox:printings += [r['printing_id'] for r in sandbox['candidates'] if r['role']=='requested-core']
     question = request.question.casefold()
     if index:
@@ -232,7 +236,11 @@ def context(request, sources, history):
         selected=selected, revision=request.revision if request.include_deck else None, window=request.window,
         as_of=str(date.today()), history=history['turns'], evidence=evidence, omissions=omissions,
         external_research=False, history_is_not_authority=True,
-        proof_requested=bool(re.search(r'prove|proven|evidence|sources?|tournament data|where.*(?:getting|say|from)|basing.*on|why', question)))
+        proof_requested=bool(re.search(r'prove|proven|evidence|sources?|tournament data|show.*data|where.*(?:getting|say|from)|basing.*on', question) or re.fullmatch(r'why[?!. ]*',question)))
+    if generated:
+        envelope['generated_intent']=generated_intent
+        envelope['current_generated_deck']=dict(id=generated['id'],cards=[{k:r[k] for k in ('candidate_id','canonical_name','printing_id','quantity')} for r in generated['report']['cards']])
+        if generated_intent=='DISCUSS':envelope['lifecycle']='EXPLORE'
     if sandbox:envelope['candidate_sandbox']=sandbox
     # Preserve selected card and complete deck; shed optional cards then older turns.
     while len(canonical(envelope).encode()) > CONTEXT_BYTES:
@@ -304,6 +312,8 @@ def run(service, request, selection, *, _repair=None):
         envelope['lifecycle']='FINALIZE'
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)
+    if envelope.get('generated_intent')=='APPLY' and not requirements:
+        return apply_generated(service,request,selection,history,envelope)
     target=None if requirements else recount_target(request.question)
     if target:
         answer=recount(history,target)
@@ -314,6 +324,9 @@ def run(service, request, selection, *, _repair=None):
             return dict(status='answered',answer=answer,envelope=envelope,conversation_id=key,execution={'mode':'local_artifact','provider_called':False})
     from .agent_qualification_config import INPUT_BYTES
     system, wire_schema = (completion.SYSTEM,None) if additive else provider_contract(envelope['lifecycle'], request.include_deck)
+    if envelope.get('generated_intent') and not additive:
+        from .agent_generated_changes import CONTRACT
+        system+=CONTRACT
     if len((system+canonical(envelope)).encode()) > INPUT_BYTES: return dict(status='budget_exceeded', answer=None)
     result = providers.complete(selection, system, canonical(envelope), transport=service.transport,
         max_output=MAX_OUTPUT, response_schema=wire_schema if selection.provider == 'gemini' else None)
@@ -341,7 +354,7 @@ def run(service, request, selection, *, _repair=None):
             hybrid_issues=[]
             parsed=Answer(version='pokelab-conversation-answer-v1',paragraphs=(Paragraph(text='Addition completion'),),proposal=proposal)
         else:
-            hybrid_prose,proposal,hybrid_issues=parse(result.text,request.include_deck,metadata)
+            hybrid_prose,proposal,hybrid_issues=parse(result.text,request.include_deck or envelope.get('generated_intent')=='RECOMMEND',metadata)
             # Read old structured envelopes for compatibility; never request them.
             if result.text.lstrip().startswith('{'):
                 try:parsed=Answer.model_validate_json(result.text)
@@ -356,7 +369,7 @@ def run(service, request, selection, *, _repair=None):
         if requirements and parsed.proposal and parsed.proposal.kind!='list':
             parsed=parsed.model_copy(update={'proposal':None});hybrid_issues.append('repair_requires_generated_deck')
         if not hybrid_prose and not parsed.proposal:raise ContractError('empty_statement')
-        if request.include_deck:
+        if request.include_deck and not envelope.get('generated_intent'):
             from .agent_hybrid import explicit_cut
             cut=explicit_cut(request.question)
             # A direct user cut owns the removal set, even when the model suggests another.
@@ -366,6 +379,22 @@ def run(service, request, selection, *, _repair=None):
                 parsed=parsed.model_copy(update={'proposal':intent})
         premises=list(parsed.premises)
         report=None;rejected=set()
+        proposed_changes=None
+        if envelope.get('generated_intent') in ('DISCUSS','RECOMMEND') and not requirements:
+            if parsed.proposal and envelope['generated_intent']=='RECOMMEND' and parsed.proposal.kind=='diff' and not hybrid_issues:
+                from .agent_generated_changes import compose,change_set
+                source=history['artifacts']['generated_deck']
+                try:
+                    composed=compose(source,parsed.proposal)
+                    preview,_,_=evaluate(composed,(),Sources(**service.paths,format_start=service.format_start),request.model_copy(update={'include_deck':False}),envelope)
+                    if preview['validation_status']=='VALIDATED' or completion.eligible(preview):proposed_changes=change_set(source,parsed.proposal,preview)
+                    else:hybrid_issues.append('generated_changes_not_validated')
+                except ValueError:hybrid_issues.append('generated_changes_not_validated')
+            elif parsed.proposal:hybrid_issues.append('generated_recommendation_requires_diff')
+            if proposed_changes:
+                if providers.secret_present(canonical(proposed_changes)):raise ContractError('secret_quarantined')
+                if not hybrid_prose:hybrid_prose=parsed.proposal.rationale or 'I have prepared a concrete proposal for this generated deck.'
+            parsed=parsed.model_copy(update={'proposal':None});premises=[]
         if parsed.proposal or premises:
             report,extra,rejected=evaluate(parsed.proposal,premises,Sources(**service.paths,format_start=service.format_start),request,envelope)
             if providers.secret_present(canonical(report)+canonical(extra)):raise ContractError('secret_quarantined')
@@ -379,6 +408,8 @@ def run(service, request, selection, *, _repair=None):
             if failure:return completion_failure(failure)
         answer,qualified=present(hybrid_prose,parsed,report,rejected,hybrid_issues,envelope,
             Sources(**service.paths,format_start=service.format_start),request)
+        if envelope.get('generated_intent')=='RECOMMEND':
+            answer['paragraphs'].append(dict(text='These exact changes are retained for this generated deck; say “Make those changes” to apply them here.' if proposed_changes else 'No validated exact change set was retained. Please specify the cuts and additions you want to test.',evidence=[]))
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except completion.CompletionError as exc:return completion_failure(exc.reason)
     except ContractError as exc:
@@ -419,8 +450,56 @@ def run(service, request, selection, *, _repair=None):
     turns = history['turns'] + [dict(question=request.question, answer=answer, snapshot=envelope['content_hash'])]
     proposal=parsed.proposal.model_dump(mode='json') if parsed.proposal else history.get('proposal')
     artifacts=remember(history,report,envelope)
+    if history.get('artifacts',{}).get('generated_deck') and re.search(r'\b(?:active|saved|deck builder) deck\b',request.question,re.I) and not (report and report['kind']=='list'):
+        artifacts['deck_referent']='active'
+    elif history.get('artifacts',{}).get('generated_deck') and not (report and report['kind']=='list') and re.search(r'change (?:the )?subject|different topic|forget (?:that|this) deck|(?:new|different|another) deck',request.question,re.I):artifacts['deck_referent']='other'
+    elif envelope.get('generated_intent'):artifacts.pop('deck_referent',None)
+    if envelope.get('generated_intent')=='RECOMMEND':
+        artifacts.pop('proposed_change_set',None)
+        if proposed_changes:artifacts['proposed_change_set']=proposed_changes
     if report and report['kind'] in ('list','diff'):
         artifact=artifacts.get('generated_deck' if report['kind']=='list' else 'proposed_deck_changes')
         if artifact:answer.update(artifact_id=artifact['id'],source_turn=artifact['source_turn'])
     key = service.conversations.put(request.conversation_id, turns, [e['printing'] for e in envelope['evidence'] if e.get('printing')],proposal,artifacts)
     return dict(response, status='answered', answer=answer, conversation_id=key, empirical_qualification=qualified)
+
+
+def apply_generated(service,request,selection,history,envelope):
+    """Local apply; only a small pure deficit may use existing bounded completion."""
+    from .agent_generated_changes import select,compose
+    from .agent_deck_proposals import evaluate
+    from .agent_context_sources import Sources
+    pending,clarification=select(history)
+    report=None
+    execution={'mode':'local_artifact','provider_called':False}
+    if pending:
+        try:
+            proposal=compose(history['artifacts']['generated_deck'],Proposal.model_validate(pending['proposal']))
+            envelope['candidate_sandbox']=history['artifacts']['generated_deck']['report']['candidate_sandbox']
+            envelope['lifecycle']='FINALIZE'
+            report,_,_=evaluate(proposal,(),Sources(**service.paths,format_start=service.format_start),request.model_copy(update={'include_deck':False}),envelope)
+            from .agent_deck_completion import eligible
+            if eligible(report):
+                repaired=run(service,request,selection,_repair=repair_requirements(report))
+                execution=dict(repaired.get('execution') or {},mode='bounded_completion',provider_called=True)
+                if (repaired.get('answer') or {}).get('proposal',{}).get('validation_status')=='VALIDATED':
+                    service.conversations.get(repaired['conversation_id'])['artifacts']['proposed_change_set']=dict(pending,status='APPLIED')
+                    return repaired
+                clarification='The bounded completion did not produce a validated deck. The original generated deck is unchanged.'
+            if not clarification and report['validation_status']!='VALIDATED':clarification='These changes no longer pass current construction checks. The generated deck is unchanged; please request a revised proposal.'
+        except (ValueError,KeyError):clarification='These changes cannot be applied to this generated deck. Please request a revised proposal.'
+    artifacts=history.get('artifacts',{}).copy()
+    envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
+    if clarification:
+        answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text=clarification,evidence=[])],facts=[],notices=[])
+    else:
+        artifacts=remember(history,report,envelope)
+        artifacts['proposed_change_set']=dict(pending,status='APPLIED')
+        answer=recount(dict(artifacts=artifacts),'generated_deck')
+        answer['historical_snapshot']=False
+        answer['paragraphs']=[dict(text='Updated the conversational generated deck. Nothing was saved or applied to Deck Builder.',evidence=[])]
+    turns=history['turns']+[dict(question=request.question,answer=answer,snapshot=envelope['content_hash'])]
+    from .agent_research import canonical
+    if providers.secret_present(canonical(answer)+canonical(envelope)):return dict(status='secret_input_rejected',answer=None)
+    key=service.conversations.put(request.conversation_id,turns,history['printings'],history.get('proposal'),artifacts)
+    return dict(status='answered',answer=answer,envelope=envelope,conversation_id=key,execution=execution)

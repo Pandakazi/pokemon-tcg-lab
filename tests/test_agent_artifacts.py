@@ -110,9 +110,9 @@ def test_artifact_survives_prose_compaction_and_later_diff(stores):
     history['turns']=[]  # exact artifact is independent of prose retention
     body={'type':'proposed_deck_changes','changes':[{'action':'remove','card_name':'Lightning Energy','quantity':1},{'action':'add','card_name':'Recovery Tool','quantity':1}]}
     svc.transport=httpx.MockTransport(lambda req:httpx.Response(200,json={'choices':[{'message':{'content':'I would test recovery. <POKELAB_ACTIONS>'+json.dumps(body)+'</POKELAB_ACTIONS>'},'finish_reason':'stop'}]}))
-    changed=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact changes.',conversation_id=session,include_deck=True,revision=7))
+    changed=svc.run(a.ResearchRequest(scope='conversation',question='Give me exact changes to the active deck.',conversation_id=session,include_deck=True,revision=7))
     assert changed['answer']['proposal']['kind']=='diff'
-    assert set(svc.conversations.get(session)['artifacts'])=={'generated_deck','proposed_deck_changes'}
+    assert set(svc.conversations.get(session)['artifacts'])=={'generated_deck','proposed_deck_changes','deck_referent'}
     again=svc.run(a.ResearchRequest(scope='conversation',question='Recount that deck.',conversation_id=session))
     assert again['answer']['artifact_id']==artifact_id and again['answer']['proposal']['total_cards']==60
     assert again['execution']['provider_called'] is False

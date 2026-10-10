@@ -6,7 +6,7 @@ from .rules.models import digest
 
 
 def artifact_context(history):
-    return {kind:dict(id=a['id'],source_turn=a['source_turn'],report={k:a['report'].get(k) for k in ('name','cards','adds','removes','unresolved','category_subtotals','total_cards','validation_status','hard_validation')}) for kind,a in history.get('artifacts',{}).items()}
+    return {kind:dict(id=a['id'],source_turn=a['source_turn'],report={k:a['report'].get(k) for k in ('name','cards','adds','removes','unresolved','category_subtotals','total_cards','validation_status','hard_validation')}) for kind,a in history.get('artifacts',{}).items() if isinstance(a,dict) and 'report' in a}
 
 
 def remember(history, report, envelope):
@@ -21,7 +21,9 @@ def remember(history, report, envelope):
         turn=history.get('turn_number',0)+1
         item=dict(type=kind,pending=report['validation_status']!='VALIDATED',source_turn=turn,source_snapshot=envelope['content_hash'],report=saved)
         item['id']=digest(item)
-        if len(json.dumps(item).encode())<=65536:artifacts[kind]=item
+        if len(json.dumps(item).encode())<=65536:
+            artifacts[kind]=item
+            if kind=='generated_deck':artifacts.pop('deck_referent',None)
         else:
             artifacts.pop(kind,None)
             report['validation_status']='NEEDS_REPAIR'
@@ -67,6 +69,7 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
     texts=[prose]
     if parsed.proposal and parsed.proposal.rationale and parsed.proposal.rationale not in prose:texts.append(parsed.proposal.rationale)
     for text in texts:
+        text=clean_references(text,envelope)
         if not text.strip():continue
         invalid_dependency=False
         for unit in re.split(r'(?<=[.!?])\s+|\n+',text):
@@ -96,15 +99,30 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
         if issues:
             report.update(validation_status='NEEDS_REPAIR',resolution_status='UNRESOLVED',legality_status='UNKNOWN')
             report['hard_validation'].append('The structured artifact is incomplete; review unresolved entries.')
-    elif envelope['lifecycle'] in ('RECOMMEND','FINALIZE'):
+    elif envelope['lifecycle'] in ('RECOMMEND','FINALIZE') and not envelope.get('generated_intent'):
         answer['notices'].append('missing_artifact')
     if issues:answer['action_diagnostics']=issues
     if qualified:answer['notices'].append('empirical_claim_unverified')
-    if answer['fact_reviews']:answer['notices'].append('printed_fact_review')
+    if answer['fact_reviews'] and (not envelope.get('generated_intent') or any(r['status']!='printed_reference' for r in answer['fact_reviews'])):answer['notices'].append('printed_fact_review')
     answer['facts']=[e for e in envelope['evidence'] if e['id'] in fact_ids]
     if not prose.strip() and not report:raise ContractError('empty_statement')
     envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     return answer,qualified
+
+
+def clean_references(text,envelope):
+    """Render identity-bound labels canonically; don't guess unannotated aliases."""
+    names={e['id']:e['title'] for e in envelope['evidence'] if e.get('printing')}
+    for row in envelope.get('current_generated_deck',{}).get('cards',[]):
+        names[row['candidate_id']]=row['canonical_name']
+    def label(match):
+        canonical=names.get(match['id'])
+        if not canonical:return match['label']
+        words=match['label'].split();prefix=words[:-len(canonical.split())]
+        return ' '.join([*prefix,canonical])
+    text=re.sub(r"(?P<label>[A-Z][\w’'-]*(?: (?:[A-Z][\w’'-]*|ex)){0,3})\s*\[(?P<id>card-[^\]\s]+)\]",label,text)
+    text=re.sub(r'\[(?:card-[^\]]*|fact_ids\s*:[^\]]*)\]','',text)
+    return re.sub(r' +([.,;!?])',r'\1',re.sub(r' {2,}',' ',text)).strip()
 
 
 def pending_repair(question, history):
