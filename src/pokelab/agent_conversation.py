@@ -153,7 +153,7 @@ def context(request, sources, history):
         if building:
             from .agent_deck_sandbox import build
             pending=pending_repair(request.question,history)
-            sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,history['printings'])
+            sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,history['printings'],competitive_path=sources.paths['competitive'],format_start=sources.format_start)
             if not sandbox['candidates']:raise ResearchUnavailable('context_unavailable')
             index=None
         else:index = RetrievalIndex.from_database(sources.paths['cards'])
@@ -409,6 +409,11 @@ def run(service, request, selection, *, _repair=None):
         answer,qualified=present(hybrid_prose,parsed,report,rejected,hybrid_issues,envelope,
             Sources(**service.paths,format_start=service.format_start),request)
         if envelope.get('generated_intent')=='RECOMMEND':
+            if proposed_changes:
+                names={r['candidate_id']:r['name'] for r in envelope['candidate_sandbox']['candidates']}
+                for group,label in (('removes','Cut'),('adds','Add')):
+                    for item in proposed_changes['proposal'][group]:
+                        answer['paragraphs'].append(dict(text=f"{label}: {item['quantity']} × {names[item['candidate_id']]}",evidence=[]))
             answer['paragraphs'].append(dict(text='These exact changes are retained for this generated deck; say “Make those changes” to apply them here.' if proposed_changes else 'No validated exact change set was retained. Please specify the cuts and additions you want to test.',evidence=[]))
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except completion.CompletionError as exc:return completion_failure(exc.reason)

@@ -48,12 +48,25 @@ def retrieval(pool):
     return RetrievalIndex(cards,effects,digest(cards))
 
 
-def build(path, question, preferred_printings=()):
+def build(path, question, preferred_printings=(), *, competitive_path=None,format_start=None,today=None):
     pool=legal_pool(path);by_id={r['functional_id']:r for r in pool}
     index=retrieval(pool);selected={};missing=[];budget=[]
     by_name={}
     for row in pool:by_name.setdefault(normalized_name(row['card']['name']),[]).append(row)
     q=normalized_name(question)
+    from .agent_candidate_quality import prior,rank,energy_types,ROLES as QUALITY_ROLES
+    core=[r for r in pool if re.search(r'(?<!\w)'+re.escape(normalized_name(r['card']['name']))+r'(?!\w)',q)]
+    core_ids={r['functional_id'] for r in core}
+    usage,field,provenance=prior(path,competitive_path,pool,core,question,format_start,today)
+    family={r['functional_id']:r for r in core}
+    pending=list(core)
+    while pending:
+        child=pending.pop()
+        for parent in by_name.get(normalized_name(child['card'].get('evolveFrom','')),[]):
+            if parent['functional_id'] not in family:
+                family[parent['functional_id']]=parent;pending.append(parent)
+    quality=rank(pool,index,list(family.values()),usage,field)
+    order=lambda r:(-quality[r['functional_id']]['score'],normalized_name(r['card']['name']),r['functional_id'])
     def add(row, role, seen=None):
         key=row['functional_id']
         if key in selected:return
@@ -64,36 +77,61 @@ def build(path, question, preferred_printings=()):
         if parent:
             parents=by_name.get(normalized_name(parent),[])
             if not parents:missing.append('legal-evolution-predecessor:'+parent)
-            for ancestor in parents[:2]:add(ancestor,'evolution-family',seen)
+            for ancestor in sorted(parents,key=order)[:2]:add(ancestor,'evolution-family',seen)
         value=dict(candidate_id=key,printing_id=row['printing_id'],role=role,
             ace_spec='ACE SPEC' in raw.get('rarity','').upper(),
             basic_energy=key.startswith('deck-basic-energy:'),copy_limit_name=normalized_name(raw['name']),
             requested_core=key in core_ids,
             predecessor_candidate_ids=[r['functional_id'] for r in by_name.get(normalized_name(parent),[]) if r['functional_id'] in selected] if parent else [],
             **{k:raw[k] for k in FIELDS if k in raw})
+        if core:value['ranking']={k:quality[key][k] for k in ('score','recent_prior')}
         if len(selected)>=MAX_CANDIDATES or len(json.dumps([*selected.values(),value],ensure_ascii=False).encode())>MAX_BYTES:
             budget.append(key);return
         selected[key]=value
-    core=[r for r in pool if re.search(r'(?<!\w)'+re.escape(normalized_name(r['card']['name']))+r'(?!\w)',q)]
-    core_ids={r['functional_id'] for r in core}
     for row in sorted(core,key=lambda r:(-len(r['card']['name']),r['functional_id'])):add(row,'requested-core')
     for row in pool:
         if row['printing_id'] in preferred_printings:add(row,'existing-concept')
-    # Basic Energy and ancestors must not lose all slots to ranked support text.
+    # Only plausible Energy: printed core costs, requested types, or recent shell.
+    energy=energy_types(core)
+    energy.update(energy_types([r for r in pool if usage.get(r['functional_id'],0)>=.25]))
     for row in pool:
-        if row['functional_id'].startswith('deck-basic-energy:'):add(row,'basic-energy')
-    groups=[index.search(text[:1000],limit=4)['results'] for text in (question,*ROLES)]
-    for rank in range(4):
-        for role,hits in zip(('requested-mechanics',*ROLES),groups):
-            if rank<len(hits):add(by_id[hits[rank]['functional_identity']],role)
-    # Supplemental attackers/utility/uncategorized text; no strategic ranking claimed.
-    core_types={t for r in core for t in r['card'].get('types',[])}
-    rest=sorted(pool,key=lambda r:(not bool(core_types.intersection(r['card'].get('types',[]))),r['functional_id']))
-    for row in rest:add(row,'additional-legal-option')
+        if row['functional_id'].startswith('deck-basic-energy:') and normalized_name(row['functional_id'].split(':',1)[1]) in q:energy.update(energy_types([row]))
+    if not core:energy.update(energy_types(pool))  # no type constraint was established
+    for row in pool:
+        if row['functional_id'].startswith('deck-basic-energy:') and row['functional_id'].split(':',1)[1] in energy:add(row,'basic-energy')
+    if not core:
+        # Without a named core, preserve the generic discovery fallback instead
+        # of pretending that a specific engine/archetype has been established.
+        hits=[index.search(text[:1000],limit=4)['results'] for text in (question,*ROLES)]
+        for depth in range(4):
+            for role,rows in zip(('requested-mechanics',*ROLES),hits):
+                if depth<len(rows):add(by_id[rows[depth]['functional_identity']],role)
+        for row in pool:add(row,'additional-legal-option')
+    ranked=sorted((r for r in pool if core and not r['functional_id'].startswith('deck-basic-energy:')),key=order)
+    # One slot per available role first, then a second pass. Multi-role cards share space.
+    groups={role:[r for r in ranked if role in quality[r['functional_id']]['roles']] for role in QUALITY_ROLES}
+    for role,rows in groups.items():
+        if any(role in quality[key]['roles'] for key in selected if key not in family):continue
+        choices=[r for r in rows if r['functional_id'] not in selected]
+        if choices:add(choices[0],role)
+    # Bounded creativity cannot displace the first infrastructure pass.
+    creative=[r for r in ranked if r['functional_id'] not in selected and not usage.get(r['functional_id']) and quality[r['functional_id']]['mechanical_synergy']]
+    # One compact wildcard leaves the bulk of remaining bytes for recent staples.
+    for row in creative:
+        if len(json.dumps(row['card'],ensure_ascii=False).encode())<=800:
+            add(row,'creative');break
+    # Fill remaining capacity by the explicit prior; avoid giving weak second role
+    # options precedence over missing staples from other roles.
+    for row in ranked:
+        if usage.get(row['functional_id'],0)>0 or quality[row['functional_id']]['score']>0 or not core:add(row,'recent-archetype' if usage.get(row['functional_id'],0) else 'support-option')
+    # Relevant secondary attackers may require an additional Basic Energy type.
+    extra_energy=energy_types([by_id[key] for key,value in selected.items() if value['role']=='secondary-attacker' and quality[key]['score']>0])
+    for row in pool:
+        if row['functional_id'].startswith('deck-basic-energy:') and row['functional_id'].split(':',1)[1] in extra_energy:add(row,'basic-energy')
     return dict(version='pokelab-standard-sandbox-v2',format=FORMAT_VERSION,
-        legal_universe_count=len(pool),candidates=list(selected.values()),
+        legal_universe_count=len(pool),candidates=list(selected.values()),competitive_prior=provenance,
         limitations=['Local indexed coverage only; legality is not a guarantee of a viable engine.']+sorted(set(missing))+(['bounded-candidate-subset;no-iterative-expansion'] if budget else []),
-        instruction='Choose only supplied candidate_id values for generated_deck entries, with exact positive integer quantities. Do not reselect ambiguous cards by bare name. Names are optional but must match the selected candidate; printing is backend-derived. Total quantity must equal 60. Sum of quantities with ace_spec=true must be <=1. Group by copy_limit_name for the ordinary maximum of 4, except basic_energy=true. Preserve requested_core candidates and consider predecessor_candidate_ids for evolution lines. Printed effects are not tournament evidence. If options are insufficient, explain the local cache/candidate limitation; never invent outside cards.')
+        instruction='Use recent-archetype priors and core support as the default foundation, allowing reasoned deviations. Ranking is a heuristic, not a tournament ranking or recommended copy count; recent_prior is recency-weighted cached inclusion, not population prevalence. Choose only supplied candidate_id values for generated_deck entries, with exact positive integer quantities. Do not reselect ambiguous cards by bare name. Names are optional but must match the selected candidate; printing is backend-derived. Total quantity must equal 60. Sum of quantities with ace_spec=true must be <=1. Group by copy_limit_name for the ordinary maximum of 4, except basic_energy=true. Preserve requested_core candidates and consider predecessor_candidate_ids for evolution lines. Printed effects are not tournament evidence. If options are insufficient, explain the local cache/candidate limitation; never invent outside cards.')
 
 
 def small_repair(report):

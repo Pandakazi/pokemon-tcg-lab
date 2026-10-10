@@ -39,6 +39,8 @@ def test_apply_chain(stores,phrase):
     first=request(svc,None,QUESTION);key=first['conversation_id']
     proposed=request(svc,key,'What exact changes would you make?',include_deck=True,revision=7)
     assert proposed['status']=='answered',proposed
+    visible='\n'.join(p['text'] for p in proposed['answer']['paragraphs'])
+    assert 'Cut: 1 × Lightning Energy' in visible and 'Add: 1 × Recovery Tool' in visible
     history=svc.conversations.get(key);change=history['artifacts']['proposed_change_set']
     assert change['status']=='PROPOSED' and change['source_artifact_id']==first['answer']['artifact_id']
     assert history['artifacts']['generated_deck']['id']==first['answer']['artifact_id']
