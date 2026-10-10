@@ -61,7 +61,7 @@ def present(prose,parsed,report,rejected,issues,envelope,sources,request):
     from .agent_card_facts import review
     from .agent_research import ContractError
     answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[],facts=[],notices=[],fact_reviews=[])
-    resolution=report if report and report['kind']=='list' else envelope.get('artifacts',{}).get('generated_deck',{}).get('report',{})
+    resolution=report if report and report['kind']=='list' else envelope.get('artifacts',{}).get('generated_deck',{}).get('report') or envelope.get('current_generated_deck',{})
     envelope['resolution_artifact']={key:resolution.get(key,[]) for key in ('cards','unresolved')}
     unresolved={r['name'].casefold() for r in resolution.get('unresolved',[]) if r.get('name')}
     envelope['evidence']=[e for e in envelope['evidence'] if not e.get('printing') or e['title'].casefold() not in unresolved]

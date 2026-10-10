@@ -119,7 +119,7 @@ class Conversations:
             while size()>8000 and turns[0]['answer']['paragraphs']:
                 turns[0]['answer']['paragraphs']=turns[0]['answer']['paragraphs'][:-1]
                 turns[0]['history_compacted']=True
-        self.items[key] = dict(at=monotonic(), turn_number=self.items.get(key,{}).get('turn_number',0)+1, turns=turns, printings=printings[:8],proposal=proposal, artifacts=artifacts if artifacts is not None else self.items.get(key,{}).get('artifacts',{}))
+        self.items[key] = dict(at=monotonic(), turn_number=self.items.get(key,{}).get('turn_number',0)+1, turns=turns, printings=printings[:8],proposal=proposal, artifacts=artifacts if artifacts is not None else self.items.get(key,{}).get('artifacts',{}),last_incident=self.items.get(key,{}).get('last_incident'))
         self.items.move_to_end(key)
         while len(self.items) > 32: self.items.popitem(last=False)
         return key
@@ -245,10 +245,11 @@ def context(request, sources, history):
         selected=selected, revision=request.revision if request.include_deck else None, window=request.window,
         as_of=str(date.today()), history=history['turns'], evidence=evidence, omissions=omissions,
         external_research=False, history_is_not_authority=True,
-        proof_requested=bool(re.search(r'prove|proven|evidence|sources?|tournament data|show.*data|where.*(?:getting|say|from)|basing.*on', question) or re.fullmatch(r'why[?!. ]*',question)))
+        proof_requested=bool(re.search(r'\b(?:prove|proven|provenance|evidence|sources?|tournament data)\b|\bshow.*data|\bwhere.*(?:getting|say|from)|\bbasing.*on', question) or re.fullmatch(r'why[?!. ]*',question)))
     if generated:
+        from .agent_generated_changes import source_hash
         envelope['generated_intent']=generated_intent
-        envelope['current_generated_deck']=dict(id=generated['id'],cards=[{k:r[k] for k in ('candidate_id','canonical_name','printing_id','quantity')} for r in generated['report']['cards']])
+        envelope['current_generated_deck']=dict(id=generated['id'],artifact_hash=source_hash(generated),cards=[{k:r[k] for k in ('candidate_id','canonical_name','printing_id','quantity')} for r in generated['report']['cards']])
         if generated_intent=='DISCUSS':envelope['lifecycle']='EXPLORE'
         envelope['current_generated_deck'].update(validation_status=generated['report']['validation_status'],total_cards=generated['report']['total_cards'],category_subtotals=generated['report'].get('category_subtotals',{}),generation_source=generated['report'].get('generation_source'))
     if sandbox:envelope['candidate_sandbox']=sandbox
@@ -258,17 +259,11 @@ def context(request, sources, history):
     if new_build:envelope['lifecycle']='FINALIZE'
     envelope['artifact_mutation_allowed']=not reading
     if reading:envelope['lifecycle']='EXPLORE'
-    # Preserve selected card and complete deck; shed optional cards then older turns.
-    while len(canonical(envelope).encode()) > CONTEXT_BYTES:
-        removable = next((e for e in reversed(evidence) if e.get('printing') and e['printing'] != request.printing), None)
-        if removable:
-            evidence.remove(removable); omissions.append('optional-card:budget')
-        elif envelope['history']: envelope['history'] = envelope['history'][1:]
-        elif envelope['artifacts']:
-            envelope['artifacts']={};omissions.append('artifact-context:budget;ask-for-local-recount')
-        elif envelope['previous_proposal']:
-            envelope['previous_proposal']=None;omissions.append('previous-proposal:budget;do-not-assume-complete-list')
-        else: raise ResearchUnavailable('budget_exceeded')
+    # Pending exact changes are authority, not expendable conversation evidence.
+    pending_changes=history.get('artifacts',{}).get('proposed_change_set')
+    if pending_changes:envelope['pending_changes']=pending_changes
+    from .agent_context_budget import fit
+    envelope=fit(envelope,CONTEXT_BYTES)
     envelope['content_hash'] = digest(envelope)
     return envelope
 
@@ -307,8 +302,13 @@ def run(service, request, selection, *, _repair=None):
     from .agent_research import ResearchUnavailable, ContractError, canonical, MAX_OUTPUT
     history = service.conversations.get(request.conversation_id)
     if history is None: return dict(status='conversation_expired', answer=None)
+    from .agent_system_questions import respond
+    local=respond(service,request,history)
+    if local is not None:return local
     try: envelope = context(request, Sources(**service.paths, format_start=service.format_start), history)
-    except ResearchUnavailable as exc: return dict(status=exc.reason, answer=None)
+    except ResearchUnavailable as exc:
+        if exc.reason=='budget_exceeded':return budget_failure(service,request,history,getattr(exc,'diagnostics',{'condition':'required_context_overflow','provider_called':False}))
+        return dict(status=exc.reason, answer=None)
     pending=pending_repair(request.question,history)
     if pending and pending['report'].get('lifecycle')=='DRAFT':pending=None
     from .agent_deck_sandbox import small_repair
@@ -347,7 +347,11 @@ def run(service, request, selection, *, _repair=None):
     if envelope.get('generated_intent') and not additive:
         from .agent_generated_changes import CONTRACT
         system+=CONTRACT
-    if len((system+canonical(envelope)).encode()) > INPUT_BYTES: return dict(status='budget_exceeded', answer=None)
+    if len((system+canonical(envelope)).encode()) > INPUT_BYTES:
+        from .agent_context_budget import fit,RequiredContextOverflow
+        try:envelope=fit(envelope,min(CONTEXT_BYTES,INPUT_BYTES-len(system.encode())))
+        except RequiredContextOverflow as exc:return budget_failure(service,request,history,exc.diagnostics)
+        envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     result = providers.complete(selection, system, canonical(envelope), transport=service.transport,
         max_output=MAX_OUTPUT, response_schema=wire_schema if selection.provider == 'gemini' else None)
     execution = {k:getattr(result,k) for k in ('latency_ms','input_tokens','output_tokens','reasoning_tokens','estimated_cost_usd','actual_cost_usd')}
@@ -495,6 +499,14 @@ def run(service, request, selection, *, _repair=None):
         artifacts=deepcopy(history.get('artifacts',{}));proposal=history.get('proposal')
     key = service.conversations.put(request.conversation_id, turns, [e['printing'] for e in envelope['evidence'] if e.get('printing')],proposal,artifacts)
     return dict(response, status='answered', answer=answer, conversation_id=key, empirical_qualification=qualified)
+
+
+def budget_failure(service,request,history,diagnostics):
+    """Safe process-local incident, with no provider output or deck mutation."""
+    key=service.conversations.put(request.conversation_id,history['turns'],history['printings'],history.get('proposal'),history.get('artifacts',{}))
+    service.conversations.get(key)['last_incident']=dict(kind='context_budget',**diagnostics)
+    return dict(status='budget_exceeded',answer=None,conversation_id=key,
+        context_diagnostics=diagnostics,execution={'provider_called':False})
 
 
 def apply_generated(service,request,selection,history,envelope):

@@ -497,6 +497,13 @@ class ResearchService:
             FLIGHT.release()
 
     def _run(self, request):
+        if request.scope == 'conversation':
+            # Product explanations need neither credentials nor card retrieval.
+            from .agent_system_questions import respond
+            history=self.conversations.get(request.conversation_id)
+            if history is None:return dict(status='conversation_expired',answer=None)
+            local=respond(self,request,history)
+            if local is not None:return local
         selection, reason = self.configured()
         if reason:
             return dict(status='unavailable', reason=reason, answer=None)
