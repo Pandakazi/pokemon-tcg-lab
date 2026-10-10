@@ -294,10 +294,13 @@ def run(service, request, selection, *, _repair=None):
         retained['notices'].append('This incomplete list needs fresh generation from the legal candidate sandbox, not a small repair.')
         return dict(status='answered',answer=retained,conversation_id=request.conversation_id,execution={'provider_called':False})
     requirements=_repair or (repair_requirements(pending['report']) if pending else None)
+    from . import agent_deck_completion as completion
+    additive=bool(requirements and requirements.get('mode')=='additive_completion')
     if requirements:
         envelope['repair']={k:v for k,v in requirements.items() if k!='candidate_sandbox'}
         if requirements.get('candidate_sandbox'):envelope['candidate_sandbox']=requirements['candidate_sandbox']
         envelope['repair_instruction']='Repair this same generated deck now. Return a complete generated_deck artifact; do not merely explain. Preserve valid engine cards, repair failed roles using Standard-legal candidates. Resolve or replace the unresolved proposed copies, add only accounting.true_missing_count genuinely missing copies, and fix construction_violations. total is resolved copies, not proposed_total; never double-count unresolved slots as missing. Select exact candidate_id values. Change at most 8 card copies; no broader redesign. Choose only candidate_sandbox cards.'
+        if additive:envelope['repair_instruction']='Add exactly repair.required_delta copies using generated_deck_completion. No removals or replacement artifact. The backend retains and applies to the existing deck.'
         envelope['lifecycle']='FINALIZE'
         envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
     if providers.secret_present(canonical(envelope)): return dict(status='secret_input_rejected', answer=None)
@@ -310,7 +313,7 @@ def run(service, request, selection, *, _repair=None):
             key=service.conversations.put(request.conversation_id,turns,history['printings'],history.get('proposal'))
             return dict(status='answered',answer=answer,envelope=envelope,conversation_id=key,execution={'mode':'local_artifact','provider_called':False})
     from .agent_qualification_config import INPUT_BYTES
-    system, wire_schema = provider_contract(envelope['lifecycle'], request.include_deck)
+    system, wire_schema = (completion.SYSTEM,None) if additive else provider_contract(envelope['lifecycle'], request.include_deck)
     if len((system+canonical(envelope)).encode()) > INPUT_BYTES: return dict(status='budget_exceeded', answer=None)
     result = providers.complete(selection, system, canonical(envelope), transport=service.transport,
         max_output=MAX_OUTPUT, response_schema=wire_schema if selection.provider == 'gemini' else None)
@@ -318,6 +321,14 @@ def run(service, request, selection, *, _repair=None):
     execution.update(provider=selection.provider, model=selection.model,
         finish_reason=result.finish_reason if result.finish_reason in ('stop','end_turn','length','max_tokens') else None)
     response = dict(answer=None, envelope=envelope, execution=execution)
+    def completion_failure(reason):
+        if pending and _repair is None:
+            retained=recount(history,'generated_deck')
+            retained['completion']={'status':'incomplete','repair_attempts':1,'reason':reason}
+            return dict(response,status='answered',answer=retained,conversation_id=request.conversation_id)
+        return dict(response,status=reason)
+    if additive and (result.status!='ok' or result.finish_reason not in ('stop','end_turn')):
+        return completion_failure('repair_provider_incomplete' if result.finish_reason in ('length','max_tokens') or result.status in ('empty_output','incomplete_or_blocked_output') else 'repair_provider_failure')
     if result.finish_reason in ('length','max_tokens'): return dict(response,status='output_token_limit_reached')
     if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'): return dict(response,status='provider_failure', provider_status=result.status if re.fullmatch(r'http_[0-9]{3}',result.status) or result.status in ('transport_or_response_error','empty_output','incomplete_or_blocked_output','output_too_large','response_too_large','secret_response_quarantined','tool_output_rejected') else 'other_provider_failure')
     try:
@@ -325,18 +336,23 @@ def run(service, request, selection, *, _repair=None):
         if len(result.text.encode())>16384:raise ContractError('answer_budget_exceeded')
         from .agent_hybrid import parse
         metadata={}
-        hybrid_prose,proposal,hybrid_issues=parse(result.text,request.include_deck,metadata)
-        # Read old structured envelopes for compatibility; never request them.
-        if result.text.lstrip().startswith('{'):
-            try:parsed=Answer.model_validate_json(result.text)
-            except ValidationError as exc:
-                from .agent_research import schema_diagnostics
-                raise ContractError('schema_validation',schema_diagnostics(result.text,exc)) from None
-            if any(not p.text.strip() for p in parsed.paragraphs):raise ContractError('empty_statement')
-            hybrid_prose='\n\n'.join(p.text for p in parsed.paragraphs)
+        if additive:
+            hybrid_prose,proposal=completion.apply(result.text,requirements)
             hybrid_issues=[]
+            parsed=Answer(version='pokelab-conversation-answer-v1',paragraphs=(Paragraph(text='Addition completion'),),proposal=proposal)
         else:
-            parsed=Answer(version='pokelab-conversation-answer-v1',paragraphs=(Paragraph(text='Natural response'),),proposal=proposal,fact_ids=metadata.get('fact_ids',()))
+            hybrid_prose,proposal,hybrid_issues=parse(result.text,request.include_deck,metadata)
+            # Read old structured envelopes for compatibility; never request them.
+            if result.text.lstrip().startswith('{'):
+                try:parsed=Answer.model_validate_json(result.text)
+                except ValidationError as exc:
+                    from .agent_research import schema_diagnostics
+                    raise ContractError('schema_validation',schema_diagnostics(result.text,exc)) from None
+                if any(not p.text.strip() for p in parsed.paragraphs):raise ContractError('empty_statement')
+                hybrid_prose='\n\n'.join(p.text for p in parsed.paragraphs)
+                hybrid_issues=[]
+            else:
+                parsed=Answer(version='pokelab-conversation-answer-v1',paragraphs=(Paragraph(text='Natural response'),),proposal=proposal,fact_ids=metadata.get('fact_ids',()))
         if requirements and parsed.proposal and parsed.proposal.kind!='list':
             parsed=parsed.model_copy(update={'proposal':None});hybrid_issues.append('repair_requires_generated_deck')
         if not hybrid_prose and not parsed.proposal:raise ContractError('empty_statement')
@@ -358,11 +374,19 @@ def run(service, request, selection, *, _repair=None):
             envelope['resolution_input_hash']=envelope['content_hash']
             envelope['content_hash']=digest({k:v for k,v in envelope.items() if k!='content_hash'})
             response['envelope']=envelope
+        if additive:
+            failure=completion.validation_failure(report)
+            if failure:return completion_failure(failure)
         answer,qualified=present(hybrid_prose,parsed,report,rejected,hybrid_issues,envelope,
             Sources(**service.paths,format_start=service.format_start),request)
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
-    except ContractError as exc: return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
-    except Exception: return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})
+    except completion.CompletionError as exc:return completion_failure(exc.reason)
+    except ContractError as exc:
+        if additive:return completion_failure('repair_parse_failed')
+        return dict(response,status='invalid_answer_contract',contract_diagnostics=exc.diagnostics)
+    except Exception:
+        if additive:return completion_failure('repair_internal_assessment_failure')
+        return dict(response,status='internal_assessment_failure',contract_diagnostics={'condition':'internal_assessment_error'})
     from .agent_deck_sandbox import small_repair, repair_distance, MAX_REPAIR_SLOTS
     if requirements and report and report['kind']=='list' and repair_distance(requirements,report)>MAX_REPAIR_SLOTS:
         return dict(response,status='repair_scope_exceeded',answer=None)
