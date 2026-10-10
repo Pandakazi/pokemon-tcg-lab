@@ -3,10 +3,12 @@ import {useDeck} from './DeckBuilder'
 import {useCompetitiveTimeframe} from './Competitive'
 import {EvidenceValue,ValidationDetails,messages,useResearchAgent} from './ResearchAgent'
 import {ResearchCardText,type ResearchCard} from './ResearchCardText'
+import {AgentMarkdown} from './AgentMarkdown'
+import {orderedDeck,deckListText} from './DeckListText'
 
 type Evidence={id:string;kind:'fact'|'evidence';title:string;printing?:string;value:Record<string,unknown>;[key:string]:unknown}
 type Envelope={content_hash:string;selected:{printing:string;variant?:string}|null;revision:number|null;window:string;as_of:string;proof_requested:boolean;evidence:Evidence[];omissions:string[]}
-type ProposedCard={card_id:string;printing_id:string;canonical_name:string;quantity:number;current_quantity?:number;validated?:boolean}
+type ProposedCard={card_id:string;printing_id:string;canonical_name:string;quantity:number;category?:string;current_quantity?:number;validated?:boolean}
 type Proposal={status:string;lifecycle:string;kind:string;name:string;source_revision:number|null;validation_status:string;legality_status:string;total_cards:number;category_subtotals?:Record<string,number>;cards:ProposedCard[];adds:ProposedCard[];removes:ProposedCard[];unresolved:{name:string;quantity:number;role:string}[];hard_validation:string[];strategic_diagnostics:string[];repair_notes:string[];alternatives:unknown[];premises:unknown[];limitations?:string[]}
 type Result={status:string;conversation_id?:string;answer:null|{paragraphs:{text:string;evidence:string[]}[];facts:Evidence[];proposal?:Proposal;notices?:string[];historical_snapshot?:boolean;artifact_id?:string;completion?:{status:string;repair_attempts:number}};envelope?:Envelope;contract_diagnostics?:unknown;execution?:{provider:string;model:string;latency_ms:number}}
 type Turn={question:string;result:Result;contextKey:string}
@@ -30,7 +32,7 @@ function AnswerView({result}:{result:Result}) {
   {result.answer.historical_snapshot&&<p className="source-note">Previously proposed artifact — original validation snapshot, separate from the active deck.</p>}
   {result.answer.notices?.map(code=><p className="source-note" key={code}>{({missing_artifact:'No structured list or changes were supplied. This remains a discussion, not a completed deck.',empirical_claim_unverified:'I do not have tournament evidence establishing that claim.',printed_fact_review:'That card detail needs a closer look; I have kept the relevant card information available below.'} as Record<string,string>)[code]}</p>)}
   {result.answer.proposal&&<ProposalView proposal={result.answer.proposal} cards={aliases} inspect={inspect}/>}
-  {result.answer.paragraphs.map((p,i)=><p key={i}><ResearchCardText text={p.text} cards={aliases} inspect={inspect}/>{p.evidence.length>0&&<button className="source-note" aria-label={`Inspect support for paragraph ${i+1}`} onClick={()=>inspect(p.evidence[0])}> · evidence</button>}</p>)}
+  {result.answer.paragraphs.map((p,i)=><div key={i}><AgentMarkdown text={p.text} cards={aliases} inspect={inspect}/>{p.evidence.length>0&&<button className="source-note" aria-label={`Inspect support for paragraph ${i+1}`} onClick={()=>inspect(p.evidence[0])}> · evidence</button>}</div>)}
   {!showEvidence&&evidence.length>0&&<button className="source-note" onClick={()=>setRequestedEvidence(true)}>Show sources</button>}
  </article>}
  {result.envelope&&showEvidence&&<section className="research-evidence" aria-label="Sources and card facts">
@@ -44,7 +46,10 @@ function AnswerView({result}:{result:Result}) {
 }
 
 function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:ResearchCard[];inspect:(id:string)=>void}){
- const [showChecks,setShowChecks]=useState(false)
+ const [showChecks,setShowChecks]=useState(false),[copyStatus,setCopyStatus]=useState('')
+ const copyTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined)
+ useEffect(()=>()=>clearTimeout(copyTimer.current),[])
+ const copy=async()=>{try{await navigator.clipboard.writeText(deckListText(p.cards));setCopyStatus('Copied');clearTimeout(copyTimer.current);copyTimer.current=setTimeout(()=>setCopyStatus(''),2000)}catch{setCopyStatus('Couldn’t copy. Clipboard access is unavailable.')}}
  const alternatives=p.alternatives.flatMap(group=>{
   if(!group||typeof group!=='object'||!('candidates' in group)||!Array.isArray(group.candidates))return []
   return group.candidates.flatMap(candidate=>candidate&&typeof candidate.canonical_name==='string'&&typeof candidate.printing_id==='string'?[{id:`alternative-${candidate.printing_id}`,name:candidate.canonical_name,printing:candidate.printing_id}]:[])
@@ -59,9 +64,10 @@ function ProposalView({proposal:p,cards,inspect}:{proposal:Proposal;cards:Resear
   <p>Proposal only — nothing has been applied or saved.</p>
   {p.source_revision!==null&&<p>Source revision: {p.source_revision}</p>}
   {p.kind!=='premises'&&<><p>{p.total_cards} resolved cards · {p.validation_status==='VALIDATED'?'Passes supported construction checks':p.validation_status==='STALE'?'Source changed — needs review':p.lifecycle==='DRAFT'?'Partial shell — not a finished list':'Needs repair before use'}</p>
-   {p.kind==='diff'&&(['removes','adds'] as const).map(key=><div key={key}><h3>{key==='removes'?'Proposed cuts':'Proposed additions'}</h3><ul>{p[key].map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} · currently {c.current_quantity}{c.validated===false?' · cut not valid':''}</li>)}</ul></div>)}
-   {p.category_subtotals&&<p aria-label="Calculated category subtotals">{Object.entries(p.category_subtotals).map(([category,count])=>`${category==='Pokemon'?'Pokémon':category}: ${count}`).join(' · ')} · Total: {p.total_cards}</p>}
-   <details open={p.kind==='list'}><summary>{p.kind==='list'?'Resolved list':'Resulting proposed list'}</summary><ul>{p.cards.map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} <small>{c.printing_id}</small></li>)}</ul></details>
+   {p.kind==='diff'&&(['removes','adds'] as const).map(key=><div key={key}><h3>{key==='removes'?'Proposed cuts':'Proposed additions'}</h3><ul>{orderedDeck(p[key]).map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} · currently {c.current_quantity}{c.validated===false?' · cut not valid':''}</li>)}</ul></div>)}
+   {p.category_subtotals&&<p aria-label="Calculated category subtotals">{['Pokemon','Trainer','Energy'].filter(category=>category in p.category_subtotals!).map(category=>`${category==='Pokemon'?'Pokémon':category}: ${p.category_subtotals![category]}`).join(' · ')} · Total: {p.total_cards}</p>}
+   <details open={p.kind==='list'}><summary>{p.kind==='list'?'Resolved list':'Resulting proposed list'}</summary><ul>{orderedDeck(p.cards).map((c,i)=><li key={i}>{c.quantity} × {text(c.canonical_name)} <small>{c.printing_id}</small></li>)}</ul></details>
+   {!!p.cards.length&&<><button onClick={()=>void copy()}>Copy Deck List</button><span role="status">{copyStatus}</span>{!!p.unresolved.length&&<small> Copies resolved cards only; this list is incomplete.</small>}</>}
    {showChecks&&!!p.unresolved.length&&<ul>{p.unresolved.map((c,i)=><li key={i}>{c.quantity} slots — {c.role||c.name} [unresolved]</li>)}</ul>}
   </>}
   {(p.hard_validation.length>0||p.unresolved.length>0||p.strategic_diagnostics.length>0||p.alternatives.length>0||p.premises.length>0||p.repair_notes.length>0)&&<button className="source-note" onClick={()=>setShowChecks(v=>!v)}>{showChecks?'Hide details':'Review deck details'}</button>}

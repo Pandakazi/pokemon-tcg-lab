@@ -4,6 +4,23 @@ import {test,expect,vi} from 'vitest'
 import {Application} from './App'
 import {CompetitiveProvider} from './Competitive'
 
+test('artifact is category-ordered and copies exact resolved list with lightweight confirmation',async()=>{
+ const rows=[{card_id:'e',category:'Energy',printing_id:'energy-1',canonical_name:'Fire Energy',quantity:9},{card_id:'t',category:'Trainer',printing_id:'trainer-1',canonical_name:'Ultra Ball',quantity:32},{card_id:'p',category:'Pokemon',printing_id:'poke-1',canonical_name:'Dragapult ex',quantity:19}]
+ const proposal={status:'PROPOSED',lifecycle:'FINALIZE',kind:'list',name:'Fixture',source_revision:null,validation_status:'VALIDATED',legality_status:'LEGAL',total_cards:60,category_subtotals:{Energy:9,Trainer:32,Pokemon:19},cards:rows,adds:[],removes:[],unresolved:[],hard_validation:[],strategic_diagnostics:[],repair_notes:[],alternatives:[],premises:[]}
+ const writeText=vi.fn().mockResolvedValue(undefined)
+ Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText}})
+ const {agent,calls}=setup(async()=>({...result,answer:{...result.answer,proposal}}))
+ await ask('Show that deck.');const region=await agent.findByRole('region',{name:'Proposed deck review'})
+ const items=within(region).getAllByRole('listitem').map(row=>row.textContent)
+ expect(items[0]).toContain('Dragapult ex');expect(items[1]).toContain('Ultra Ball');expect(items[2]).toContain('Fire Energy')
+ expect(within(region).getByLabelText('Calculated category subtotals')).toHaveTextContent('Pokémon: 19 · Trainer: 32 · Energy: 9 · Total: 60')
+ fireEvent.click(within(region).getByRole('button',{name:'Copy Deck List'}))
+ await within(region).findByText('Copied')
+ const copied=writeText.mock.calls[0][0]
+ expect(copied).toContain('19 Dragapult ex (poke-1)');expect(copied).toContain('32 Ultra Ball (trainer-1)');expect(copied).toContain('9 Fire Energy (energy-1)');expect(copied).toContain('Total Cards: 60')
+ expect(calls).toHaveLength(1);expect(proposal.cards).toEqual(rows)
+})
+
 const evidence={id:'card-fixture',kind:'fact',title:'Example Card',printing:'test-1',value:{name:'Example Card',abilities:[{name:'Example Ability',effect:'Exact locally supplied text.'}]},source:'TCGdex'}
 const result={status:'answered',conversation_id:'a'.repeat(32),answer:{paragraphs:[{text:'Example Card and Example Ability suggest a flexible concept to test.',evidence:['card-fixture']}],facts:[evidence]},envelope:{content_hash:'fixture',selected:null,revision:null,window:'30',as_of:'2026-10-03',proof_requested:false,evidence:[evidence],omissions:['empirical-tournament-evidence-not-supplied']}}
 function setup(reply:()=>Promise<unknown>=async()=>result){

@@ -48,7 +48,7 @@ def public_card(value, include_image=False):
 
 
 def summary(card, include_image=False):
-    keys = ("id", "name", "localId", "category", "hp", "types", "stage", "suffix", "trainerType", "energyType", "rarity", "regulationMark", "legal")
+    keys = ("id", "name", "localId", "category", "hp", "types", "stage", "suffix", "trainerType", "energyType", "rarity", "regulationMark", "legal", "illustrator")
     result = {k: card[k] for k in keys if k in card}
     if isinstance(card.get("set"), dict):
         result["set"] = {k: card["set"][k] for k in ("id", "name") if k in card["set"]}

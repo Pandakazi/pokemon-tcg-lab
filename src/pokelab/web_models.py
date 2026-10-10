@@ -20,8 +20,9 @@ class LibraryQuery(BaseModel):
     trainer_types: list[Literal['Item','Supporter','Stadium','Tool']] = Field(default_factory=list, max_length=4)
     energy_types: list[Literal['Normal','Special']] = Field(default_factory=list, max_length=2)
     regulation_marks: list[str] = Field(default_factory=list, max_length=26)
+    illustrators: list[str] = Field(default_factory=list,max_length=26)
 
-    @field_validator('pokemon_types', 'stages', 'trainer_types', 'energy_types', 'regulation_marks', 'ability', mode='before')
+    @field_validator('pokemon_types', 'stages', 'trainer_types', 'energy_types', 'regulation_marks', 'ability', 'illustrators', mode='before')
     @classmethod
     def empty_selections(cls, values):
         # Empty HTML/query values are an unselected family, not an SQL constraint.
@@ -31,6 +32,7 @@ class LibraryQuery(BaseModel):
 
     @model_validator(mode='after')
     def compatible(self):
+        if any(len(v)>100 for v in self.illustrators):raise ValueError('Illustrator names must be at most 100 characters')
         if self.has_ability and not self.ability:
             self.ability = ['Yes']  # Backward-compatible shared URLs.
         if (self.category != 'Pokemon' and (self.pokemon_types or self.stages or self.ability)
@@ -79,6 +81,7 @@ class CardSummary(BaseModel):
     id: str
     deck_identity: str | None = None
     name: str
+    illustrator: str | None = None
     category: Category
     localId: str | int
     set: SetInfo

@@ -29,11 +29,12 @@ def filter_options(cards, category):
                 'Energy': [('energy_types','Energy classification','energyType')]}
     result = []
     with closing(cards.connect()) as db:
-        for parameter, label, field in [*families[category], ('regulation_marks','Regulation mark','regulationMark')]:
+        for parameter, label, field in [*families[category], ('regulation_marks','Regulation mark','regulationMark'), ('illustrators','Illustrator','illustrator')]:
             # Paths come only from the fixed declarations above.
+            scope = "c.game='tcg'" if parameter == 'illustrators' else "c.standard=1 AND c.game='tcg' AND c.category=?"
             values = [row[0] for row in db.execute(
-                "SELECT DISTINCT j.value FROM cards c,json_each(c.raw,?) j WHERE c.standard=1 AND c.game='tcg' AND c.category=? AND j.type='text' ORDER BY j.value",
-                ('$.' + field, category))]
+                f"SELECT DISTINCT j.value FROM cards c,json_each(c.raw,?) j WHERE {scope} AND j.type='text' ORDER BY j.value",
+                ('$.' + field,) if parameter == 'illustrators' else ('$.' + field, category))]
             if values:
                 result.append({'parameter': parameter, 'label': label, 'values': values})
     return result
@@ -45,6 +46,7 @@ class ReadOnlyCards(SQLiteCards):
         self.path = Path(path).resolve()
         self.collection_snapshot = None
         self.ownership = 'all'
+        self.exact_printings = False
 
     def connect(self):
         db = sqlite3.connect(self.path.as_uri() + '?mode=ro', uri=True, timeout=5)
@@ -62,6 +64,8 @@ class ReadOnlyCards(SQLiteCards):
         exact ID break release-date ties. No identity tables or cache writes needed.
         MCP keeps the base service's exact-printing search contract.
         """
+        if self.exact_printings:
+            return super()._search_page(db, where, params, page, page_size)
         db.create_function('functional_identity', 1,
                            lambda raw: library_signature(json.loads(raw)), deterministic=True)
         db.create_function('basic_image_priority', 1,
@@ -104,6 +108,20 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
     agent = ResearchService(dict(cards=cards.path, collection=collection.path,
         workspace=decks.path, competitive=competitive.path), competitive.format_start.isoformat() if competitive.format_start else None)
     app.state.research_agent = agent
+    from .competitive_sync import ManualCompetitiveSync
+    app.state.competitive_sync=ManualCompetitiveSync(competitive)
+
+    @app.get('/api/v1/competitive/sync')
+    def competitive_sync_status():
+        return app.state.competitive_sync.status()
+
+    @app.post('/api/v1/competitive/sync')
+    def competitive_manual_sync():
+        from fastapi.responses import JSONResponse
+        try:result=app.state.competitive_sync.run()
+        except (OSError,sqlite3.Error,ValueError):
+            return JSONResponse(status_code=503,content={'status':'failed','message':'Competitive data could not be refreshed. Previous data is still available.'})
+        return JSONResponse(status_code=200 if result['status']=='complete' else 409 if result['status'] in ('cooldown','running') else 503,content=result)
 
     @app.get('/api/v1/agent/status')
     def agent_status():
@@ -305,12 +323,14 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
                 'next_page':page+1 if page*page_size<len(pairs) else None}
 
     @app.get('/api/v1/collection', response_model=VariationPage, response_model_exclude_unset=True)
-    def owned_collection(category: Category | None=None, q: str=Query('',max_length=100),
+    def owned_collection(category: Category | None=None, q: str=Query('',max_length=100), illustrators: list[str]=Query(default=[],max_length=26),
                          page: int=Query(1,ge=1,le=10000), page_size: int=Query(24,ge=1,le=50)):
+        if any(len(name)>100 for name in illustrators):raise HTTPException(422,detail='Illustrator names must be at most 100 characters.')
         snapshot = state()
         pairs = [(id,v) for (id,v),n in sorted(snapshot.quantities.items()) if n>0 and id in snapshot.records
                  and (category is None or snapshot.records[id]['card']['category']==category)
-                 and (not q.strip() or q.strip().casefold() in snapshot.records[id]['card']['name'].casefold() or q.strip()==id)]
+                 and (not q.strip() or q.strip().casefold() in snapshot.records[id]['card']['name'].casefold() or q.strip().casefold() in snapshot.records[id]['card'].get('illustrator','').casefold() or q.strip()==id)
+                 and (not illustrators or snapshot.records[id]['card'].get('illustrator') in illustrators)]
         return variation_page(snapshot, pairs, page, page_size)
 
     def unavailable():
@@ -336,9 +356,21 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
             browser = ReadOnlyCards(cards.path)
             browser.collection_snapshot, browser.ownership = snapshot, query.ownership
             filters = query.model_dump(exclude={'q', 'page', 'page_size', 'include_image', 'has_ability', 'ownership'})
+            if query.illustrators:
+                # Artist discovery is an exact-printing catalog, independent of
+                # the competitive Library's default legality/identity filters.
+                browser.exact_printings = True
+                browser.ownership = 'all'
+                filters = {'illustrators': query.illustrators}
+            else:
+                filters.update(format='standard', legality='legal')
             result = browser.search(query.q, page=query.page, page_size=query.page_size, include_image=query.include_image,
-                                  format='standard', legality='legal', game='tcg', **filters)
-            result['cards'] = [owned_summary(snapshot, *snapshot.displayed(card['id']), query.include_image) for card in result['cards']]
+                                  game='tcg', **filters)
+            displayed=[]
+            for card in result['cards']:
+                printing,variant=(card['id'],snapshot.default_variant(card['id'])) if query.illustrators else snapshot.displayed(card['id'])
+                displayed.append(owned_summary(snapshot,printing,variant,query.include_image))
+            result['cards']=displayed
             result['filter_options'] = filter_options(cards, query.category)
             return result
         except (sqlite3.Error, OSError, ValueError):

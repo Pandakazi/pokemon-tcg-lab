@@ -7,6 +7,7 @@ import type { Card } from './api'
 // Library tests own only library requests; Agent status/transactions have their
 // own tests and must not consume ordered library-only fetch fixtures.
 vi.mock('./ConversationPanel',()=>({ConversationPanel:()=>null}))
+vi.mock('./CompetitiveSync',()=>({CompetitiveSync:()=>null})) // Sync has its own isolated fixtures.
 const card: Card = {id:'sv02-097',name:'Test printing',category:'Pokemon',localId:'097',set:{id:'sv02',name:'Paldea Evolved'},legal:{standard:true},image_url:'https://assets.tcgdex.net/en/sv/sv02/097/low.webp',legality_provenance:{source:'TCGdex',checked_at:'2026-09-23'}}
 const result = (page=1) => ({cards:[{...card,id:page===1?card.id:'sv02-098'}],page,page_size:24,total:25,next_page:page===1?2:null,sync:{status:'complete'}})
 test('shows loading until the API returns', async () => {

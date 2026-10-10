@@ -26,11 +26,11 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
       {/* Navigation */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {['Library', 'Collection', 'Analytics', 'Deck Builder'].map(nav => (
-          <button
+          <span key={nav} title={nav==='Analytics'?'Coming soon!':undefined} style={{display:'inline-flex'}}><button
             key={nav}
             disabled={nav === "Analytics"} onClick={() => onNavChange(nav)}
             style={{
-              padding: '5px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
+              padding: '5px 14px', borderRadius: 6, border: 'none', cursor: nav==='Analytics'?'not-allowed':'pointer',
               fontSize: 13, fontWeight: activeNav === nav ? 600 : 400,
               color: activeNav === nav ? '#e2e8f0' : '#6b7280',
               background: activeNav === nav ? 'rgba(255,255,255,0.08)' : 'transparent',
@@ -38,7 +38,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
             }}
           >
             {nav}
-          </button>
+          </button></span>
         ))}
       </div>
 

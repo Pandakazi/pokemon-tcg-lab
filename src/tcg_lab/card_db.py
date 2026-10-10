@@ -145,8 +145,8 @@ class SQLiteCards:
         check_search(query, page, page_size, allow_empty=bool(filters))
         clauses, params = [], []
         if query.strip():
-            clauses.append("(instr(name_fold, ?) > 0 OR id = ?)")
-            params.extend((query.strip().casefold(), query.strip()))
+            clauses.append("(instr(name_fold, ?) > 0 OR id = ? OR instr(lower(COALESCE(json_extract(raw,'$.illustrator'),'')), ?) > 0)")
+            params.extend((query.strip().casefold(), query.strip(),query.strip().lower()))
         columns = {"set_id": "set_id", "collector_number": "number", "category": "category",
                    "trainer_type": "trainer_type", "regulation_mark": "regulation", "game": "game"}
         for key, column in columns.items():
@@ -170,10 +170,11 @@ class SQLiteCards:
                     "stages": "json_extract(raw,'$.stage') IN ({marks})",
                     "trainer_types": "trainer_type IN ({marks})",
                     "energy_types": "json_extract(raw,'$.energyType') IN ({marks})",
-                    "regulation_marks": "regulation IN ({marks})"}
+                    "regulation_marks": "regulation IN ({marks})",
+                    "illustrators": "json_extract(raw,'$.illustrator') IN ({marks})"}
         for key, expression in families.items():
             selected = filters.get(key, ())
-            if not isinstance(selected, (list, tuple)) or len(selected) > 26 or any(not isinstance(v, str) or len(v) > 30 for v in selected):
+            if not isinstance(selected, (list, tuple)) or len(selected) > 26 or any(not isinstance(v, str) or len(v) > (100 if key=='illustrators' else 30) for v in selected):
                 raise ValueError("Invalid multi-select filter")
             if selected:
                 clauses.append(expression.format(marks=",".join("?" for _ in selected)))

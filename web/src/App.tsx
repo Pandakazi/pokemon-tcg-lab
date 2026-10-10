@@ -11,6 +11,7 @@ import { DeckProvider, DeckTray, useBuilder } from './DeckBuilder'
 import { ArchetypeResearch, TournamentDeckResearch } from './ResearchPages'
 import { ResearchAgentProvider, ResearchPanel, useResearchAgent } from './ResearchAgent'
 import { ConversationPanel } from './ConversationPanel'
+import { CompetitiveSync } from './CompetitiveSync'
 
 type CategoryMemory = {current:Record<string,string>;filterOpen?:boolean;scroll?:Record<string,number>}
 function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'gallery'|'list')=>void;memory:CategoryMemory}) {
@@ -73,9 +74,9 @@ function Library({view,setView,memory}:{view:'gallery'|'list';setView:(v:'galler
     scope={(params.get('ownership')||'all') as 'all'|'owned'|'unowned'} onScopeChange={scope=>update(next=>{scope==='all'?next.delete('ownership'):next.set('ownership',scope)})} viewMode={view} onViewModeChange={setView}
     searchQuery={params.get('q') || ''} onSearchChange={q=>update(next=>{q?next.set('q',q):next.delete('q')},true)}
     filterOpen={filterOpen} onFilterToggle={()=>setFilterOpen(v=>{memory.filterOpen=!v;return !v})} totalCards={data?.total??0} filteredCount={data?Math.min((data.page-1)*data.page_size+data.cards.length,data.total):0}/>
-   <div className="source-note">TCGdex · local SQLite · Standard {category==='Pokemon'?'Pokémon':category}
-    {data && <span> · Sync: {data.sync.status}{data.sync.finished_at?` · ${data.sync.finished_at.slice(0,10)}`:''}</span>}
+   <div className="source-note">TCGdex · local SQLite · {params.has('illustrators')?'Illustrator catalog · all indexed printings':`Standard ${category==='Pokemon'?'Pokémon':category}`}
    </div>
+   <CompetitiveSync/>
    <CompetitiveWindows/>
    <section ref={scroll} onScroll={e=>{if(data){memory.scroll??={};memory.scroll[query]=e.currentTarget.scrollTop}}} className="gallery-scroll" aria-label="Card library results" aria-busy={loading}>
     {loading && <p role="status">Loading cards…</p>}

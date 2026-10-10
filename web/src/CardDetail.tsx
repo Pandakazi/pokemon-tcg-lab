@@ -52,7 +52,7 @@ export function CardDetail() {
       {card.regulationMark && <><dt>Regulation mark</dt><dd>{card.regulationMark}</dd></>}
       {card.evolveFrom && <><dt>Evolves from</dt><dd>{card.evolveFrom}</dd></>}
       {card.suffix && <><dt>Rule-box label</dt><dd>{card.suffix}</dd></>}
-      {card.illustrator && <><dt>Illustrator</dt><dd>{card.illustrator}</dd></>}
+      {card.illustrator && <><dt>Illustrator</dt><dd><Link to={`/?${new URLSearchParams({illustrators:card.illustrator})}`}>{card.illustrator}</Link></dd></>}
      </dl>
      <h2>Card text</h2>
      {card.abilities?.map((a,i)=><section className="rule-text" key={`ability-${i}`}><h3>{a.type || 'Ability'}{a.name?` — ${a.name}`:''}</h3><p>{a.effect}</p></section>)}

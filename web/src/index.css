@@ -53,6 +53,7 @@ button {cursor:pointer} button:disabled {opacity:.4;cursor:not-allowed}
 button:focus-visible,input:focus-visible {outline:2px solid #a78bfa;outline-offset:3px}
 .agent-panel button,.pagination button,[role=alert] button {border:1px solid #ffffff20;border-radius:6px;background:#ffffff09;padding:6px 10px;color:#c4b5fd}
 .source-note {padding:10px 20px;color:#8892a4;font-size:11px;border-bottom:1px solid #ffffff0f}
+.competitive-sync button {margin-left:8px;border:1px solid #ffffff25;border-radius:6px;background:#ffffff09;padding:5px 9px;color:#c4b5fd}
 .gallery-scroll {flex:1;overflow:auto;padding:20px}
 .card-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px}
 .card-tile {display:flex;flex-direction:column;gap:4px;min-width:0}
