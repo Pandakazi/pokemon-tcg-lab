@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import time
+from contextvars import ContextVar
 from dataclasses import dataclass
 from urllib.parse import quote
 import httpx
@@ -32,6 +33,10 @@ PROVIDERS = {
     'openrouter': Provider('https://openrouter.ai/api/v1/chat/completions','POKELAB_OPENROUTER_API_KEY'),
     'ollama': Provider('http://127.0.0.1:11434/v1/chat/completions',None),
 }
+
+# Request-local product credentials. Qualification keeps its existing live gate;
+# only an explicit Settings transaction may opt the product into paid traffic.
+PRODUCT_CONNECTION = ContextVar('pokelab_product_connection', default=None)
 
 
 class Selection(Frozen):
@@ -92,6 +97,9 @@ def error_diagnostics(response):
 def secret_forms():
     """Only explicitly named credential variables; never enumerate/dump environment."""
     values=[os.environ.get(p.variable,'') for p in PROVIDERS.values() if p.variable]
+    connection = PRODUCT_CONNECTION.get()
+    if connection:
+        values.append(connection[1])
     forms=set()
     for value in filter(None,values):
         forms.update((value,quote(value,safe=''),json.dumps(value)[1:-1],
@@ -104,6 +112,9 @@ def secret_present(text):
 
 
 def live_gate(selection):
+    connection = PRODUCT_CONNECTION.get()
+    if connection and connection[0] == selection and selection.provider in ('openai', 'gemini'):
+        return None
     if os.environ.get('POKELAB_7B_LIVE_AUTHORIZATION') != 'PM_APPROVED_ZERO_COST':
         return 'live_not_authorized'
     if selection.provider=='gemini':
@@ -133,7 +144,9 @@ def complete(selection, system, user, *, transport=None, max_output=1200, respon
         blocked=live_gate(selection)
         if blocked: return failed(blocked)
     provider=PROVIDERS[selection.provider]
-    credential=os.environ.get(provider.variable,'') if provider.variable and not fake else ''
+    connection = PRODUCT_CONNECTION.get()
+    credential=(connection[1] if connection and connection[0] == selection else
+                os.environ.get(provider.variable,'')) if provider.variable and not fake else ''
     if provider.variable and not credential and not fake: return failed('missing_credential')
     headers={'content-type':'application/json'}
     # Fake requests never carry actual environment credentials.
@@ -237,12 +250,13 @@ def complete(selection, system, user, *, transport=None, max_output=1200, respon
         cost=cost if type(cost) in (int,float) and 0<=cost<1000000 else None
         reported=data.get('model')
         reported=reported if isinstance(reported,str) and len(reported)<=160 else None
-        return Response(status='nonzero_cost_reported_stop' if not fake and cost and cost>0 else 'ok',text=text,latency_ms=round((time.monotonic()-started)*1000),
+        product_request = connection is not None and connection[0] == selection
+        return Response(status='nonzero_cost_reported_stop' if not fake and not product_request and cost and cost>0 else 'ok',text=text,latency_ms=round((time.monotonic()-started)*1000),
             reported_model=reported,finish_reason=finish if isinstance(finish,str) else None,
             input_tokens=count('input_tokens' if provider.anthropic else 'prompt_tokens'),
             output_tokens=count('output_tokens' if provider.anthropic else 'completion_tokens'),reasoning_tokens=reasoning,
-            estimated_cost_usd=0 if not fake else None,actual_cost_usd=cost,
-            cost_basis='mock-no-charge' if fake else 'provider-reported' if cost is not None else 'zero-cost-policy; actual billing unreported')
+            estimated_cost_usd=0 if not fake and not product_request else None,actual_cost_usd=cost,
+            cost_basis='mock-no-charge' if fake else 'provider-reported' if cost is not None else 'user-configured; actual billing unreported' if product_request else 'zero-cost-policy; actual billing unreported')
     except Exception as exc:
         # Never propagate provider bodies, request/header objects or exception text.
         kind = 'internal_error'

@@ -1,4 +1,5 @@
 // Retained from approved Figma source e3d410e; unsupported controls are disabled.
+import {SettingsControl} from './Settings'
 type ViewMode = 'gallery' | 'list'
 type Category = 'pokemon' | 'trainers' | 'energy'
 type Scope = 'all' | 'owned' | 'unowned'
@@ -6,8 +7,8 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
   return (
     <div style={{
       height: 48, display: 'flex', alignItems: 'center', padding: '0 16px',
-      borderBottom: '1px solid rgba(255,255,255,0.07)',
-      background: 'rgba(11,13,19,0.95)', flexShrink: 0, gap: 0, zIndex: 100,
+      borderBottom: '1px solid var(--overlay-07)',
+      background: 'var(--topbar)', flexShrink: 0, gap: 0, zIndex: 100,
     }}>
       {/* Logo */}
       <button aria-label="PokéLab Home" onClick={()=>onNavChange('Home')} style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 32 }}>
@@ -18,7 +19,7 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
         }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: 'Outfit' }}>PL</span>
         </div>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', fontFamily: 'Outfit', letterSpacing: '-0.01em' }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--heading)', fontFamily: 'Outfit', letterSpacing: '-0.01em' }}>
           Poké<span style={{ color: '#8b5cf6' }}>Lab</span>
         </span>
       </button>
@@ -32,8 +33,8 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
             style={{
               padding: '5px 14px', borderRadius: 6, border: 'none', cursor: nav==='Analytics'?'not-allowed':'pointer',
               fontSize: 13, fontWeight: activeNav === nav ? 600 : 400,
-              color: activeNav === nav ? '#e2e8f0' : '#6b7280',
-              background: activeNav === nav ? 'rgba(255,255,255,0.08)' : 'transparent',
+              color: activeNav === nav ? 'var(--heading)' : 'var(--nav-muted)',
+              background: activeNav === nav ? 'var(--overlay-08)' : 'transparent',
               transition: 'all 0.12s', fontFamily: 'Inter',
             }}
           >
@@ -47,7 +48,8 @@ export function TopBar({ activeNav, onNavChange }: { activeNav: string; onNavCha
 
       {/* Right controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{color:'#8892a4',fontSize:11}}>Local collection</span>
+        <span style={{color:'var(--muted)',fontSize:11}}>Local collection</span>
+        <SettingsControl/>
       </div>
     </div>
   )
@@ -68,16 +70,16 @@ export function LibraryControls({
   return (
     <div className="library-controls" style={{
       height: 52, display: 'flex', alignItems: 'center', padding: '0 16px',
-      borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, gap: 12,
-      background: 'rgba(11,13,19,0.6)',
+      borderBottom: '1px solid var(--overlay-06)', flexShrink: 0, gap: 12,
+      background: 'var(--toolbar)',
     }}>
       {/* Filter toggle */}
       <button
         onClick={onFilterToggle}
         style={{
-          width: 30, height: 30, borderRadius: 6, border: `1px solid ${filterOpen ? 'rgba(124,58,237,0.4)' : 'rgba(255,255,255,0.08)'}`,
-          background: filterOpen ? 'rgba(124,58,237,0.14)' : 'rgba(255,255,255,0.04)',
-          color: filterOpen ? '#a78bfa' : '#6b7280', cursor: 'pointer',
+          width: 30, height: 30, borderRadius: 6, border: `1px solid ${filterOpen ? 'rgba(124,58,237,0.4)' : 'var(--overlay-08)'}`,
+          background: filterOpen ? 'rgba(124,58,237,0.14)' : 'var(--overlay-04)',
+          color: filterOpen ? 'var(--focus)' : 'var(--nav-muted)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13,
         }}
         aria-label="Toggle filters" aria-expanded={filterOpen} title="Toggle filters"
@@ -86,7 +88,7 @@ export function LibraryControls({
       </button>
 
       {/* Category tabs */}
-      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 7, padding: 2, border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display: 'flex', background: 'var(--overlay-04)', borderRadius: 7, padding: 2, border: '1px solid var(--overlay-07)' }}>
         {(['pokemon', 'trainers', 'energy'] as Category[]).map(cat => (
           <button
             key={cat}
@@ -94,8 +96,8 @@ export function LibraryControls({
             style={{
               padding: '4px 14px', borderRadius: 5, border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: category === cat ? 600 : 400,
-              color: category === cat ? '#dde1ed' : '#6b7280',
-              background: category === cat ? 'rgba(255,255,255,0.09)' : 'transparent',
+              color: category === cat ? 'var(--text)' : 'var(--nav-muted)',
+              background: category === cat ? 'var(--overlay-09)' : 'transparent',
               transition: 'all 0.12s', textTransform: 'capitalize', fontFamily: 'Inter',
             }}
           >
@@ -105,7 +107,7 @@ export function LibraryControls({
       </div>
 
       {/* Scope */}
-      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 7, padding: 2, border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display: 'flex', background: 'var(--overlay-04)', borderRadius: 7, padding: 2, border: '1px solid var(--overlay-07)' }}>
         {(['all', 'owned', 'unowned'] as Scope[]).map(s => (
           <button
             key={s}
@@ -113,8 +115,8 @@ export function LibraryControls({
             style={{
               padding: '4px 10px', borderRadius: 5, border: 'none', cursor: 'pointer',
               fontSize: 12, fontWeight: scope === s ? 600 : 400,
-              color: scope === s ? '#dde1ed' : '#6b7280',
-              background: scope === s ? 'rgba(255,255,255,0.09)' : 'transparent',
+              color: scope === s ? 'var(--text)' : 'var(--nav-muted)',
+              background: scope === s ? 'var(--overlay-09)' : 'transparent',
               transition: 'all 0.12s', textTransform: 'capitalize', fontFamily: 'Inter',
             }}
           >
@@ -124,35 +126,35 @@ export function LibraryControls({
       </div>
 
       {/* Card count */}
-      <span data-testid="result-progress" style={{ fontSize: 11, color: '#505c70', fontFamily: 'JetBrains Mono', flexShrink: 0 }}>
+      <span data-testid="result-progress" style={{ fontSize: 11, color: 'var(--quiet)', fontFamily: 'JetBrains Mono', flexShrink: 0 }}>
         {filteredCount}/{totalCards}
       </span>
 
       {/* Search */}
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', gap: 8, maxWidth: 320,
-        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
+        background: 'var(--overlay-05)', border: '1px solid var(--overlay-09)',
         borderRadius: 7, padding: '0 10px', height: 30,
       }}>
-        <span style={{ color: '#505c70', fontSize: 12, flexShrink: 0 }}>⌕</span>
+        <span style={{ color: 'var(--quiet)', fontSize: 12, flexShrink: 0 }}>⌕</span>
         <input
           aria-label="Search cards" maxLength={100} value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Search cards…"
           style={{
             flex: 1, background: 'none', border: 'none', outline: 'none',
-            fontSize: 12, color: '#dde1ed', fontFamily: 'Inter',
+            fontSize: 12, color: 'var(--text)', fontFamily: 'Inter',
           }}
         />
         {searchQuery && (
-          <button aria-label="Clear search" onClick={() => onSearchChange('')} style={{ background: 'none', border: 'none', color: '#505c70', cursor: 'pointer', fontSize: 13, padding: 0 }}>×</button>
+          <button aria-label="Clear search" onClick={() => onSearchChange('')} style={{ background: 'none', border: 'none', color: 'var(--quiet)', cursor: 'pointer', fontSize: 13, padding: 0 }}>×</button>
         )}
       </div>
 
       <div style={{ flex: 1 }}/>
 
       {/* View mode */}
-      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: 7, padding: 2, border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display: 'flex', background: 'var(--overlay-04)', borderRadius: 7, padding: 2, border: '1px solid var(--overlay-07)' }}>
         {[
           { mode: 'gallery' as ViewMode, icon: '⊞', label: 'Gallery' },
           { mode: 'list' as ViewMode, icon: '≡', label: 'List' },
@@ -163,8 +165,8 @@ export function LibraryControls({
             title={label}
             style={{
               padding: '4px 10px', borderRadius: 5, border: 'none', cursor: 'pointer',
-              fontSize: 14, color: viewMode === mode ? '#dde1ed' : '#6b7280',
-              background: viewMode === mode ? 'rgba(255,255,255,0.09)' : 'transparent',
+              fontSize: 14, color: viewMode === mode ? 'var(--text)' : 'var(--nav-muted)',
+              background: viewMode === mode ? 'var(--overlay-09)' : 'transparent',
               transition: 'all 0.12s',
             }}
           >

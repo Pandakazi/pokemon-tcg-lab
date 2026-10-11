@@ -445,10 +445,13 @@ class ResearchService:
     def __init__(self, paths, format_start=None, *, transport=None, selection=None):
         self.paths, self.format_start = paths, format_start
         self.transport, self.selection = transport, selection
+        self.settings = None
         from .agent_conversation import Conversations
         self.conversations = Conversations()
 
     def configured(self):
+        if self.settings is not None and self.settings.managed:
+            return self.settings.configured()
         try:
             selection = self.selection or providers.Selection(provider=os.getenv('POKELAB_RESEARCH_PROVIDER', ''),
                 model=os.getenv('POKELAB_RESEARCH_MODEL', ''))
@@ -490,6 +493,9 @@ class ResearchService:
         if not FLIGHT.acquire(blocking=False):
             return dict(status='busy', answer=None)
         try:
+            if self.settings is not None:
+                with self.settings.activate():
+                    return self._run(request)
             return self._run(request)
         except Exception:
             return dict(status='internal_processing_failure', answer=None)

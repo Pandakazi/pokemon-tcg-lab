@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
+import {publishAgentStatus,useAgentSettingsRevision} from './AgentStatus'
 import {useDeck} from './DeckBuilder'
 import {useCompetitiveTimeframe} from './Competitive'
 import {EvidenceValue,ValidationDetails,messages,useResearchAgent} from './ResearchAgent'
@@ -102,10 +103,11 @@ export function ConversationPanel({open,toggle}:{open:boolean;toggle:()=>void}) 
  const session=useRef<string|undefined>(undefined),flight=useRef(false),alive=useRef(true)
  const usesDeck=includeDeck&&!!deck?.data
  const contextKey=JSON.stringify([selected?.printing,selected?.variant,usesDeck?deck?.data?.revision:null,window])
+ const settingsRevision=useAgentSettingsRevision()
  useEffect(()=>{alive.current=true;const controller=new AbortController()
-  fetch('/api/v1/agent/status',{signal:controller.signal}).then(async r=>{if(!r.ok)throw new Error();return r.json()}).then(s=>{if(alive.current&&!controller.signal.aborted){setStatus(s);setStatusError(false)}}).catch(()=>{if(alive.current&&!controller.signal.aborted)setStatusError(true)})
+  fetch('/api/v1/agent/status',{signal:controller.signal}).then(async r=>{if(!r.ok)throw new Error();return r.json()}).then(s=>{if(alive.current&&!controller.signal.aborted){setStatus(s);setStatusError(false);publishAgentStatus(s)}}).catch(()=>{if(alive.current&&!controller.signal.aborted)setStatusError(true)})
   return()=>{alive.current=false;controller.abort()}
- },[])
+ },[settingsRevision])
  const ready=status?.available&&!pending&&(!usesDeck||!deck?.pending&&!deck?.error)
  const ask=async()=>{
   if(flight.current||!ready||!question.trim())return

@@ -108,6 +108,9 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
     agent = ResearchService(dict(cards=cards.path, collection=collection.path,
         workspace=decks.path, competitive=competitive.path), competitive.format_start.isoformat() if competitive.format_start else None)
     app.state.research_agent = agent
+    from .agent_settings import AgentSettings, ApplySettings
+    app.state.agent_settings = AgentSettings()
+    agent.settings = app.state.agent_settings
     from .competitive_sync import ManualCompetitiveSync
     app.state.competitive_sync=ManualCompetitiveSync(competitive)
 
@@ -138,6 +141,78 @@ def create_app(database=None, state_database=None, competitive_database=None, fo
         return app.state.research_agent.status()
 
     from starlette.requests import Request as HttpRequest
+
+    async def settings_body(request):
+        from urllib.parse import urlsplit
+        # Guard Host as well as Origin (including DNS rebinding). No CORS.
+        local = ('localhost', '127.0.0.1', '::1')
+        origin = request.headers.get('origin')
+        host = request.url.hostname
+        if host not in local or request.headers.get('sec-fetch-site') == 'cross-site':
+            raise HTTPException(403, detail='Settings require a local origin.')
+        if origin:
+            parsed = urlsplit(origin)
+            if parsed.scheme not in ('http', 'https') or parsed.hostname != host or parsed.hostname not in local:
+                raise HTTPException(403, detail='Settings require a same-host local origin.')
+        if request.headers.get('content-type', '').split(';')[0] != 'application/json':
+            raise HTTPException(415, detail='JSON required.')
+        raw = b''
+        async for chunk in request.stream():
+            raw += chunk
+            if len(raw) > 8192:
+                raise HTTPException(413, detail='Settings request too large.')
+        return raw
+
+    @app.get('/api/v1/settings/agent')
+    def settings_status():
+        from fastapi.responses import JSONResponse
+        return JSONResponse(app.state.agent_settings.status(app.state.research_agent), headers={'Cache-Control': 'no-store'})
+
+    @app.post('/api/v1/settings/agent/test-apply')
+    async def settings_apply(request: HttpRequest):
+        import asyncio
+        from pydantic import ValidationError
+        from fastapi.responses import StreamingResponse
+        raw = await settings_body(request)
+        try:
+            query = ApplySettings.model_validate_json(raw)
+        except (ValidationError, ValueError):
+            # Never echo a pasted secret through FastAPI validation diagnostics.
+            raise HTTPException(422, detail='Choose one provider and enter a valid API key.') from None
+
+        async def progress():
+            loop = asyncio.get_running_loop()
+            queue = asyncio.Queue()
+            def worker():
+                try:
+                    for event in app.state.agent_settings.test_apply(query, transport=app.state.research_agent.transport):
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
+                finally:
+                    loop.call_soon_threadsafe(queue.put_nowait, None)
+            # Keep the entire transaction in one worker/context. It retains the
+            # shared flight lock even if the browser disconnects while waiting.
+            task = asyncio.create_task(asyncio.to_thread(worker))
+            try:
+                while True:
+                    event = await queue.get()
+                    if event is None:
+                        break
+                    yield json.dumps(event) + '\n'
+                await task
+            finally:
+                # Do not cancel a provider call or release its lock prematurely.
+                task.add_done_callback(lambda finished: finished.exception() if not finished.cancelled() else None)
+        return StreamingResponse(progress(), media_type='application/x-ndjson',
+            headers={'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no'})
+
+    @app.post('/api/v1/settings/agent/disconnect')
+    async def settings_disconnect(request: HttpRequest):
+        from fastapi.responses import JSONResponse
+        raw = await settings_body(request)
+        if raw.strip() != b'{}':
+            raise HTTPException(422, detail='Invalid disconnect request.')
+        result = app.state.agent_settings.disconnect()
+        return JSONResponse(result, status_code=200 if result['ok'] else 409, headers={'Cache-Control': 'no-store'})
 
     @app.post('/api/v1/agent/research')
     async def agent_research(request: HttpRequest):

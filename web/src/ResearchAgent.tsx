@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import {publishAgentStatus,useAgentSettingsRevision} from './AgentStatus'
 import { Link } from 'react-router'
 import { useDeck } from './DeckBuilder'
 import { useCompetitiveTimeframe } from './Competitive'
@@ -109,12 +110,13 @@ export function ResearchPanel({open,toggle}:{open:boolean;toggle:()=>void}) {
  const [submitted,setSubmitted]=useState<{name:string;printing?:string;variant?:string;question:string;revision:number|null;window:string;archetype:string;deckId:string;pool:boolean;includeDeck:boolean}|null>(null)
  const flight=useRef(false),alive=useRef(true)
  useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[])
+ const settingsRevision=useAgentSettingsRevision()
  useEffect(()=>{
   const controller=new AbortController();setStatus(null);setStatusError(false)
   fetch('/api/v1/agent/status',{signal:controller.signal}).then(async r=>{if(!r.ok)throw new Error();const s=await r.json();if(s.version!=='pokelab-research-v1')throw new Error();return s})
-   .then(s=>{if(!controller.signal.aborted)setStatus(s)}).catch(()=>{if(!controller.signal.aborted)setStatusError(true)})
+   .then(s=>{if(!controller.signal.aborted){setStatus(s);publishAgentStatus(s)}}).catch(()=>{if(!controller.signal.aborted)setStatusError(true)})
   return()=>controller.abort()
- },[deck?.data?.deck.id])
+ },[deck?.data?.deck.id,settingsRevision])
  useEffect(()=>{setArchetype('')},[deck?.data?.deck.id])
  useEffect(()=>{setQuestion('')},[selected?.printing,selected?.variant,deck?.data?.deck.id,deck?.data?.revision,period,archetype,pool,includeDeck])
  const entry=deck?.data?.deck.entries.find(e=>e.identity===selected?.identity)
