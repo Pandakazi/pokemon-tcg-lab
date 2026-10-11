@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from './fixtures'
 
 test('tray presentation shares quantities, preserves navigation and uses image-only hover',async({page,request},info)=>{
  const read=async()=> (await request.get('/api/v1/deck-workspace')).json()

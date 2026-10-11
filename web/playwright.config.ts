@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test'
 import path from 'node:path'
 const root = path.resolve('..')
+// SQL/fixture helpers spawned by browser tests must use this checkout too.
+process.env.PYTHONPATH=[path.join(root,'src'),process.env.PYTHONPATH].filter(Boolean).join(path.delimiter)
 const python = process.env.POKELAB_TEST_PYTHON || path.join(root,'.venv',process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
 export default defineConfig({
  testDir:'./integration',timeout:60000,workers:1,

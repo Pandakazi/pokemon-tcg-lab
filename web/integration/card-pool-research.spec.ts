@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from './fixtures'
 
 // The card-pool resource now appears underneath the default conversation panel.
 // Strict research contracts remain covered by backend and ResearchPanel unit tests.
@@ -43,7 +43,9 @@ for(const width of [1440,900])test(`conversation, evidence and hover at ${width}
  await agent.getByRole('textbox').fill('Prove it. Which parts are facts and which are your reasoning?')
  await agent.getByRole('button',{name:'Ask',exact:true}).click()
  await expect(agent.getByRole('article')).toHaveCount(2)
- await expect(agent.getByText(/Inference: the Agent/).last()).toBeVisible()
+ const sources=agent.getByRole('region',{name:'Sources and card facts'})
+ await expect(sources).toContainText('Recommendations are judgment')
+ await expect(sources).toContainText('Cragalanche')
  const panel=await agent.boundingBox();expect(panel!.x+panel!.width).toBeLessThanOrEqual(width)
  await agent.screenshot({path:info.outputPath(`conversation-proof-${width}.png`)})
  expect(calls).toBe(2)

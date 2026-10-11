@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext } from '@playwright/test'
+import { test, expect, type APIRequestContext } from './fixtures'
 
 async function command(request:APIRequestContext,body:object){
  const current=await (await request.get('/api/v1/deck-workspace')).json()
@@ -105,6 +105,11 @@ test('real variation allocations, defaults, aggregate tooltip and reload persist
  await page.goto(detail);await page.getByRole('button',{name:'Variations',exact:true}).click()
  await checkSettled()
  await expect(first.getByRole('status')).toHaveText('1');await expect(second.getByRole('status')).toHaveText('3')
+ // At 1100px the established Agent drawer overlays the tray. Dismiss it
+ // through the visible control before interacting with the underlying tray.
+ const toggle=page.getByRole('button',{name:'Toggle Agent panel'})
+ if(await toggle.getAttribute('aria-expanded')==='true')await toggle.click()
+ await expect(toggle).toHaveAttribute('aria-expanded','false')
  await page.getByRole('button',{name:'Refresh active deck'}).click()
  await expect(tray.locator('footer')).not.toContainText('Storing changes')
  await checkSettled()

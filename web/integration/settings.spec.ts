@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from './fixtures'
 
 const disconnected={provider:null,connected:false,has_key:false,managed:false,storage:'external'}
 const connected={provider:'gemini',connected:true,has_key:true,managed:true,storage:'encrypted'}

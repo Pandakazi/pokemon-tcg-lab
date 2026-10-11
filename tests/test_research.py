@@ -24,7 +24,10 @@ KEY=archetype_key('/decks/284?variant=3')
 def research(tmp_path):
     cards=SQLiteCards(tmp_path/'cards.sqlite3');cards.put_set(set_record())
     for n in (1,2):
-        raw=card(f'sm2-{n}',f'Basic {n}');raw['legal']['standard']=True;cards.put(raw)
+        raw=card(f'sm2-{n}',f'Basic {n}')
+        # Synthetic current-Standard cards, not the rotated Dhelmise template.
+        # A source flag cannot override an explicit historical regulation mark.
+        raw['legal']['standard']=True;raw['regulationMark']='H';cards.put(raw)
     energy=dict(id='sm2-3',localId='3',name='Water Energy',category='Energy',energyType='Normal',set={'id':'sm2'},rarity='Common',legal={'standard':True},variants={'normal':True})
     cards.put(energy)
     collection=Collection(ReadOnlyCards(cards.path),tmp_path/'user-state.sqlite3')
@@ -149,6 +152,24 @@ def test_composite_unavailable_instead_of_inventing_valid_deck(research,quantity
 def test_invalid_candidate_does_not_hide_valid_candidate(research):
     seed(research,[5,5,1])
     assert research.composite(KEY,today=TODAY)['status']=='available'
+
+
+@pytest.mark.parametrize('mark',['A','G'])
+def test_rotated_source_flag_cannot_make_composite_or_copy_legal(research,mark):
+    from copy import deepcopy
+    from pokelab.decks import Decks,ResearchCopy
+    raw=deepcopy(research.collection.catalog()[0]['sm2-1']['card'])
+    raw['regulationMark']=mark
+    assert raw['legal']['standard'] is True  # Deliberately conflicting source flag.
+    SQLiteCards(research.collection.cards.path).put(raw)
+    seed(research,[4],day=date.today())
+    result=research.composite(KEY)
+    assert result['status']=='unavailable' and result['cards']==[]
+    assert any('not legal' in reason for reason in result['reasons'])
+    decks=Decks(research.collection,research.collection.path.with_name('rotated-decks.sqlite3'))
+    copied=decks.copy_research(ResearchCopy(schema_version=2,revision=decks.read()['revision'],
+        source='tournament',key=evidence_key('1',1)),research)
+    assert copied['validation']['state']=='INVALID' and copied['validation']['total']==60
 
 
 def test_unknown_archetype_does_not_claim_prevalence(research):

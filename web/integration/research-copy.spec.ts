@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext } from '@playwright/test'
+import { test, expect, type APIRequestContext } from './fixtures'
 
 async function current(request:APIRequestContext){return (await request.get('/api/v1/deck-workspace')).json()}
 async function command(request:APIRequestContext,body:object){const before=await current(request);const r=await request.post('/api/v1/deck-workspace',{data:{...body,schema_version:2,revision:before.revision}});expect(r.ok()).toBeTruthy();return r.json()}

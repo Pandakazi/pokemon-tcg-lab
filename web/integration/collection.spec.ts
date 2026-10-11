@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test('collection acceptance: exact finishes, rollup, preference, detail magnification and persistence',async({page,request,context})=>{
  test.setTimeout(90000)

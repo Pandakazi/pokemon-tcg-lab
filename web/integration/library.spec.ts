@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test('categories, search, OR/AND filters, paging, views, exact detail and history',async({page})=>{
  await page.route('https://api.tcgdex.net/**',()=>{throw new Error('Unexpected card-data request')})

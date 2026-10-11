@@ -1,4 +1,4 @@
-import { test, expect, type Locator } from '@playwright/test'
+import { test, expect, offlineArtwork, type Locator } from './fixtures'
 
 async function loaded(image:Locator){await expect(image).toBeVisible();await expect.poll(()=>image.evaluate((e:HTMLImageElement)=>e.complete&&e.naturalWidth>0)).toBe(true)}
 
@@ -106,7 +106,8 @@ test('dark and bright artwork stays readable through Holo and Reverse lighting',
 test('a touch device autonomously shimmers without gestures and respects reduced motion',async({browser},info)=>{
  const context=await browser.newContext({baseURL:'http://127.0.0.1:5174',hasTouch:true,isMobile:true,viewport:{width:1100,height:1000}})
  try{
-  const page=await context.newPage()
+  await offlineArtwork(context)
+ const page=await context.newPage()
   await page.goto('/deck-builder/cards/me01-110?variant=reverse')
   await page.getByRole('button',{name:'Variations',exact:true}).click()
   const grid=page.locator('.deck-variation-grid');await grid.scrollIntoViewIfNeeded()

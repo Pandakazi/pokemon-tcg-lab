@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test('real Card → Archetype → Tournament Deck → Card research loop preserves context and active deck',async({page,request},info)=>{
  test.setTimeout(120000)

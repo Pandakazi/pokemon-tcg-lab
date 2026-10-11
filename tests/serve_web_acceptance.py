@@ -1,9 +1,13 @@
 """Browser acceptance server: reject all outbound socket connections."""
 import socket
 import os
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import uvicorn
+
+# Execute this checkout, never another editable installation in the Python env.
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 
 original_connect = socket.socket.connect
 original_connect_ex = socket.socket.connect_ex
@@ -21,6 +25,14 @@ socket.socket.connect_ex = guarded(original_connect_ex)
 Path('.cache').mkdir(exist_ok=True)
 with TemporaryDirectory(prefix='browser-state-', dir='.cache') as state_dir:
     os.environ['POKELAB_USER_DB_PATH'] = str(Path(state_dir).resolve() / 'user-state.sqlite3')
+    os.environ['POKELAB_DECK_DB_PATH'] = str(Path(state_dir).resolve() / 'deck-workspace.sqlite3')
+    # Disconnect provider execution and use isolated acceptance settings.
+    from pokelab.api import app
+    from pokelab.agent_settings import AgentSettings
+    settings=AgentSettings(directory=Path(state_dir).resolve()/'agent-settings')
+    settings.managed=True
+    app.state.agent_settings=settings
+    app.state.research_agent.settings=settings
     if os.getenv('POKELAB_TEST_RESEARCH') == '1':
         # Only this network-blocked acceptance server has fake inference. There
         # is no production API/environment switch that enables canned answers.
@@ -45,4 +57,4 @@ with TemporaryDirectory(prefix='browser-state-', dir='.cache') as state_dir:
         app.state.research_agent.selection=Selection(provider='openrouter',model='fixture/research:free')
         uvicorn.run(app,host='127.0.0.1',port=int(os.getenv('POKELAB_TEST_API_PORT','8002')))
     else:
-        uvicorn.run('pokelab.api:app', host='127.0.0.1', port=int(os.getenv('POKELAB_TEST_API_PORT', '8002')))
+        uvicorn.run(app, host='127.0.0.1', port=int(os.getenv('POKELAB_TEST_API_PORT', '8002')))

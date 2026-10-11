@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test('empty Energy and repeated Trainer selections agree with authoritative category results',async({page,request})=>{
  const read=async(query:string)=>{

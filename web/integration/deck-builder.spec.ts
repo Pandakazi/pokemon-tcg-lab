@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext } from '@playwright/test'
+import { test, expect, type APIRequestContext } from './fixtures'
 
 async function command(request:APIRequestContext,body:object){
  const current=await (await request.get('/api/v1/deck-workspace')).json()
@@ -163,7 +163,7 @@ test('dense real-card deck scrolls independently, valid and invalid states, keyb
  await expect(tray.locator('.deck-state')).toHaveText('INVALID')
  await expect(tray).toContainText('61 cards')
  await page.getByRole('button',{name:'Toggle Agent panel'}).click()
- await expect(page.getByLabel('PokéLab Agent')).toContainText('No AI provider is connected')
+ await expect(page.getByLabel('PokéLab Agent')).toContainText('Agent unavailable: disconnected')
  await expect(tray).toBeInViewport()
  await page.screenshot({path:info.outputPath('builder-invalid-agent-1280.png')})
 })

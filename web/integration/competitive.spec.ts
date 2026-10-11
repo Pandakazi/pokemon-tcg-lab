@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 for(const width of [1440,900])test(`Library delay, popup crossing, Card Detail research and frozen artwork at ${width}`,async({page,request},testInfo)=>{
  await page.setViewportSize({width,height:1000})
@@ -84,6 +84,6 @@ test('Associated card name previews readable artwork without navigation or stati
  expect(calls).toBe(before);expect(page.url()).toBe(url)
  await page.keyboard.press('Escape');await expect(preview).toHaveCount(0)
  await page.locator('.detail-art .artwork-trigger').hover();await page.waitForTimeout(1100)
- await expect(page.getByRole('tooltip')).toHaveCount(0)
+ await expect(page.getByRole('tooltip',{name:`${cards.cards[0].name} — ${id} card preview`})).toBeVisible();expect(calls).toBe(before);expect(page.url()).toBe(url)
  await expect(page.locator('.competitive-popup')).toHaveCount(0)
 })

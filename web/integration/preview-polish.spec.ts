@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from './fixtures'
 import {readFileSync} from 'node:fs'
 
 test.beforeEach(async({page})=>{
@@ -62,13 +62,15 @@ test('illustrator detail opens the full exact-printing catalog and clearing rest
 test('Collection artist discovery includes unowned printings and clearing restores owned collection',async({page,request})=>{
  const query=new URLSearchParams({illustrators:'Mitsuhiro Arita'})
  const source=await (await request.get(`/api/v1/cards?${query}&page_size=24`)).json()
+ const owned=await (await request.get('/api/v1/collection?page_size=24')).json()
  await page.goto(`/collection?${query}`)
  await expect(page.getByRole('heading',{name:'Illustrator catalog',exact:true})).toBeVisible()
  await expect(page.locator('article[data-printing-id]')).toHaveCount(source.cards.length)
  expect(await page.locator('article[data-printing-id]').evaluateAll(els=>els.map(e=>e.getAttribute('data-printing-id')))).toEqual(source.cards.map((c:any)=>c.id))
  await page.getByRole('button',{name:'Clear illustrator',exact:true}).click()
  await expect(page.getByRole('heading',{name:'Collection',exact:true})).toBeVisible()
- await expect(page.getByText('No owned variations match. Add cards from the Library or Card Detail.')).toBeVisible()
+ if(owned.cards.length)await expect(page.locator('article[data-printing-id]')).toHaveCount(owned.cards.length)
+ else await expect(page.getByText('No owned variations match. Add cards from the Library or Card Detail.')).toBeVisible()
 })
 
 test('generated deck Copy translates local metadata into the full PTCGL fixture',async({page})=>{

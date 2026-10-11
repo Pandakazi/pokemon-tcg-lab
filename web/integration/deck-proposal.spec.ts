@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test'
+import {test,expect} from './fixtures'
 
 for(const width of [1440,900])test(`invalid deck proposal continues conversation without writes at ${width}px`,async({page},info)=>{
  let calls=0,writes=0
@@ -26,6 +26,8 @@ for(const width of [1440,900])test(`invalid deck proposal continues conversation
  await expect(review).toContainText('Source revision: 158')
  await expect(review).toContainText('currently 0 · cut not valid')
  await expect(review).toContainText('currently 3')
+ await expect(review.getByLabel('Deck review details')).toHaveCount(0)
+ await review.getByRole('button',{name:'Review deck details'}).click()
  await expect(review).toContainText('two ACE SPEC')
  await expect(review).toContainText('Strategic checks — advisory')
  await expect(agent.getByRole('article')).toContainText('still worth exploring')
