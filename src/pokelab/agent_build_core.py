@@ -107,11 +107,17 @@ def selection(row,source):
 REFERENT=r'(?:please )?(?:build (?:me )?(?:a )?(?:deck )?around (?:it|that card)|(?:build|make) (?:me )?(?:a )?deck (?:around|with) (?:it|that|that card)|use that one)'
 
 
+def new_build(question):
+    """Fresh named builds; explicit modification/referents retain their source."""
+    from .agent_consensus import build_request
+    return build_request(question) and not re.search(r'\b(?:this|that|current|existing) (?:deck|list)\b|\b(?:build|make|modify) (?:this|that)\b|\b(?:combine|merge|modify|replace|swap|work .+ into)\b',question,re.I)
+
+
 def begin(request,history):
     """New explicit builds own selection context; old decks remain intact."""
     from .agent_consensus import build_request
     q=normalized_name(request.question).rstrip('.!?')
-    if build_request(q) and not re.fullmatch(REFERENT,q):
+    if new_build(q) and not re.fullmatch(REFERENT,q):
         history=deepcopy(history)
         for key in ('selected_core','pending_build','build_clarification'):history.get('artifacts',{}).pop(key,None)
     return history

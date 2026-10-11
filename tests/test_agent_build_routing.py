@@ -118,7 +118,8 @@ def test_explicit_consensus_bypasses_candidate_admission(cohort,monkeypatch,limi
 
 def change(e):
     current=e['current_generated_deck']['cards'];energy=next(r for r in current if r['candidate_id'].startswith('deck-basic-energy:'))
-    target=next(r for r in e['candidate_sandbox']['candidates'] if r['category']=='Trainer' and all(x['candidate_id']!=r['candidate_id'] for x in current))
+    quantities={r['candidate_id']:r['quantity'] for r in current}
+    target=next(r for r in e['candidate_sandbox']['candidates'] if r['category']=='Trainer' and not r.get('ace_spec') and quantities.get(r['candidate_id'],0)<4)
     return 'I would test this support option. '+actions(dict(type='proposed_deck_changes',changes=[
         dict(action='remove',candidate_id=energy['candidate_id'],quantity=1),
         dict(action='add',candidate_id=target['candidate_id'],quantity=1)],rationale='Test support.'))

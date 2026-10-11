@@ -83,7 +83,7 @@ def test_underfilled_custom_finishes_exact_sixty(novel,n,reply):
     assert r['answer']['completion']['status']=='complete' and 'build_failure' not in r['answer']
     assert report['construction_violations']==[] and not report['unresolved']
     energy_before=sum(c['quantity'] for c in calls[1]['repair']['cards'] if c['candidate_id'].startswith('deck-basic-energy:'))
-    assert report['category_subtotals']['Energy']==energy_before
+    assert report['category_subtotals']['Energy']==min(14,energy_before)
     assert before=={k:p.read_bytes() for k,p in novel.paths.items()}
     assert ask(svc,'Recount that deck.',r['conversation_id'])['answer']['proposal']['total_cards']==60 and len(calls)==2
     if not callable(reply):assert report['completion_debug']['mode']=='deterministic_ranked_fill'

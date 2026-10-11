@@ -106,9 +106,10 @@ def final_fill(report):
     names=Counter()
     for r in report['cards']:names[normalized_name(r['canonical_name'])]+=r['quantity']
     ace=sum(r['quantity'] for r in report['cards'] if 'ACE SPEC' in r['printed'].get('rarity','').upper())
-    energies=sum(r['quantity'] for r in report['cards'] if r['candidate_id'].startswith('deck-basic-energy:'))
+    energies=sum(r['quantity'] for r in report['cards'] if r['category']=='Energy')
     costs=[len(a.get('cost',[])) for r in report['cards'] for a in r['printed'].get('attacks',[])]
-    energy_ceiling=min(16,max(8,2*max(costs,default=0)))
+    from .agent_custom_build import shape
+    energy_ceiling=shape(report['candidate_sandbox'])['energy_completion_ceiling']
     added=Counter();role_targets={'setup-search','draw-consistency','recovery','gust','mobility','evolution-support'}
     def roles(r):return set(r.get('ranking',{}).get('roles',[]))|{r.get('role','')}
     for _ in range(accounting(report)['true_missing_count']):
@@ -126,14 +127,14 @@ def final_fill(report):
             if r.get('ace_spec') and ace>=1:continue
             if r.get('evolveFrom') and normalized_name(r['evolveFrom']) not in present:continue
             if r.get('stage') in ('Stage1','Stage2') and not r.get('evolveFrom'):continue
-            if r.get('basic_energy') and energies>=energy_ceiling:continue
+            if r['category']=='Energy' and energies>=energy_ceiling:continue
             if missing and name not in missing:continue
             # Useful support precedes extra Energy or unrelated attackers.
-            priority=(name in missing,bool(r.get('basic_energy') and energies<min(8,max(costs,default=0))),len(roles(r)&(role_targets-occupied)),r['category']=='Trainer',not r.get('basic_energy'),r.get('ranking',{}).get('score',0),-quantities[key],-index)
+            priority=(name in missing,bool(r.get('basic_energy') and energies<min(8,max(costs,default=0))),len(roles(r)&(role_targets-occupied)),r['category']=='Trainer',r['category']!='Energy',r.get('ranking',{}).get('score',0),-quantities[key],-index)
             options.append((priority,r))
         if not options:return None,dict(reason='insufficient_safe_completion_candidates')
         r=max(options,key=lambda pair:pair[0])[1];key=candidate_key(r)
         quantities[key]+=1;added[key]+=1;names[normalized_name(r['name'])]+=1
-        ace+=int(r.get('ace_spec',False));energies+=int(r.get('basic_energy',False))
+        ace+=int(r.get('ace_spec',False));energies+=int(r['category']=='Energy')
     cards=tuple(Candidate(candidate_id=k,quantity=n) for k,n in quantities.items() if n)
     return Proposal(kind='list',name=report['name'],cards=cards,rationale='Retained custom structure with locally validated completion.'),dict(added=[dict(candidate_id=k,quantity=n) for k,n in added.items()])

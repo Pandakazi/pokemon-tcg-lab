@@ -80,7 +80,7 @@ def test_small_repair_cannot_redesign_valid_slots(stores):
     assert len(calls)==2 and result['answer']['proposal']['total_cards']==60
     assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_parse_failed'
     quantities={r['canonical_name']:r['quantity'] for r in result['answer']['proposal']['cards']}
-    assert quantities['Lightning Energy']==51 and 'Darkness Energy' not in quantities
+    assert quantities['Lightning Energy']<=14 and 'Darkness Energy' not in quantities
     assert quantities['Pikachu ex']==4 and quantities['Recovery Tool']==4
 
 
@@ -91,7 +91,7 @@ def test_small_repair_cannot_regress(stores):
     result=svc.run(a.ResearchRequest(scope='conversation',question='Build a Standard deck'))
     assert len(calls)==2 and result['answer']['proposal']['total_cards']==60
     assert result['answer']['proposal']['completion_debug']['provider_failure']=='repair_parse_failed'
-    assert next(r['quantity'] for r in result['answer']['proposal']['cards'] if r['canonical_name']=='Lightning Energy')==51
+    assert next(r['quantity'] for r in result['answer']['proposal']['cards'] if r['canonical_name']=='Lightning Energy')<=14
 
 
 def test_name_copy_limit_spans_distinct_functional_cards(stores):
@@ -110,5 +110,5 @@ def test_build_never_calls_legacy_retrieval(stores,monkeypatch):
     monkeypatch.setattr(RetrievalIndex,'from_database',classmethod(lambda *args:pytest.fail('legacy retrieval used')))
     svc,calls=service(stores,[deck([FULL[0],('Unknown',None,4,'recovery'),FULL[2]]),deck(FULL)])
     result=svc.run(a.ResearchRequest(scope='conversation',question='Build a Standard deck'))
-    assert result['answer']['proposal']['validation_status']=='VALIDATED'
+    assert result['answer']['proposal']['validation_status']=='VALIDATED',result['answer']['proposal']['hard_validation']
     assert len(calls)==2

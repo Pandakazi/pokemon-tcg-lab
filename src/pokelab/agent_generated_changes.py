@@ -16,6 +16,7 @@ def intent(question, history):
     if re.search(r'\b(?:active|saved|deck builder) deck\b|\b(?:new|different|another) deck\b|change (?:the )?subject|different topic|forget (?:that|this) deck|(?:this|selected) card\b',q):return None
     if read_only(question):return 'DISCUSS'
     if re.search(r'\b(?:make|apply) (?:those|these|the|your) (?:changes|recommendations)|\b(?:do|try) that\b|\bshow.*updated.*list',q):return 'APPLY'
+    if re.search(r'\b(?:build|modify) (?:this|that|the current)\b|\bswap in\b|\bwork .+ into (?:this|that)\b',q):return 'RECOMMEND'
     if lifecycle(question)=='FINALIZE':return None
     if re.search(r'exact changes|cut and add|more aggressive|what would you change|try a control|\b(?:add|cut|replace|modify)\b',q) or lifecycle(question)=='RECOMMEND':return 'RECOMMEND'
     if re.search(r'\b(?:deck|list|critique|weaknesses|weakest|ratios|pilot|play|weak points|game plan|these cards|it|this|that|evidence|sources)\b',q):return 'DISCUSS'

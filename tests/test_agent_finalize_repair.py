@@ -119,6 +119,13 @@ def test_confirmation_requires_pending_artifact_and_new_request_is_not_hijacked(
 
 
 def test_resolved_generated_identity_controls_facts_over_active_deck(stores):
+    # This deliberately sparse identity/fact fixture retains 52 Energy. Give
+    # its synthetic core a printed scaling reason, independent of shape tests.
+    with sqlite3.connect(stores.paths['cards']) as db:
+        raw=json.loads(db.execute("SELECT raw FROM cards WHERE id='qa-pikachu'").fetchone()[0])
+    raw['attacks'][0]['effect']='This attack does 20 damage for each Energy attached to this Pokémon.'
+    SQLiteCards(stores.paths['cards']).put(raw)
+    with sqlite3.connect(stores.paths['cards']) as db:db.execute("UPDATE cards SET game='tcg' WHERE id='qa-pikachu'")
     active(stores,[('qa-alakazam2',1),('qa-energy',59)])
     rows=[FULL[0],('Alakazam','qa-alakazam1',4,'draw support'),FULL[2]]
     svc,calls=service(stores,[deck(rows),'Alakazam has an Ability called First.'])

@@ -4,7 +4,7 @@ from copy import deepcopy
 import pytest
 from pokelab import agent_research as a
 from pokelab.agent_artifacts import clean_references
-from test_agent_deck_completion import service,partial,addition,QUESTION
+from test_agent_deck_completion import service,partial,addition,QUESTION,energy_engine
 from test_agent_deck_proposals import stores,active
 from test_card_pool_research import sources,setup,research,offline
 
@@ -62,7 +62,7 @@ def test_stale_and_ambiguous(stores):
     first=request(svc,None,QUESTION);key=first['conversation_id']
     request(svc,key,'Give me exact changes.')
     proposal=deepcopy(svc.conversations.get(key)['artifacts']['proposed_change_set'])
-    request(svc,key,'Create another complete legal 60-card Standard deck.')
+    request(svc,key,'Create another complete legal 60-card Standard deck with Pikachu ex.')
     result=request(svc,key,'Do that.')
     assert 'older deck' in result['answer']['paragraphs'][0]['text'] and len(calls)==3
     svc.conversations.get(key)['artifacts']['proposed_change_set']=[proposal,deepcopy(proposal)]

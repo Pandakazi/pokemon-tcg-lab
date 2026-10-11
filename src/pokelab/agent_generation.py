@@ -85,6 +85,8 @@ def direct_generation(service,request,history,envelope):
 
 
 def custom_generation(envelope,consensus,reason,core=()):
+    from .agent_custom_build import shape
+    envelope['custom_shape_prior']=shape(envelope['candidate_sandbox'])
     envelope['generation']=dict(build_mode='custom',generation_source='custom_model_build',
         consensus_status='no_matching_variant' if consensus is None else 'unavailable',
         fallback_reason=reason,requested_core_ids=[envelope['selected_core']['candidate_id']] if envelope.get('new_build') and envelope.get('selected_core') else [r['candidate_id'] for r in core])

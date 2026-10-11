@@ -12,6 +12,22 @@ from test_card_pool_research import sources,setup,research,offline
 QUESTION='Create a complete legal 60-card Standard deck with Pikachu ex, Recovery Tool, ACE Draw and ACE Recovery.'
 
 
+@pytest.fixture(autouse=True)
+def energy_engine(stores):
+    """These sparse delta fixtures intentionally retain 50+ Energy copies.
+
+    Give their synthetic core a printed scaling reason so shape normalization
+    does not obscure the independent allocation/repair assertions.
+    """
+    import sqlite3
+    from tcg_lab.card_db import SQLiteCards
+    with sqlite3.connect(stores.paths['cards']) as db:
+        card=json.loads(db.execute("SELECT raw FROM cards WHERE id='qa-pikachu'").fetchone()[0])
+    card['attacks'][0]['effect']='This attack does 20 damage for each Energy attached to this Pokémon.'
+    SQLiteCards(stores.paths['cards']).put(card)
+    with sqlite3.connect(stores.paths['cards']) as db:db.execute("UPDATE cards SET game='tcg' WHERE id='qa-pikachu'")
+
+
 def partial(n=58,pika=3,recovery=3,ace=False):
     rows=[('Pikachu ex','qa-pikachu',pika,'core'),('Recovery Tool','qa-recover',recovery,'recovery')]
     if ace:rows.append(('ACE Draw','qa-ace1',1,'draw'))

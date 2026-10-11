@@ -146,7 +146,8 @@ def test_explicit_constraint_allows_deliberate_larger_deviation(cohort):
         return '<POKELAB_ACTIONS>'+json.dumps(dict(type='generated_deck',cards=[dict(candidate_id=rows[n]['candidate_id'],quantity=q) for n,q in counts.items()],rationale='Explicit experimental constraint'))+'</POKELAB_ACTIONS>'
     svc,calls=service(cohort,[answer]);result=svc.run(ResearchRequest(scope='conversation',question='Build me a Dragapult deck with Alcremie ex'))
     assert result['answer']['proposal']['validation_status']=='VALIDATED'
-    assert result['answer']['proposal']['category_subtotals']['Energy']==44 and len(calls)==1
+    assert result['answer']['proposal']['category_subtotals']['Energy']<=14 and len(calls)==1
+    assert any(r['canonical_name']=='Alcremie ex' for r in result['answer']['proposal']['cards'])
 
 
 def test_functional_reprints_merge_and_no_variant_bleed(cohort):

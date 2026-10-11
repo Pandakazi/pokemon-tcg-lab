@@ -44,18 +44,18 @@ def test_gengar_auto_default_and_explicit_regular(stores):
 
 def test_true_gameplay_choice_persists_then_pronoun_builds(stores):
     install(stores,[pokemon('g-mega','Mega Gengar ex'),pokemon('g-ex','Gengar ex',300)])
-    svc,calls=service(stores,['I would test the setup.',custom])
+    svc,calls=service(stores,['I would test the setup.','invalid repair',custom])
     first=ask(svc,'I like Gengar, build me something.')
     assert not calls and text(first) in ('Do you want Mega Gengar ex or Gengar ex?','Do you want Gengar ex or Mega Gengar ex?')
     chosen=ask(svc,'Mega Gengar EX.',first['conversation_id'])
     selected=deepcopy(state(svc,chosen)['selected_core'])
     assert selected['canonical_name']=='Mega Gengar ex' and selected['selection_source']=='user_selected'
-    assert chosen['answer']['build_failure']['reason']=='structured_deck_not_returned'
+    assert chosen['answer']['build_failure']['reason']=='contract_repair_invalid'
     assert 'missing_artifact' not in chosen['answer']['notices']
     final=ask(svc,'build me a deck around it',first['conversation_id'])
     assert state(svc,final)['selected_core']==selected
     assert final['answer']['proposal']['total_cards']==60 and final['answer']['proposal']['build_mode']=='custom'
-    assert len(calls)==2 and calls[-1]['selected_core']['candidate_id']==selected['candidate_id']
+    assert len(calls)==3 and calls[-1]['selected_core']['candidate_id']==selected['candidate_id']
 
 
 @pytest.mark.parametrize('q',['build me a deck around it','use that one','make a deck with that','build around that card'])
@@ -79,13 +79,13 @@ def test_same_name_different_effects_only_gameplay_labels(stores):
 
 
 @pytest.mark.parametrize('reply,reason',[
-    ('I would test the setup.','structured_deck_not_returned'),
-    ('<POKELAB_ACTIONS>{broken}</POKELAB_ACTIONS>','generated_deck_contract_invalid'),
+    ('I would test the setup.','contract_repair_invalid'),
+    ('<POKELAB_ACTIONS>{broken}</POKELAB_ACTIONS>','contract_repair_invalid'),
     (httpx.Response(429,json={'error':{'code':429}}),'provider_failure'),
     (httpx.Response(200,json={'choices':[{'message':{'content':'partial'},'finish_reason':'length'}]}),'output_token_limit_reached')])
 def test_custom_failure_is_structured_and_remembers_core(novel,reply,reason):
     svc,calls=service(novel,[reply]);r=ask(svc,'Build me a 60-card Mega Lopunny ex deck.')
-    assert r['answer']['build_failure']['reason']==reason and len(calls)==1
+    assert r['answer']['build_failure']['reason']==reason and len(calls)==(2 if reason=='contract_repair_invalid' else 1)
     assert r['answer']['completion']['status']=='incomplete'
     assert not r['answer']['notices'] and 'discussion' not in text(r)
     assert 'generated_deck' not in state(svc,r) and state(svc,r)['selected_core']['canonical_name']=='Mega Lopunny ex'
