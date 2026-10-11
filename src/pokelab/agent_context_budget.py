@@ -60,7 +60,7 @@ def fit(envelope, limit):
         fields = ('candidate_id','printing_id','name','category','role','ace_spec',
             'basic_energy','copy_limit_name','requested_core','predecessor_candidate_ids',
             'stage','evolveFrom','types','attacks','abilities','effect','rules','hp',
-            'trainerType','energyType')
+            'trainerType','energyType','strategic_roles')
         sandbox['candidates'] = [{k:r[k] for k in fields if k in r} for r in sandbox.get('candidates',[])]
         sandbox.pop('instruction', None)  # same constraints in the system contract
         note('compact_candidate_support')

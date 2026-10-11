@@ -41,6 +41,15 @@ def review(text, sources, request, envelope):
                 resolver=Resolver(SnapshotCollection(cards,sources.paths['collection'],dbs.get('collection')),sources.paths['cards'])
             for match in matches:
                 name=match[1];verb=match[2]
+                # An ordinary introduction is not part of a resolved card name.
+                # Only strip known grammatical prefixes; never alias an unknown
+                # card ('Mega Pikachu ex') to a familiar suffix ('Pikachu ex').
+                if envelope.get('current_generated_deck',{}).get('validation_status')=='VALIDATED':
+                    for canonical in sorted(resolved,key=len,reverse=True):
+                        if name.casefold().endswith(' '+canonical):
+                            prefix=name[:len(name)-len(canonical)].strip().casefold().split()
+                            if prefix and all(word in {'the','your','our','this','using','since','adding','with'} for word in prefix):
+                                name=canonical;break
                 if name.casefold() in unresolved:
                     reviews.append(dict(card=name,status='unresolved',references=[]));continue
                 start=max(text.rfind(delimiter,0,match.start()) for delimiter in '.!?\n')+1

@@ -95,7 +95,13 @@ def replacement_pool(path, artifact, **kwargs):
     fields=('candidate_id','printing_id','name','category','role','ace_spec','basic_energy',
         'copy_limit_name','requested_core','predecessor_candidate_ids','stage','evolveFrom',
         'types','attacks','abilities','effect','rules')
-    return dict(original,candidates=[{k:r[k] for k in fields if k in r} for r in rows.values()],
+    fresh_by_id={r['candidate_id']:r for r in fresh['candidates']}
+    projected=[]
+    for r in rows.values():
+        item={k:r[k] for k in fields if k in r}
+        item['strategic_roles']=fresh_by_id.get(r['candidate_id'],r).get('ranking',{}).get('roles',r.get('strategic_roles',[]))
+        projected.append(item)
+    return dict(original,candidates=projected,
         replacement_pool=True)
 
 
@@ -112,6 +118,9 @@ Group ordinary copies by copy_limit_name for maximum 4, except basic_energy; at 
 one ACE SPEC. Preserve the requested core and evolution support. Never invent cards.
 If a preferred conceptual card is unavailable, select the next legal role-appropriate
 alternative in this sandbox. On retry, revise the failed choices using these candidates.
+If no meaningful improvement can be justified, return only
+{"source_artifact_id":"actual ID","source_artifact_hash":"actual hash","no_material_improvement":true}.
+Do not fabricate a swap just to produce actions.
 PokéLab validates first and renders the canonical Cut/Add explanation afterward.
 '''
 

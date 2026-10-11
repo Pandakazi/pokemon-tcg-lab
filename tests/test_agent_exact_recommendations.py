@@ -62,7 +62,9 @@ def test_bounded_retry_selects_legal_alternative_without_rejected_prose(novel,fa
     assert len(calls)==3 and r['execution']['recommendation_repair_calls']==1
     assert 'proposed_change_set' in state(svc,r)
     assert 'Energy Switch' not in '\n'.join(p['text'] for p in r['answer']['paragraphs'])
-    assert 'recommendation_retry' in calls[-1] and 'outside-sandbox-energy-switch' not in json.dumps(calls[-1])
+    assert 'recommendation_retry' in calls[-1]
+    assert 'outside-sandbox-energy-switch' not in json.dumps(calls[-1]['candidate_sandbox'])
+    if failure=='unsupported':assert 'outside-sandbox-energy-switch' in calls[-1]['recommendation_retry']['blocked_add_candidate_ids']
     applied=ask(svc,'Make those changes',first['conversation_id'])
     assert applied['answer']['proposal']['total_cards']==60 and len(calls)==3
 

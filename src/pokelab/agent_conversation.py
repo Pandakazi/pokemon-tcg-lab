@@ -119,7 +119,7 @@ class Conversations:
             while size()>8000 and turns[0]['answer']['paragraphs']:
                 turns[0]['answer']['paragraphs']=turns[0]['answer']['paragraphs'][:-1]
                 turns[0]['history_compacted']=True
-        self.items[key] = dict(at=monotonic(), turn_number=self.items.get(key,{}).get('turn_number',0)+1, turns=turns, printings=printings[:8],proposal=proposal, artifacts=artifacts if artifacts is not None else self.items.get(key,{}).get('artifacts',{}),last_incident=self.items.get(key,{}).get('last_incident'))
+        self.items[key] = dict(at=monotonic(), turn_number=self.items.get(key,{}).get('turn_number',0)+1, turns=turns, printings=printings[:8],proposal=proposal, artifacts=artifacts if artifacts is not None else self.items.get(key,{}).get('artifacts',{}),last_incident=self.items.get(key,{}).get('last_incident'),proposal_attempt=self.items.get(key,{}).get('proposal_attempt'))
         self.items.move_to_end(key)
         while len(self.items) > 32: self.items.popitem(last=False)
         return key
@@ -460,37 +460,47 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
     if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'):
         return custom_failure('provider_failure') if custom_initial else dict(response,status='provider_failure', provider_status=result.status if re.fullmatch(r'http_[0-9]{3}',result.status) or result.status in ('transport_or_response_error','empty_output','incomplete_or_blocked_output','output_too_large','response_too_large','secret_response_quarantined','tool_output_rejected') else 'other_provider_failure')
     if envelope.get('generated_intent')=='RECOMMEND' and not requirements:
-        from .agent_generated_changes import structured,compose,RECOMMEND_SYSTEM
-        from .agent_deck_proposals import evaluate
-        source=history['artifacts']['generated_deck'];failure='change_contract_invalid';validated=False
+        from .agent_recommendation_fallback import assessment,retry_context,local_options,ratio_option,failure_message
+        from .agent_generated_changes import RECOMMEND_SYSTEM,source_hash
+        source=history['artifacts']['generated_deck'];sources=Sources(**service.paths,format_start=service.format_start)
+        diagnostics=dict(source_artifact_id=source['id'],source_artifact_hash=source_hash(source),attempts=[],final_status='FAILED')
+        validated=False;direction=None;failure='unknown_validation_failure'
         for attempt in range(2):
-            exact=None;preview=None
-            try:
-                exact=structured(result.text,source)
-                preview,_,_=evaluate(compose(source,exact,envelope['candidate_sandbox']),(),
-                    Sources(**service.paths,format_start=service.format_start),request.model_copy(update={'include_deck':False}),envelope)
-                if preview['validation_status']!='VALIDATED' or preview['total_cards']!=60:raise ValueError('change_construction_invalid')
-                # Only validated IDs reach the existing artifact retention path.
-                result=result.model_copy(update={'text':'I have prepared a balanced change set for the current generated deck. <POKELAB_ACTIONS>'+canonical(dict(type='proposed_deck_changes',changes=[dict(action=action,candidate_id=c.candidate_id,quantity=c.quantity) for action,group in (('remove',exact.removes),('add',exact.adds)) for c in group]))+'</POKELAB_ACTIONS>'})
-                validated=True
-                break
-            except (ValueError,TypeError,KeyError):
-                failure='change_construction_invalid' if preview is not None else 'change_contract_invalid'
+            exact,preview,detail=assessment(result.text,source,envelope,sources,request)
+            diagnostics['attempts'].append(detail);failure=detail['failure_reason']
+            if exact:direction=exact
+            if detail['final_status']=='VALIDATED':validated=True;diagnostics['final_status']='MODEL_VALIDATED';break
+            if failure=='no_material_improvement_found':diagnostics['final_status']='NO_MATERIAL_IMPROVEMENT';break
             if attempt==0:
-                # Bounded retry contains authoritative context and a safe reason,
-                # never the rejected prose or unavailable card suggestions.
-                allowed={r['candidate_id'] for r in envelope['candidate_sandbox']['candidates']}
-                rejected={group:[dict(candidate_id=c.candidate_id,quantity=c.quantity) for c in getattr(exact,group) if c.candidate_id in allowed] for group in ('removes','adds')} if exact else {}
-                retry=dict(envelope,recommendation_retry=dict(attempt=1,reason=failure,rejected_selection=rejected))
-                result=providers.complete(selection,RECOMMEND_SYSTEM,canonical(retry),transport=service.transport,max_output=MAX_OUTPUT)
+                try:retry=retry_context(source,envelope,sources,detail,exact)
+                except ResearchUnavailable:failure='context_budget_trimmed_required_candidates';break
+                instruction=RECOMMEND_SYSTEM+'\nFollow recommendation_retry. Never add blocked IDs. For a contract repair preserve the intended strategy and repair only the format. Otherwise use eligible_add_candidate_ids and change the rejected choice; do not repeat a blocked selection.\n'
+                result=providers.complete(selection,instruction,canonical(retry),transport=service.transport,max_output=MAX_OUTPUT)
                 execution['recommendation_repair_calls']=1
                 execution['recommendation_repair']={k:getattr(result,k) for k in ('latency_ms','input_tokens','output_tokens','reasoning_tokens','estimated_cost_usd','actual_cost_usd')}
-                if result.status!='ok' or result.finish_reason not in ('stop','end_turn'):failure='change_retry_provider_failure';break
+                envelope=retry;response['envelope']=envelope
+                if result.status!='ok' or result.finish_reason not in ('stop','end_turn'):
+                    diagnostics['attempts'].append(dict(source_artifact_id=source['id'],cuts=[],adds=[],failure_reason='provider_failure',blocked_candidate_ids=[],retry_strategy=detail['retry_strategy'],final_status='REJECTED'))
+                    break
+        if not validated and failure!='no_material_improvement_found' and source['report'].get('build_mode')=='custom' and direction:
+            options=local_options(source,envelope,sources,request,direction)
+            if not options:
+                ratio=ratio_option(source,envelope,sources,request)
+                if ratio:options=[ratio]
+            if options:
+                exact,preview,strategy=options[0];validated=True;diagnostics['final_status']='FALLBACK_VALIDATED'
+                diagnostics['attempts'].append(dict(source_artifact_id=source['id'],cuts=[dict(candidate_id=c.candidate_id,quantity=c.quantity) for c in exact.removes],adds=[dict(candidate_id=c.candidate_id,quantity=c.quantity) for c in exact.adds],failure_reason=None,blocked_candidate_ids=[],retry_strategy=strategy,final_status='VALIDATED'))
+        diagnostics['failure_reason']=None if validated else failure
+        response['proposal_attempt']=diagnostics
         if not validated:
-            answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='I could not validate a balanced replacement from the available legal candidates after one retry. The current deck is unchanged. Please retry the exact recommendation.',evidence=[])],facts=[],notices=[],recommendation_failure=dict(reason=failure,attempts=2))
+            answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text=failure_message(failure),evidence=[])],facts=[],notices=[],recommendation_failure=dict(reason=failure,attempts=len(diagnostics['attempts'])))
             artifacts=history.get('artifacts',{}).copy();artifacts.pop('proposed_change_set',None)
             key=service.conversations.put(request.conversation_id,history['turns']+[dict(question=request.question,answer=answer,snapshot=envelope['content_hash'])],history['printings'],history.get('proposal'),artifacts)
+            service.conversations.get(key)['proposal_attempt']=diagnostics
             return dict(response,status='answered',answer=answer,conversation_id=key)
+        text='I have prepared a balanced change set for the current generated deck.'
+        if diagnostics['final_status']=='FALLBACK_VALIDATED':text='I selected a legal role-based alternative after the preferred change failed validation.'
+        result=result.model_copy(update={'status':'ok','finish_reason':'stop','text':text+' <POKELAB_ACTIONS>'+canonical(dict(type='proposed_deck_changes',changes=[dict(action=action,candidate_id=c.candidate_id,quantity=c.quantity) for action,group in (('remove',exact.removes),('add',exact.adds)) for c in group]))+'</POKELAB_ACTIONS>'})
     if custom_initial:
         from .agent_hybrid import parse
         from .agent_custom_build import REPAIR_SYSTEM,repair_input,repaired
@@ -707,6 +717,7 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
         from copy import deepcopy
         artifacts=deepcopy(history.get('artifacts',{}));proposal=history.get('proposal')
     key = service.conversations.put(request.conversation_id, turns, [e['printing'] for e in envelope['evidence'] if e.get('printing')],proposal,artifacts)
+    if response.get('proposal_attempt'):service.conversations.get(key)['proposal_attempt']=response['proposal_attempt']
     return dict(response, status='answered', answer=answer, conversation_id=key, empirical_qualification=qualified)
 
 
