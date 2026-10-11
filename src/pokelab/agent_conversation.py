@@ -610,11 +610,9 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
             Sources(**service.paths,format_start=service.format_start),request)
         if envelope.get('generated_intent')=='RECOMMEND':
             if proposed_changes:
-                names={r['candidate_id']:r['canonical_name'] for r in envelope['current_generated_deck']['cards']}
-                names.update({r['candidate_id']:r['name'] for r in envelope['candidate_sandbox']['candidates']})
-                for group,label in (('removes','Cut'),('adds','Add')):
-                    for item in proposed_changes['proposal'][group]:
-                        answer['paragraphs'].append(dict(text=f"{label}: {item['quantity']} × {names[item['candidate_id']]}",evidence=[]))
+                from .agent_change_labels import change_lines
+                for line in change_lines(proposed_changes['proposal'],source['report']['cards'],preview['cards'],source['report']['candidate_sandbox']['candidates']):
+                    answer['paragraphs'].append(dict(text=line,evidence=[]))
             answer['paragraphs'].append(dict(text='These exact changes are retained for this generated deck; say “Make those changes” to apply them here.' if proposed_changes else 'No validated exact change set was retained. Please specify the cuts and additions you want to test.',evidence=[]))
         if providers.secret_present(canonical(answer)+canonical(envelope)): raise ContractError('secret_quarantined')
     except completion.CompletionError as exc:return completion_failure(exc.reason)
