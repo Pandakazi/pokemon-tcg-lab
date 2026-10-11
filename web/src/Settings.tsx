@@ -5,12 +5,12 @@ import {agentSettingsChanged} from './AgentStatus'
 type Provider='openai'|'gemini'
 type AgentState={provider:Provider|null;connected:boolean;has_key:boolean;managed:boolean;storage:string;reason?:string|null}
 type Progress={stage:string;message:string;settings?:AgentState}
-const label=(provider:Provider)=>provider==='openai'?'OpenAI':'Gemini'
+const label=(provider:Provider)=>provider==='gemini'?'Gemini':'External provider'
 
 export function SettingsControl() {
  const {appearance,choose,persisted}=useAppearance()
  const [menu,setMenu]=useState(false),[page,setPage]=useState<'agent'|'appearance'|null>(null)
- const [state,setState]=useState<AgentState|null>(null),[provider,setProvider]=useState<Provider>('openai')
+ const [state,setState]=useState<AgentState|null>(null)
  const [key,setKey]=useState(''),[replace,setReplace]=useState(false),[pending,setPending]=useState(false)
  const [events,setEvents]=useState<Progress[]>([]),[error,setError]=useState(''),[loading,setLoading]=useState(false)
  const dialog=useRef<HTMLDialogElement>(null),gear=useRef<HTMLButtonElement>(null),menuRef=useRef<HTMLDivElement>(null)
@@ -42,7 +42,7 @@ export function SettingsControl() {
    fetch('/api/v1/settings/agent',{signal:abort.signal,cache:'no-store'}).then(async response=>{
     if(!response.ok)throw new Error();const result:AgentState=await response.json()
     if(typeof result.connected!=='boolean'||!['openai','gemini',null].includes(result.provider))throw new Error()
-    if(alive.current&&!abort.signal.aborted){setState(result);if(result.provider)setProvider(result.provider)}
+    if(alive.current&&!abort.signal.aborted){setState(result)}
    }).catch(()=>{if(alive.current&&!abort.signal.aborted)setError('Unable to load Agent settings. Close and try again.')})
     .finally(()=>{if(alive.current&&!abort.signal.aborted)setLoading(false)})
   }
@@ -57,7 +57,7 @@ export function SettingsControl() {
   const submitted=key;setKey('')
   try{
    const response=await fetch('/api/v1/settings/agent/test-apply',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({provider,api_key:submitted}),signal:abort.signal})
+    body:JSON.stringify({provider:'gemini',api_key:submitted}),signal:abort.signal})
    if(!response.ok||!response.body)throw new Error()
    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',finished=false
    const consume=(line:string)=>{
@@ -85,7 +85,7 @@ export function SettingsControl() {
   }catch{if(alive.current)setError('Unable to disconnect. Check the API and try again.')}
   finally{flight.current=false;if(alive.current)setPending(false)}
  }
- const entering=replace||!state?.has_key||provider!==state?.provider
+ const entering=replace||!state?.has_key||state?.provider!=='gemini'
  return <>
   <span className="agent-connection" aria-live="polite">Agent: {state?.connected?(state.provider?`${label(state.provider)} · Connected`:'Configured externally'):state?'Disconnected':'Checking…'}</span>
   <div className="settings-control" ref={menuRef} onKeyDown={event=>{if(event.key==='Escape'){setMenu(false);gear.current?.focus()}}}>
@@ -101,10 +101,10 @@ export function SettingsControl() {
     {!persisted&&<p role="alert">Browser storage is unavailable. This choice will last for this session.</p>}
    </>:<>
     {loading&&<p>Loading Agent settings…</p>}
-    <fieldset disabled={pending||loading}><legend>AI provider</legend>{(['openai','gemini'] as const).map(value=><label key={value}><input type="radio" name="provider" checked={provider===value} onChange={()=>{setProvider(value);setKey('');setEvents([]);setError('')}}/>{label(value)}</label>)}</fieldset>
+    <p>AI provider: Gemini</p>
     {state?.connected&&<p>{state.provider?label(state.provider):'External provider'} connected{state.storage==='session'?' for this session':''}.</p>}
-    {entering?<label className="key-label" htmlFor="agent-api-key">API key<input id="agent-api-key" type="password" autoComplete="off" spellCheck={false} maxLength={2048} value={key} disabled={pending||loading} onChange={event=>setKey(event.target.value)}/></label>:<p>Saved API key: ••••••••••••</p>}
-    <p>Test &amp; Apply sends one small request to the selected provider. API charges may apply. Windows saves your key encrypted for your account; other platforms keep it only for this session.</p>
+    {entering?<label className="key-label" htmlFor="agent-api-key">Gemini API Key<input id="agent-api-key" type="password" autoComplete="off" spellCheck={false} maxLength={2048} value={key} disabled={pending||loading} onChange={event=>setKey(event.target.value)}/></label>:<p>Saved API key: ••••••••••••</p>}
+    <p>Test &amp; Apply sends one small request to Gemini. API charges may apply. Windows saves your key encrypted for your account; other platforms keep it only for this session.</p>
     <div className="settings-actions">
      {entering?<button disabled={pending||loading||!key.trim()} onClick={()=>void apply()}>Test &amp; Apply</button>:<button disabled={pending||loading} onClick={()=>{setReplace(true);setKey('');setEvents([]);setError('')}}>Replace Key</button>}
      {(state?.connected||state?.has_key)&&<button disabled={pending||loading} onClick={()=>void disconnect()}>Disconnect</button>}

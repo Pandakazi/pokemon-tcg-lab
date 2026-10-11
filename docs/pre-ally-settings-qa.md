@@ -1,5 +1,9 @@
 # Pre-Ally Settings — PM QA handoff
 
+Historical handoff for settings candidate `35296ba1b344413fa5ef8c9b5a3332ce366258f6`.
+The current Gemini-only preview and custom-proposal completion are documented in
+[the final pre-Ally PM QA handoff](pre-ally-custom-proposal-qa.md).
+
 Starting candidate: `1fefc3486c95dab97fe313fa0b32285b9c4c0ae3`.
 Branch: `phase7c5-concrete-deck-resolution`.
 

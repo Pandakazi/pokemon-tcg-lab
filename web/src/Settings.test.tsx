@@ -8,11 +8,11 @@ import {APPEARANCE_KEY} from './Appearance'
 vi.mock('./DeckBuilder',()=>({useDeck:()=>null}))
 vi.mock('./Competitive',()=>({useCompetitiveTimeframe:()=>({window:'30'})}))
 const disconnected={provider:null,connected:false,has_key:false,managed:false,storage:'external'}
-const connected={provider:'openai',connected:true,has_key:true,managed:true,storage:'encrypted'}
+const connected={provider:'gemini',connected:true,has_key:true,managed:true,storage:'encrypted'}
 const ok=(value:unknown)=>({ok:true,json:async()=>value})
-const events=[{stage:'validating',message:'Validating API key…'},{stage:'connecting',message:'Connecting to OpenAI…'},
+const events=[{stage:'validating',message:'Validating API key…'},{stage:'connecting',message:'Connecting to Gemini…'},
  {stage:'testing',message:'Checking Agent response…'},{stage:'saving',message:'Saving securely…'},
- {stage:'connected',message:'OpenAI connected.',settings:connected}]
+ {stage:'connected',message:'Gemini connected.',settings:connected}]
 function stream(value=events) {
  return {ok:true,body:new ReadableStream({start(controller){
   const text=value.map(event=>JSON.stringify(event)+'\n').join(''),bytes=new TextEncoder().encode(text)
@@ -34,10 +34,10 @@ async function openAgent() {
 test('Settings menu has bounded choices and exactly one provider with a masked key',async()=>{
  const fetch=vi.fn().mockResolvedValue(ok(disconnected));vi.stubGlobal('fetch',fetch)
  render(<SettingsControl/>);await openAgent()
- expect(screen.getByLabelText('OpenAI')).toBeChecked();expect(screen.getByLabelText('Gemini')).not.toBeChecked()
- fireEvent.click(screen.getByLabelText('Gemini'))
- expect(screen.getByLabelText('Gemini')).toBeChecked();expect(screen.getByLabelText('OpenAI')).not.toBeChecked()
- expect(screen.getByLabelText('API key')).toHaveAttribute('type','password')
+ expect(screen.getByText('AI provider: Gemini')).toBeInTheDocument()
+ expect(screen.queryByText('OpenAI')).not.toBeInTheDocument()
+ expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+ expect(screen.getByLabelText('Gemini API Key')).toHaveAttribute('type','password')
  expect(screen.getByRole('button',{name:'Test & Apply'})).toBeDisabled()
  fireEvent.click(screen.getByRole('button',{name:'Done'}))
  expect(screen.getByRole('button',{name:'Settings'})).toHaveFocus()
@@ -48,15 +48,15 @@ test('live streamed progress holds the modal and prevents duplicate submissions;
  let controller!:ReadableStreamDefaultController
  const fetch=vi.fn(async(url:string)=>url.endsWith('test-apply')?{ok:true,body:new ReadableStream({start(value){controller=value}})}:ok(disconnected))
  vi.stubGlobal('fetch',fetch);render(<SettingsControl/>);await openAgent()
- fireEvent.change(screen.getByLabelText('API key'),{target:{value:'fixture-api-key'}})
+ fireEvent.change(screen.getByLabelText('Gemini API Key'),{target:{value:'fixture-api-key'}})
  fireEvent.click(screen.getByRole('button',{name:'Test & Apply'}));fireEvent.click(screen.getByRole('button',{name:'Test & Apply'}))
- expect(screen.getByLabelText('API key')).toHaveValue('');expect(screen.getByRole('button',{name:'Done'})).toBeDisabled()
+ expect(screen.getByLabelText('Gemini API Key')).toHaveValue('');expect(screen.getByRole('button',{name:'Done'})).toBeDisabled()
  await act(async()=>{controller.enqueue(new TextEncoder().encode(JSON.stringify(events[0])+'\n'+JSON.stringify(events[1])+'\n'))})
- expect(screen.getByRole('status')).toHaveTextContent('Connecting to OpenAI…')
+ expect(screen.getByRole('status')).toHaveTextContent('Connecting to Gemini…')
  expect(screen.getByLabelText('Connection progress')).toHaveAttribute('value','2')
  await act(async()=>{controller.enqueue(new TextEncoder().encode(events.slice(2).map(value=>JSON.stringify(value)+'\n').join('')));controller.close()})
  expect(await screen.findByRole('button',{name:'Replace Key'})).toBeEnabled()
- expect(screen.getByText('Agent: OpenAI · Connected')).toBeInTheDocument()
+ expect(screen.getByText('Agent: Gemini · Connected')).toBeInTheDocument()
  expect(screen.getByRole('dialog')).toBeInTheDocument()
  expect(fetch.mock.calls.filter(([url])=>url.endsWith('test-apply'))).toHaveLength(1)
  expect(Object.values(localStorage).join('')).not.toContain('fixture-api-key')
@@ -67,25 +67,36 @@ test('failed replacement keeps current status and supports explicit retry; disco
  const fetch=vi.fn(async(url:string)=>url.endsWith('test-apply')?stream([{stage:'failed',message:'The API key was rejected. Check it and try again.'} as typeof events[number]]):url.endsWith('disconnect')?ok({ok:true,settings:{...disconnected,managed:true}}):ok(connected))
  vi.stubGlobal('fetch',fetch);render(<SettingsControl/>);await openAgent()
  fireEvent.click(screen.getByRole('button',{name:'Replace Key'}))
- fireEvent.change(screen.getByLabelText('API key'),{target:{value:'invalid-fixture-key'}})
+ fireEvent.change(screen.getByLabelText('Gemini API Key'),{target:{value:'invalid-fixture-key'}})
  fireEvent.click(screen.getByRole('button',{name:'Test & Apply'}))
  expect(await screen.findByRole('alert')).toHaveTextContent('API key was rejected')
- expect(screen.getByText('Agent: OpenAI · Connected')).toBeInTheDocument()
+ expect(screen.getByText('Agent: Gemini · Connected')).toBeInTheDocument()
  expect(changed).not.toHaveBeenCalled()
  fireEvent.click(screen.getByRole('button',{name:'Disconnect'}))
  await screen.findByText('Agent: Disconnected')
- expect(screen.getByLabelText('API key')).toHaveValue('');expect(changed).toHaveBeenCalledTimes(1)
+ expect(screen.getByLabelText('Gemini API Key')).toHaveValue('');expect(changed).toHaveBeenCalledTimes(1)
  window.removeEventListener('pokelab-agent-settings-changed',changed)
 })
 
-test('disconnect failure retains the connection and a changing provider clears pasted key',async()=>{
+test('disconnect failure retains the connection; closing clears the pasted key',async()=>{
  vi.stubGlobal('fetch',vi.fn(async(url:string)=>url.endsWith('disconnect')?{ok:false,json:async()=>({ok:false,message:'The Agent is busy.'})}:ok(connected)))
  render(<SettingsControl/>);await openAgent();fireEvent.click(screen.getByRole('button',{name:'Replace Key'}))
- fireEvent.change(screen.getByLabelText('API key'),{target:{value:'fixture-key'}})
- fireEvent.click(screen.getByLabelText('Gemini'));expect(screen.getByLabelText('API key')).toHaveValue('')
+ fireEvent.change(screen.getByLabelText('Gemini API Key'),{target:{value:'fixture-key'}})
  fireEvent.click(screen.getByRole('button',{name:'Disconnect'}))
  expect(await screen.findByRole('alert')).toHaveTextContent('busy')
- expect(screen.getByText('Agent: OpenAI · Connected')).toBeInTheDocument()
+ expect(screen.getByText('Agent: Gemini · Connected')).toBeInTheDocument()
+ fireEvent.click(screen.getByRole('button',{name:'Done'}));await openAgent()
+ fireEvent.click(screen.getByRole('button',{name:'Replace Key'}))
+ expect(screen.getByLabelText('Gemini API Key')).toHaveValue('')
+})
+
+test('legacy backend provider remains disconnectable without an OpenAI preview option',async()=>{
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue(ok({...connected,provider:'openai'})))
+ render(<SettingsControl/>);await openAgent()
+ expect(screen.queryByText(/OpenAI/)).not.toBeInTheDocument()
+ expect(screen.getByText('AI provider: Gemini')).toBeInTheDocument()
+ expect(screen.getByLabelText('Gemini API Key')).toHaveAttribute('type','password')
+ expect(screen.getByRole('button',{name:'Disconnect'})).toBeEnabled()
 })
 
 test('System is default, tracks device changes; explicit Light/Dark persist and survive remount',async()=>{
@@ -125,7 +136,7 @@ test('provider update refreshes existing conversation status without clearing pr
  await screen.findByText('Agent: Gemini · Connected')
  fireEvent.change(screen.getByLabelText('Ask PokéLab'),{target:{value:'Hello'}})
  fireEvent.click(screen.getByRole('button',{name:'Ask'}));await screen.findByText('Saved conversational answer')
- await openAgent();fireEvent.change(screen.getByLabelText('API key'),{target:{value:'fixture-key'}})
+ await openAgent();fireEvent.change(screen.getByLabelText('Gemini API Key'),{target:{value:'fixture-key'}})
  fireEvent.click(screen.getByRole('button',{name:'Test & Apply'}));await screen.findByRole('button',{name:'Replace Key'})
  await waitFor(()=>expect(statusCalls).toBe(2));expect(screen.getByText('Saved conversational answer')).toBeInTheDocument()
 })

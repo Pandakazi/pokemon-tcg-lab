@@ -77,7 +77,7 @@ def test_invalid_or_missing_changes_cannot_apply(stores,reply):
     first=request(svc,None,QUESTION);key=first['conversation_id']
     request(svc,key,'What exact changes would you make?')
     result=request(svc,key,'Make those changes.')
-    assert 'proposal' not in result['answer'] and len(calls)==2
+    assert 'proposal' not in result['answer'] and len(calls)==3
     assert svc.conversations.get(key)['artifacts']['generated_deck']['id']==first['answer']['artifact_id']
 
 
@@ -91,19 +91,16 @@ def test_evidence_and_identity_labels(stores):
     assert clean_references('Dragapult ex [card-unknown] is an option.',env)=='Dragapult ex is an option.'
 
 
-@pytest.mark.parametrize('succeed',[True,False])
-def test_small_delta_after_apply(stores,succeed):
-    from test_agent_deck_completion import delta
+def test_cut_only_recommendation_requires_balanced_retry(stores):
     def cut(env):
-        return 'Test a leaner Energy package. <POKELAB_ACTIONS>'+json.dumps(dict(type='proposed_deck_changes',changes=[dict(action='remove',**addition(env,'Lightning Energy',2))]))+'</POKELAB_ACTIONS>'
-    svc,calls=service(stores,[partial(60),cut,lambda e:delta([addition(e,'Recovery Tool',1),addition(e,'Lightning Energy',1 if succeed else 2)])])
+        return '<POKELAB_ACTIONS>'+json.dumps(dict(type='proposed_deck_changes',changes=[dict(action='remove',**addition(env,'Lightning Energy',2))]))+'</POKELAB_ACTIONS>'
+    svc,calls=service(stores,[partial(60),cut,changes])
     first=request(svc,None,QUESTION);key=first['conversation_id']
-    request(svc,key,'What exact changes would you make?')
+    recommended=request(svc,key,'What exact changes would you make?')
+    assert recommended['execution']['recommendation_repair_calls']==1
     result=request(svc,key,'Make those changes.')
-    assert len(calls)==3
-    current=svc.conversations.get(key)['artifacts']['generated_deck']
-    assert current['report']['total_cards']==60
-    assert (current['id']!=first['answer']['artifact_id'])==succeed
+    assert len(calls)==3 and result['answer']['proposal']['total_cards']==60
+    assert result['answer']['artifact_id']!=first['answer']['artifact_id']
 
 
 def test_new_recommendation_supersedes_and_explicit_context_switch(stores):

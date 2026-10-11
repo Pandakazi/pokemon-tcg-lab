@@ -1,7 +1,7 @@
 import {test,expect} from '@playwright/test'
 
 const disconnected={provider:null,connected:false,has_key:false,managed:false,storage:'external'}
-const connected={provider:'openai',connected:true,has_key:true,managed:true,storage:'encrypted'}
+const connected={provider:'gemini',connected:true,has_key:true,managed:true,storage:'encrypted'}
 
 test.beforeEach(async({page})=>{
  await page.route('**/*',async route=>{
@@ -19,12 +19,12 @@ test('native Agent Settings modal masks the key, applies one provider, replaces 
  await page.route('**/api/v1/agent/status',route=>route.fulfill({json:{version:'pokelab-research-v1',available:current.connected,provider:current.provider,model:null,reason:current.connected?null:'not_configured'}}))
  await page.route('**/api/v1/settings/agent',route=>route.fulfill({json:current}))
  await page.route('**/api/v1/settings/agent/test-apply',async route=>{
-  posts++;expect(route.request().postDataJSON()).toEqual({provider:'openai',api_key:'fixture-browser-key'})
+  posts++;expect(route.request().postDataJSON()).toEqual({provider:'gemini',api_key:'fixture-browser-key'})
   current=connected as typeof disconnected
   await route.fulfill({contentType:'application/x-ndjson',body:[
-   {stage:'validating',message:'Validating API key…'}, {stage:'connecting',message:'Connecting to OpenAI…'},
+   {stage:'validating',message:'Validating API key…'}, {stage:'connecting',message:'Connecting to Gemini…'},
    {stage:'testing',message:'Checking Agent response…'}, {stage:'saving',message:'Saving securely…'},
-   {stage:'connected',message:'OpenAI connected.',settings:current}].map(event=>JSON.stringify(event)+'\n').join('')})
+   {stage:'connected',message:'Gemini connected.',settings:current}].map(event=>JSON.stringify(event)+'\n').join('')})
  })
  await page.route('**/api/v1/settings/agent/disconnect',async route=>{current=disconnected;await route.fulfill({json:{ok:true,settings:current}})})
  await page.goto('/')
@@ -32,19 +32,19 @@ test('native Agent Settings modal masks the key, applies one provider, replaces 
  await page.getByRole('button',{name:'Agent Settings',exact:true}).click()
  const dialog=page.getByRole('dialog',{name:'Agent Settings'})
  await expect(dialog).toBeVisible()
- await expect(dialog.getByLabel('OpenAI')).toBeChecked()
- await dialog.getByLabel('Gemini').check();await expect(dialog.getByLabel('OpenAI')).not.toBeChecked()
- await dialog.getByLabel('OpenAI').check()
- await dialog.getByLabel('API key').fill('fixture-browser-key')
- await expect(dialog.getByLabel('API key')).toHaveAttribute('type','password')
+ await expect(dialog.getByText('AI provider: Gemini')).toBeVisible()
+ await expect(dialog.getByText('OpenAI')).toHaveCount(0)
+ await expect(dialog.getByRole('radio')).toHaveCount(0)
+ await dialog.getByLabel('Gemini API Key').fill('fixture-browser-key')
+ await expect(dialog.getByLabel('Gemini API Key')).toHaveAttribute('type','password')
  await dialog.getByRole('button',{name:'Test & Apply'}).click()
- await expect(dialog.getByRole('status').getByText('OpenAI connected.',{exact:true})).toBeVisible()
- await expect(page.getByText('Agent: OpenAI · Connected',{exact:true})).toBeVisible()
+ await expect(dialog.getByRole('status').getByText('Gemini connected.',{exact:true})).toBeVisible()
+ await expect(page.getByText('Agent: Gemini · Connected',{exact:true})).toBeVisible()
  await expect(dialog.getByRole('progressbar')).toHaveAttribute('value','5')
  expect(posts).toBe(1)
  await page.screenshot({path:'../.cache/settings-agent.png',fullPage:true})
  await dialog.getByRole('button',{name:'Replace Key'}).click()
- await expect(dialog.getByLabel('API key')).toHaveValue('')
+ await expect(dialog.getByLabel('Gemini API Key')).toHaveValue('')
  await dialog.getByRole('button',{name:'Disconnect'}).click()
  await expect(page.getByText('Agent: Disconnected',{exact:true})).toBeVisible()
  await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible()

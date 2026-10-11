@@ -16,7 +16,7 @@ type Turn={question:string;result:Result;contextKey:string}
 
 function AnswerView({result}:{result:Result}) {
  const [inspected,inspect]=useState<string|null>(null),[requestedEvidence,setRequestedEvidence]=useState(false)
- const showEvidence=requestedEvidence||!!inspected||!!result.envelope?.proof_requested||!!result.answer?.notices?.some(code=>['printed_fact_review','empirical_claim_unverified'].includes(code))||!!result.answer?.facts.some(e=>e.kind==='evidence')
+ const showEvidence=requestedEvidence||!!inspected||!!result.envelope?.proof_requested
  const evidence=result.envelope?.evidence||[]
  const cards:ResearchCard[]=evidence.filter(e=>e.printing).map(e=>({id:e.id,name:e.title,printing:e.printing!}))
  const components:ResearchCard[]=[]

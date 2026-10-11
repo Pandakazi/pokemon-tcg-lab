@@ -1,5 +1,6 @@
 """Conversation-only generated-deck referents. Never mutate workspace state."""
 from copy import deepcopy
+import json
 import re
 from .rules.models import digest
 from .agent_deck_proposals import Candidate, Proposal, lifecycle
@@ -23,9 +24,9 @@ def intent(question, history):
     return 'DISCUSS'
 
 
-def compose(artifact, proposal):
+def compose(artifact, proposal, sandbox=None):
     """Bind functional IDs, reject phantom/excess cuts, retain every other slot."""
-    report=artifact['report'];sandbox=report.get('candidate_sandbox') or {}
+    report=artifact['report'];sandbox=sandbox or report.get('candidate_sandbox') or {}
     allowed={r['candidate_id']:r for r in sandbox.get('candidates',[])}
     rows={r['candidate_id']:deepcopy(r) for r in report['cards']}
     counts={key:r['quantity'] for key,r in rows.items()}
@@ -48,7 +49,14 @@ def source_hash(artifact):return digest(artifact['report'])
 def change_set(artifact, proposal, report):
     value=dict(type='proposed_change_set',status='PROPOSED',source_artifact_id=artifact['id'],
         source_artifact_hash=source_hash(artifact),proposal=proposal.model_dump(mode='json'),
+        cuts=[dict(candidate_id=c.candidate_id,quantity=c.quantity) for c in proposal.removes],
+        adds=[dict(candidate_id=c.candidate_id,quantity=c.quantity) for c in proposal.adds],
         reasoning=proposal.rationale,validation_status=report['validation_status'])
+    original=artifact['report'].get('candidate_sandbox',{}).get('candidates',[])
+    known={r['candidate_id'] for r in original}
+    extra=[deepcopy(r) for r in report.get('candidate_sandbox',{}).get('candidates',[])
+        if r['candidate_id'] not in known and r['candidate_id'] in {c.candidate_id for c in proposal.adds}]
+    if extra:value['replacement_candidates']=extra
     value['id']=digest(value)
     return value
 
@@ -62,6 +70,80 @@ def select(history):
     if not source or pending['source_artifact_id']!=source['id'] or pending['source_artifact_hash']!=source_hash(source):
         return None,'Those changes refer to an older deck. Should I propose changes for the current generated deck?'
     return pending,None
+
+
+def replacement_pool(path, artifact, **kwargs):
+    """Fresh role-ranked alternatives, with every current identity retained.
+
+    This changes recommendation context only, never custom generation or consensus.
+    The original packet remains immutable and bounded; legal resolution still reads DB.
+    """
+    from .agent_deck_sandbox import build,MAX_CANDIDATES
+    report=artifact['report'];original=report['candidate_sandbox']
+    core=[r['name'] for r in original['candidates'] if r.get('requested_core')]
+    fresh=build(path,'Recommend support changes for '+', '.join(core),
+        [r['printing_id'] for r in report['cards']],**kwargs)
+    current={r['candidate_id'] for r in report['cards']}
+    rows={r['candidate_id']:deepcopy(r) for r in original['candidates'] if r['candidate_id'] in current}
+    # A currently legal identity may have been absent from an older compact packet.
+    for r in fresh['candidates']:
+        if r['candidate_id'] in current:rows.setdefault(r['candidate_id'],deepcopy(r))
+    if set(rows)!=current:raise ValueError('current_candidate_coverage')
+    for r in [*fresh['candidates'],*original['candidates']]:
+        if len(rows)>=MAX_CANDIDATES:break
+        rows.setdefault(r['candidate_id'],deepcopy(r))
+    fields=('candidate_id','printing_id','name','category','role','ace_spec','basic_energy',
+        'copy_limit_name','requested_core','predecessor_candidate_ids','stage','evolveFrom',
+        'types','attacks','abilities','effect','rules')
+    return dict(original,candidates=[{k:r[k] for k in fields if k in r} for r in rows.values()],
+        replacement_pool=True)
+
+
+RECOMMEND_SYSTEM='''Return ONLY one JSON object, before any user explanation:
+{"source_artifact_id":"current_generated_deck.id",
+ "source_artifact_hash":"current_generated_deck.artifact_hash",
+ "cuts":[{"candidate_id":"exact supplied ID","quantity":1}],
+ "adds":[{"candidate_id":"exact supplied ID","quantity":1}]}
+Use the actual source ID/hash. No prose, card names, rationale, markdown or actions block.
+Answer the user's exact-change request using a small useful role-appropriate tradeoff.
+Both arrays must be nonempty. Cuts must exist in the current deck and not exceed its
+quantities. Adds must use candidate_sandbox IDs. Balance removals and additions to 60.
+Group ordinary copies by copy_limit_name for maximum 4, except basic_energy; at most
+one ACE SPEC. Preserve the requested core and evolution support. Never invent cards.
+If a preferred conceptual card is unavailable, select the next legal role-appropriate
+alternative in this sandbox. On retry, revise the failed choices using these candidates.
+PokéLab validates first and renders the canonical Cut/Add explanation afterward.
+'''
+
+
+def structured(text, artifact):
+    """Strict bound JSON; legacy action blocks are read for wire compatibility only.
+
+    Legacy prose is discarded, never parsed for candidates or shown as changes.
+    """
+    if len(text.encode())>8192:raise ValueError('change_budget_exceeded')
+    if '<POKELAB_ACTIONS>' in text:
+        from .agent_hybrid import parse
+        _,proposal,issues=parse(text,True)
+        if issues or not proposal or proposal.kind!='diff':raise ValueError('change_contract_invalid')
+    else:
+        value=json.loads(text)
+        if not isinstance(value,dict) or set(value)!= {'source_artifact_id','source_artifact_hash','cuts','adds'}:raise ValueError('change_contract_invalid')
+        if value['source_artifact_id']!=artifact['id'] or value['source_artifact_hash']!=source_hash(artifact):raise ValueError('change_source_mismatch')
+        def entries(group):
+            rows=value[group]
+            if not isinstance(rows,list) or not 1<=len(rows)<=60:raise ValueError('change_entries_invalid')
+            for r in rows:
+                if not isinstance(r,dict) or set(r)!={'candidate_id','quantity'}:raise ValueError('change_entries_invalid')
+            return tuple(Candidate(**r) for r in rows)
+        proposal=Proposal(kind='diff',removes=entries('cuts'),adds=entries('adds'))
+    if not proposal.removes or not proposal.adds:raise ValueError('balanced_changes_required')
+    for group in (proposal.removes,proposal.adds):
+        ids=[r.candidate_id for r in group]
+        if not all(ids) or len(set(ids))!=len(ids):raise ValueError('unique_candidate_ids_required')
+    if set(c.candidate_id for c in proposal.removes)&set(c.candidate_id for c in proposal.adds):raise ValueError('cancelled_changes')
+    if sum(c.quantity for c in proposal.removes)!=sum(c.quantity for c in proposal.adds):raise ValueError('balanced_changes_required')
+    return proposal.model_copy(update={'rationale':''})
 
 
 CONTRACT='''

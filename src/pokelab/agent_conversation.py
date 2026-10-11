@@ -164,6 +164,10 @@ def context(request, sources, history, selected_core=None):
             from .agent_deck_sandbox import build
             pending=None if new_build else pending_repair(request.question,history)
             sandbox=((generated or pending)['report'].get('candidate_sandbox') if generated or pending else None) or build(sources.paths['cards'],request.question,[] if new_build else history['printings'],competitive_path=sources.paths['competitive'],format_start=sources.format_start,selected_core=selected_core)
+            if generated_intent=='RECOMMEND' and generated['report'].get('build_mode')=='custom':
+                from .agent_generated_changes import replacement_pool
+                sandbox=replacement_pool(sources.paths['cards'],generated,
+                    competitive_path=sources.paths['competitive'],format_start=sources.format_start)
             if generated_intent=='DISCUSS':
                 # Read context needs current printed facts, not all alternative
                 # ranking/construction annotations. Never modify the saved packet.
@@ -417,6 +421,9 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
     if envelope.get('generated_intent') and not additive:
         from .agent_generated_changes import CONTRACT
         system+=CONTRACT
+    if envelope.get('generated_intent')=='RECOMMEND' and not requirements:
+        from .agent_generated_changes import RECOMMEND_SYSTEM
+        system,wire_schema=RECOMMEND_SYSTEM,None
     if len((system+canonical(envelope)).encode()) > INPUT_BYTES:
         from .agent_context_budget import fit,RequiredContextOverflow
         try:envelope=fit(envelope,min(CONTEXT_BYTES,INPUT_BYTES-len(system.encode())))
@@ -452,6 +459,38 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
         return custom_failure('output_token_limit_reached') if custom_initial else dict(response,status='output_token_limit_reached')
     if result.status != 'ok' or result.finish_reason not in ('stop','end_turn'):
         return custom_failure('provider_failure') if custom_initial else dict(response,status='provider_failure', provider_status=result.status if re.fullmatch(r'http_[0-9]{3}',result.status) or result.status in ('transport_or_response_error','empty_output','incomplete_or_blocked_output','output_too_large','response_too_large','secret_response_quarantined','tool_output_rejected') else 'other_provider_failure')
+    if envelope.get('generated_intent')=='RECOMMEND' and not requirements:
+        from .agent_generated_changes import structured,compose,RECOMMEND_SYSTEM
+        from .agent_deck_proposals import evaluate
+        source=history['artifacts']['generated_deck'];failure='change_contract_invalid';validated=False
+        for attempt in range(2):
+            exact=None;preview=None
+            try:
+                exact=structured(result.text,source)
+                preview,_,_=evaluate(compose(source,exact,envelope['candidate_sandbox']),(),
+                    Sources(**service.paths,format_start=service.format_start),request.model_copy(update={'include_deck':False}),envelope)
+                if preview['validation_status']!='VALIDATED' or preview['total_cards']!=60:raise ValueError('change_construction_invalid')
+                # Only validated IDs reach the existing artifact retention path.
+                result=result.model_copy(update={'text':'I have prepared a balanced change set for the current generated deck. <POKELAB_ACTIONS>'+canonical(dict(type='proposed_deck_changes',changes=[dict(action=action,candidate_id=c.candidate_id,quantity=c.quantity) for action,group in (('remove',exact.removes),('add',exact.adds)) for c in group]))+'</POKELAB_ACTIONS>'})
+                validated=True
+                break
+            except (ValueError,TypeError,KeyError):
+                failure='change_construction_invalid' if preview is not None else 'change_contract_invalid'
+            if attempt==0:
+                # Bounded retry contains authoritative context and a safe reason,
+                # never the rejected prose or unavailable card suggestions.
+                allowed={r['candidate_id'] for r in envelope['candidate_sandbox']['candidates']}
+                rejected={group:[dict(candidate_id=c.candidate_id,quantity=c.quantity) for c in getattr(exact,group) if c.candidate_id in allowed] for group in ('removes','adds')} if exact else {}
+                retry=dict(envelope,recommendation_retry=dict(attempt=1,reason=failure,rejected_selection=rejected))
+                result=providers.complete(selection,RECOMMEND_SYSTEM,canonical(retry),transport=service.transport,max_output=MAX_OUTPUT)
+                execution['recommendation_repair_calls']=1
+                execution['recommendation_repair']={k:getattr(result,k) for k in ('latency_ms','input_tokens','output_tokens','reasoning_tokens','estimated_cost_usd','actual_cost_usd')}
+                if result.status!='ok' or result.finish_reason not in ('stop','end_turn'):failure='change_retry_provider_failure';break
+        if not validated:
+            answer=dict(version='pokelab-conversation-answer-v1',paragraphs=[dict(text='I could not validate a balanced replacement from the available legal candidates after one retry. The current deck is unchanged. Please retry the exact recommendation.',evidence=[])],facts=[],notices=[],recommendation_failure=dict(reason=failure,attempts=2))
+            artifacts=history.get('artifacts',{}).copy();artifacts.pop('proposed_change_set',None)
+            key=service.conversations.put(request.conversation_id,history['turns']+[dict(question=request.question,answer=answer,snapshot=envelope['content_hash'])],history['printings'],history.get('proposal'),artifacts)
+            return dict(response,status='answered',answer=answer,conversation_id=key)
     if custom_initial:
         from .agent_hybrid import parse
         from .agent_custom_build import REPAIR_SYSTEM,repair_input,repaired
@@ -520,9 +559,9 @@ def run(service, request, selection, *, _repair=None, _selected_core=None):
                 from .agent_generated_changes import compose,change_set
                 source=history['artifacts']['generated_deck']
                 try:
-                    composed=compose(source,parsed.proposal)
+                    composed=compose(source,parsed.proposal,envelope['candidate_sandbox'])
                     preview,_,_=evaluate(composed,(),Sources(**service.paths,format_start=service.format_start),request.model_copy(update={'include_deck':False}),envelope)
-                    if preview['validation_status']=='VALIDATED' or completion.eligible(preview):proposed_changes=change_set(source,parsed.proposal,preview)
+                    if preview['validation_status']=='VALIDATED' and preview['total_cards']==60:proposed_changes=change_set(source,parsed.proposal,preview)
                     else:hybrid_issues.append('generated_changes_not_validated')
                 except ValueError:hybrid_issues.append('generated_changes_not_validated')
             elif parsed.proposal:hybrid_issues.append('generated_recommendation_requires_diff')
@@ -689,8 +728,10 @@ def apply_generated(service,request,selection,history,envelope):
     execution={'mode':'local_artifact','provider_called':False}
     if pending:
         try:
-            proposal=compose(history['artifacts']['generated_deck'],Proposal.model_validate(pending['proposal']))
-            envelope['candidate_sandbox']=history['artifacts']['generated_deck']['report']['candidate_sandbox']
+            original=history['artifacts']['generated_deck']['report']['candidate_sandbox']
+            sandbox=dict(original,candidates=[*original['candidates'],*pending.get('replacement_candidates',[])])
+            proposal=compose(history['artifacts']['generated_deck'],Proposal.model_validate(pending['proposal']),sandbox)
+            envelope['candidate_sandbox']=sandbox
             envelope['lifecycle']='FINALIZE'
             report,_,_=evaluate(proposal,(),Sources(**service.paths,format_start=service.format_start),request.model_copy(update={'include_deck':False}),envelope)
             from .agent_deck_completion import eligible

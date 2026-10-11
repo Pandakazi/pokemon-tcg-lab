@@ -103,6 +103,14 @@ test('proof opens existing evidence and keeps inference distinct',async()=>{
  expect(agent.getByText(/Recommendations are judgment/)).toBeVisible()
 })
 
+test.each(['Build me a Pikachu deck','Explain this custom deck','Critique this deck','What exact changes would you make?'])('ordinary custom request %s keeps cited evidence on demand',async question=>{
+ const {agent}=setup(async()=>({...result,answer:{...result.answer,facts:[{...evidence,kind:'evidence'}],notices:['printed_fact_review','empirical_claim_unverified']}}))
+ await ask(question);await agent.findByRole('article')
+ expect(agent.queryByRole('region',{name:'Sources and card facts'})).toBeNull()
+ fireEvent.click(agent.getByRole('button',{name:'Show sources'}))
+ expect(agent.getByRole('region',{name:'Sources and card facts'})).toBeVisible()
+})
+
 test.each(['output_token_limit_reached','provider_failure','conversation_expired','internal_assessment_failure'])('failure %s never shows partial answer or retries',async status=>{
  const {calls,agent}=setup(async()=>({status,answer:null}))
  await ask();await agent.findByRole('alert')
