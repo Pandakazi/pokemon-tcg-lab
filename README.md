@@ -1,5 +1,42 @@
 # PokéLab
 
+## Quick Start — Ally preview (Windows)
+
+1. Clone the repository and open PowerShell in the PokéLab folder.
+2. Install **Python 3.11+** (enable Add Python to PATH) and **Node.js LTS 22.12+ or 24+** if needed.
+3. Run one setup command:
+   ```powershell
+   .\setup.ps1
+   ```
+4. Start PokéLab:
+   ```powershell
+   .\start.ps1
+   ```
+5. Your browser opens **http://127.0.0.1:5173/**.
+6. Open **Settings → Agent Settings**, paste your Gemini API key, and click **Test & Apply**.
+
+First setup needs internet for packages and the English TCGdex card catalog; the
+catalog can take several minutes. Rerun setup safely if interrupted. No API key
+is requested by setup, and no `.env` editing is needed. Windows stores the key
+using the existing encrypted in-app storage.
+
+Stop with `.\stop.ps1`. To restart, run `.\stop.ps1`, then `.\start.ps1`.
+Running start again reuses healthy servers. The API uses port **8001**; unrelated
+programs on either port are left alone with a clear error. If PowerShell blocks
+a downloaded script, run `powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1`
+(and use the same form for start/stop); this applies only to that process.
+
+Local cards, collection, decks, and competitive cache live in `data/` in this
+clone; back it up with PokéLab stopped. Logs live in `.cache/local-web/`.
+A fresh clone has an empty collection and competitive cache. Use the existing
+in-app competitive Sync control when tournament evidence is needed. Analytics
+is intentionally **Coming Soon**.
+
+Product freeze: `pokelab-ally-preview-2026-10-11` identifies the regression-tested
+product commit. Use the branch's following setup/docs commit for these commands;
+the product tag alone predates the wrappers. No Phase 7D certification is implied.
+
+
 PokéLab is a **web-first, PWA-capable competitive Pokémon TCG research, collection,
 deckbuilding and analysis environment**, in development toward private alpha.
 Phases 1–6 and Phase 6.5 are PM-certified. Phase 6.5 — Rules & Interaction Foundation
@@ -59,8 +96,7 @@ without merging cards by name alone or changing deck/collection identity. Exact
 Holo and Reverse Holo visualization uses distinct masks and slow staggered shimmer;
 touch receives autonomous light, while reduced motion retains a static treatment.
 
-Agent and authentication remain
-disabled/unconnected. PWA installation,
+Gemini Agent setup is available through Settings. Authentication remains disabled. PWA installation,
 offline service workers, hosting and billing are not implemented.
 
 ## Architecture
@@ -83,9 +119,7 @@ Existing collection, filtering, functional/printing identities, competitive anal
 and provider-independent Agent groundwork remain in the Python engine. Analytics
 uses source-isolated cached main-Limitless research for the web UI; legacy Play!
 Limitless evidence remains separate. Unresolved mappings are excluded and coverage
-is explicitly limited; it is not a full paper metagame census. The Agent remains
-read-only and provider-independent; only its Anthropic
-adapter exists today, with live-provider QA deferred.
+is explicitly limited; it is not a full paper metagame census. The Agent uses the existing provider-independent engine; configure Gemini in Agent Settings.
 
 MCP remains an optional adapter. Qt is preserved as an earlier reference prototype,
 not the primary product. Its packaged EXE has a known DLL startup failure and is
@@ -96,49 +130,15 @@ not certified. See [the architecture decision](docs/adr-001-web-first.md),
 
 ## Local setup — Windows
 
-Prerequisites: Python 3.11+ and Node.js 22.12+ (tested with Python 3.13.15 and Node
-22.22.1). Download them from [python.org](https://www.python.org/downloads/) and
-[nodejs.org](https://nodejs.org/). Open PowerShell in this repository folder.
-Do not use the old Run-Local launcher for the web UI; it starts the optional MCP adapter.
+Use the Quick Start above. For an existing local card cache, setup also supports
+`.\setup.ps1 -CardsDatabase C:\path\cards.sqlite3`; it copies the cache safely only
+when this clone has no card database. An optional `-CompetitiveDatabase` works the
+same way. Existing collection/deck files are preserved. `-Offline` prevents package
+and card downloads and requires installed dependencies or cached installer packages
+plus a populated card database. Startup prepares/reuses indexes offline.
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[web,dev]"
-cd web
-npm.cmd ci
-cd ..
-```
-
-An existing `.venv` may be reused; skip its creation. No API key is needed.
-If this is a fresh clone/ZIP, initialize card data once:
-
-```powershell
-.\.venv\Scripts\python.exe -m tcg_lab.sync_cards
-```
-
-The initial English catalog download can take time. The existing local synchronized
-`data/cards.sqlite3` can be reused without downloading it again. Refresh later with:
-
-```powershell
-.\.venv\Scripts\python.exe -m tcg_lab.sync_cards --refresh
-```
-
-Start the API from the repository root and leave this window open:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn pokelab.api:app --host 127.0.0.1 --port 8001
-```
-
-Open a second PowerShell window in the repository root:
-
-```powershell
-cd web
-npm.cmd run dev
-```
-
-Open **http://127.0.0.1:5173**. The frontend proxies `/api` to port 8001. The optional
-MCP service can continue using port 8000 independently.
-
+The earlier `Run-Local.ps1` starts the optional MCP adapter. The developer QA
+launcher remains separate from normal web startup.
 ## Local setup — macOS
 
 Install Python 3.11+ and Node.js 22.12+. In Terminal at the repository root:
@@ -159,7 +159,7 @@ macOS instructions use standard tooling; this milestone was executed on Windows.
 
 ## Stop, restart and troubleshoot
 
-- Stop each server with Ctrl+C in its terminal; restart with the same commands.
+- Windows Quick Start: use `.\stop.ps1`, then `.\start.ps1`. For the manual macOS servers below, use Ctrl+C in each terminal.
 - Database unavailable: run synchronization from the repository root. The API uses
   `data/cards.sqlite3` by default and deliberately does not create a missing cache.
 - A custom cache path can be supplied before API startup via
