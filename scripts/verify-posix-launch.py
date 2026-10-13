@@ -1,5 +1,4 @@
 """Offline smoke test in a disposable checkout only; no provider requests."""
-import hashlib
 import importlib.util
 import json
 import os
@@ -44,8 +43,15 @@ def request(url):
 
 
 def snapshots():
-    return {name: hashlib.sha256((ROOT / 'data' / name).read_bytes()).hexdigest()
-            for name in ('user-state.sqlite3','deck-workspace.sqlite3')}
+    # SQLite updates file-header counters during PRAGMA/schema preparation even
+    # when user records are unchanged. Compare schema/version and every row.
+    result = {}
+    for name in ('user-state.sqlite3','deck-workspace.sqlite3'):
+        with sqlite3.connect(ROOT/'data'/name) as db:
+            tables = db.execute("SELECT name,sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").fetchall()
+            rows = {table: sorted(db.execute('SELECT * FROM "' + table.replace('"','""') + '"').fetchall(),key=repr) for table,_ in tables}
+            result[name] = {'version':db.execute('PRAGMA user_version').fetchone()[0], 'schema':tables, 'rows':rows}
+    return result
 
 
 def main():
