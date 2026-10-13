@@ -204,9 +204,17 @@ def start(args):
             for label, command, cwd in commands:
                 with (STATE / f'{label}.out.log').open('w') as out, (STATE / f'{label}.err.log').open('w') as err:
                     processes.append(subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=out, stderr=err, start_new_session=True))
-            tasks = [{'pid': p.pid, 'identity': fingerprint(p.pid)} for p in processes]
-            if any(not t['identity'] for t in tasks):
-                raise RuntimeError('A server exited during launch. Check the logs.')
+            tasks = []
+            for process, marker in zip(processes, (str(ROOT/'src'),str(vite))):
+                identity_deadline = time.monotonic() + 2
+                while True:
+                    identity = fingerprint(process.pid)
+                    if identity and marker in identity:
+                        tasks.append({'pid':process.pid, 'identity':identity})
+                        break
+                    if process.poll() is not None or time.monotonic() >= identity_deadline:
+                        raise RuntimeError('A server could not be identified during launch. Check the logs.')
+                    time.sleep(.01)
             temporary = RECORD.with_suffix('.tmp')
             temporary.write_text(json.dumps({'root': str(ROOT), 'tasks': tasks}))
             temporary.chmod(0o600)
