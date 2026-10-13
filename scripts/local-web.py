@@ -96,6 +96,17 @@ def setup(args):
 
 def fingerprint(pid):
     """BSD/macOS and Linux ps: timestamp plus full command, never PID alone."""
+    if sys.platform == 'linux':
+        # Kernel start ticks do not move when WSL adjusts its wall clock.
+        try:
+            proc = Path('/proc') / str(pid)
+            fields = (proc/'stat').read_text().rsplit(')',1)[1].split()
+            if fields[0] == 'Z':
+                return None
+            command = (proc/'cmdline').read_bytes().replace(b'\0',b' ').decode().strip()
+            return fields[19] + ' ' + command if command else None
+        except FileNotFoundError:
+            return None
     result = subprocess.run(['ps', '-ww', '-p', str(pid), '-o', 'stat=', '-o', 'lstart=', '-o', 'args='], capture_output=True, text=True, timeout=5)
     line = result.stdout.strip()
     if result.returncode or not line or line.split()[0].startswith('Z'):
