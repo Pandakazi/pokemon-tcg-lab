@@ -1,0 +1,31 @@
+name: macOS local setup and start
+on:
+  push:
+    branches: [phase7c5-concrete-deck-resolution]
+    paths:
+      - 'setup.sh'
+      - 'start.sh'
+      - 'stop.sh'
+      - 'scripts/local-web.py'
+      - 'scripts/bootstrap-web.py'
+      - 'scripts/verify-posix-launch.py'
+      - '.github/workflows/macos-local-launch.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify fresh setup, safe repeated start, stop and data preservation
+        env:
+          POKELAB_EXPECT_MAC_ARM64: '1'
+        run: python3 scripts/verify-posix-launch.py

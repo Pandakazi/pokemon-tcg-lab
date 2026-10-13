@@ -1,5 +1,26 @@
 # PokéLab
 
+## Quick Start — Ally preview (macOS)
+
+Install **Python 3.11+** from python.org and **Node.js LTS 22.12+ or 24+** from
+nodejs.org. In Terminal, inside the clone on `phase7c5-concrete-deck-resolution`:
+
+```sh
+bash setup.sh
+bash start.sh
+```
+
+Your browser opens **http://127.0.0.1:5173/**. Open **Settings → Agent Settings**,
+paste your Gemini API key, and click **Test & Apply**. On macOS the key stays in
+memory for this server session; re-enter it after stopping/restarting the app.
+No secret is saved in `.env` or plaintext files.
+
+Stop with `bash stop.sh`; restart with `bash stop.sh`, then `bash start.sh`.
+Repeated start reuses healthy servers. First setup downloads packages and card
+records (not artwork); it may take several minutes. Local data lives in `data/`;
+logs live in `.cache/local-web-posix/`. Unrelated occupied ports 8001/5173 produce
+a clear error. Analytics is intentionally Coming Soon.
+
 ## Quick Start — Ally preview (Windows)
 
 1. Clone the repository and open PowerShell in the PokéLab folder.
@@ -141,25 +162,15 @@ The earlier `Run-Local.ps1` starts the optional MCP adapter. The developer QA
 launcher remains separate from normal web startup.
 ## Local setup — macOS
 
-Install Python 3.11+ and Node.js 22.12+. In Terminal at the repository root:
-
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[web,dev]'
-cd web
-npm ci
-cd ..
-.venv/bin/python -m tcg_lab.sync_cards
-.venv/bin/python -m uvicorn pokelab.api:app --host 127.0.0.1 --port 8001
-```
-
-Skip synchronization if the cache already exists. In a second Terminal, enter the
-repository's `web` directory and run `npm run dev`, then open the same browser URL.
-macOS instructions use standard tooling; this milestone was executed on Windows.
+Use the macOS Quick Start above. Existing caches can be copied safely on first
+setup with `bash setup.sh --cards-database /path/to/cards.sqlite3` and optional
+`--competitive-database /path/to/competitive.sqlite3`. `--offline` requires
+installed/cached dependencies and a populated card cache. Keep the clone in a
+writable folder; do not reuse a Windows virtual environment on a Mac.
 
 ## Stop, restart and troubleshoot
 
-- Windows Quick Start: use `.\stop.ps1`, then `.\start.ps1`. For the manual macOS servers below, use Ctrl+C in each terminal.
+- Windows Quick Start: use `.\stop.ps1`, then `.\start.ps1`. On macOS use `bash stop.sh`, then `bash start.sh`.
 - Database unavailable: run synchronization from the repository root. The API uses
   `data/cards.sqlite3` by default and deliberately does not create a missing cache.
 - A custom cache path can be supplied before API startup via
