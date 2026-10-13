@@ -119,14 +119,22 @@ def parse_decklists(html, results):
     root = Tree(html).root
     section = one(root.find('section','tournament-decklists'), 'decklists section')
     output = {}
+    targets = set()
     for block in section.find('div','tournament-decklist'):
         toggle = one(block.find('div','decklist-toggle'), 'decklist placement toggle')
-        match = re.fullmatch(r'decklist-(\d+)', toggle.attrs.get('data-target',''))
-        require(match, 'decklist rank')
-        rank = int(match[1])
+        target = toggle.attrs.get('data-target','')
+        require(re.fullmatch(r'decklist-\d+', target) and target not in targets, 'duplicate/invalid decklist target')
+        targets.add(target)
+        container = one([node for node in block.find('div') if node.attrs.get('data-name') == target], 'decklist target container')
+        # The target is a page-local identifier, not a finishing position. They
+        # diverge when the results omit a placement (for example a disqualification).
+        placement = re.fullmatch(r'(\d+)(?:st|nd|rd|th) (.+)', toggle.text())
+        require(placement, 'decklist placement label')
+        rank = int(placement[1])
         require(rank in results and results[rank]['list_url'] and rank not in output, 'unexpected/duplicate decklist')
+        require(placement[2] == ' '.join(results[rank]['player'].split()), 'decklist player mismatch')
         cards = []
-        for card in block.find('div','decklist-card'):
+        for card in container.find('div','decklist-card'):
             a = card.attrs
             require(a.get('data-set') and a.get('data-number') and a.get('data-lang') == 'en', 'card printing attributes/language')
             count = one(card.find('span','card-count'), 'card count').text()

@@ -41,6 +41,28 @@ def test_shared_list_urls_are_distinct_result_entries():
     assert len(parse_decklists(fixture('decklists'),results))==8
 
 
+def test_decklist_target_is_not_finishing_position():
+    results=parse_results(fixture('results'))
+    results[9]={**results.pop(2), 'rank':9, 'player':' Fabrizio  Inga Silva '}
+    html=fixture('decklists').replace('2nd Fabrizio Inga Silva','9th Fabrizio Inga Silva')
+    decks=parse_decklists(html,results)
+    assert len(decks)==8
+    assert decks[1]['rank']==9 and decks[1]['player']==results[9]['player']
+    assert decks[1]['list_url']==results[9]['list_url']
+    assert sum(card['count'] for card in decks[1]['cards'])==60
+
+
+@pytest.mark.parametrize('old,new', [
+    ('2nd Fabrizio Inga Silva','2nd Wrong Player'),
+    ('2nd Fabrizio Inga Silva','1st Rodrigo Montoya'),
+    ('2nd Fabrizio Inga Silva','Fabrizio Inga Silva'),
+    ('data-name="decklist-2"','data-name="missing"'),
+])
+def test_decklist_placement_identity_failure(old,new):
+    with pytest.raises(SourceLayoutError):
+        parse_decklists(fixture('decklists').replace(old,new),parse_results(fixture('results')))
+
+
 def test_same_set_basic_energy_fallback_does_not_merge_identities(store):
     writable=SQLiteCards(store.cards.path)
     writable.put_set(set_record('other'))
